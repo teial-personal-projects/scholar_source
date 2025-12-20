@@ -31,7 +31,8 @@ class ScholarSource():
     def resource_discovery_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['resource_discovery_agent'], # type: ignore[index]
-            verbose=True
+            verbose=True,
+            tools=[SerperDevTool()]
         )
 
     @agent
