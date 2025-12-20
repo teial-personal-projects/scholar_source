@@ -11,7 +11,7 @@ course_intelligence_agent:
     what topics are typically covered, and how to identify core learning objectives 
     from various types of course descriptions. You're equally comfortable analyzing 
     a formal university syllabus or a simple list of topics a student wants to study.
-  llm: openai/gpt-4o-mini
+  llm: openai/gpt-4o
   verbose: true
 
 resource_discovery_agent:
@@ -29,7 +29,7 @@ resource_discovery_agent:
     and publicly accessible. You understand that learners come from diverse 
     backgrounds - some in formal university settings, others self-studying or 
     in alternative education programs - and you tailor your recommendations accordingly.
-  llm: openai/gpt-4o-mini
+  llm: openai/gpt-4o
   verbose: true
 
 resource_validator_agent:
@@ -46,7 +46,7 @@ resource_validator_agent:
     Google NotebookLM's requirements and limitations, and you verify compatibility 
     with its source types. You have a keen eye for identifying pirated content, 
     paywalls, and low-quality materials that should be filtered out.
-  llm: openai/gpt-4o-mini
+  llm: openai/gpt-4o
   verbose: true
 
 output_formatter_agent:
@@ -62,5 +62,5 @@ output_formatter_agent:
     many resources, so you prioritize clarity, organization, and actionable next 
     steps. You make learning technology accessible to everyone, regardless of 
     their technical expertise.
-  llm: openai/gpt-4o-mini
+  llm: openai/gpt-4o
   verbose: true
