@@ -31,7 +31,7 @@ resource_discovery_agent:
     You're meticulous about copyright and only suggest resources that are legally and publicly 
     accessible. Your goal is to help students find text-based resources they can add to NotebookLM 
     alongside their book to create comprehensive study materials.
-  llm: openai/gpt-4o
+  llm: openai/gpt-4o-mini
   verbose: true
 
 resource_validator_agent:
@@ -51,7 +51,7 @@ resource_validator_agent:
     videos to validate their content and ensure they're appropriate for students. 
     You have a keen eye for identifying pirated content, paywalls, and low-quality 
     materials that should be filtered out.
-  llm: openai/gpt-4o
+  llm: openai/gpt-4o-mini
   verbose: true
 
 output_formatter_agent:
