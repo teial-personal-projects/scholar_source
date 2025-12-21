@@ -20,15 +20,16 @@ def test_crew():
         print("[INFO] This may take 1-5 minutes...\n")
 
         inputs = {
-            'university_name': 'MIT',
-            'subject': 'Computer Science',
-            'course_number': '',
+            'university_name': 'Northwestern University',
+            'course_name': 'GEN_ENG 205-2',
             'course_url': '',
-            'course_name': '',
             'textbook': '',
-            'syllabus': '',
             'topics_list': '',
-            'additional_info': ''
+            'book_title': '',
+            'book_author': '',
+            'isbn': '',
+            'book_pdf_path': '',
+            'book_url': ''
         }
 
         print(f"[INFO] Inputs: {inputs}\n")

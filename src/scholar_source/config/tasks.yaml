@@ -1,40 +1,49 @@
 course_analysis_task:
   description: >
-    Analyze the provided course information to extract key learning objectives, 
-    topics, and educational context. The input may vary in format and completeness:
+    Analyze the provided book and course information to extract the book's table of contents,
+    key topics, and learning structure. The primary goal is to understand what topics the 
+    student's book covers so we can find similar resources.
     
-    - For university students: university name, subject, course number, course webpage URL
-    - For general students: course name, textbook title/author, syllabus (text or URL), 
-      topic list, or general description
+    **Input Sources (use whatever is available):**
+    - Book information: book_title, book_author, isbn, book_url
+    - PDF file: book_pdf_path (use FileReadTool to read and extract table of contents)
+    - Course information: university_name, course_name, course_url
+    - Additional context: textbook, topics_list
     
-    Your job is to work with whatever information is provided and extract:
-    1. Course title or subject area
-    2. Comprehensive list of topics/units/concepts covered
-    3. Official or recommended textbook(s) if mentioned
-    4. Course level (introductory/intermediate/advanced/professional)
-    5. Key learning objectives or skills to be developed
-    6. Discipline area (e.g., "Physics", "Calculus", "Organic Chemistry", "Python Programming")
+    **Your Analysis Tasks:**
+    1. Extract the book's table of contents and major topics/chapters
+       - If PDF is provided, read it to find the table of contents
+       - If book_url is provided, extract book structure from web pages
+       - If only book title/author/ISBN is provided, infer likely topics based on the book
+    2. Identify 5-10 major topic areas or chapters from the book
+    3. Determine course level (introductory/intermediate/advanced/professional)
+    4. Identify the discipline area (e.g., "Algorithms", "Calculus", "Organic Chemistry")
+    5. Note any specific learning objectives or skills the book focuses on
     
-    Be flexible - if a formal syllabus isn't provided, infer the structure from 
-    the textbook table of contents, course description, or topic list. If the 
-    student provides minimal information, make reasonable assumptions about scope 
-    and depth based on the subject matter.
+    **Priority:**
+    - If a PDF is provided, prioritize extracting the actual table of contents from it
+    - If book_url is provided, extract book structure from web pages
+    - Use book metadata (title, author, ISBN) to infer structure if other sources unavailable
+    - Use course information (university_name, course_name, course_url) for additional context
     
-    Available input variables (all optional): university_name, subject, course_number,
-    course_url, course_name, textbook, syllabus, topics_list, additional_info
+    Available input variables (all optional):
+    university_name, course_name, course_url, textbook, topics_list,
+    book_title, book_author, isbn, book_pdf_path, book_url
 
     The following inputs were provided:
     {university_name}
-    {subject}
-    {course_number}
-    {course_url}
     {course_name}
+    {course_url}
     {textbook}
-    {syllabus}
     {topics_list}
-    {additional_info}
+    {book_title}
+    {book_author}
+    {isbn}
+    {book_pdf_path}
+    {book_url}
 
-    Note: Not all input variables will be populated. Use whatever is available.
+    Note: Not all input variables will be populated. Use whatever is available to extract
+    the book's structure and topics.
   expected_output: >
     A structured analysis containing:
     
@@ -52,52 +61,64 @@ course_analysis_task:
 
 resource_search_task:
   description: >
-    Based on the course analysis, search for 2-3 high-quality complementary resources 
-    for each major topic area. Focus your search on legally accessible, free resources:
+    Based on the book analysis, search for 5-7 high-quality resources that follow a similar 
+    structure to the student's book. These resources should complement the book's table of 
+    contents and be suitable for adding to NotebookLM.
     
-    **Priority Resource Types:**
-    1. Open textbooks (OpenStax, MIT OpenCourseWare PDFs, LibreTexts, etc.)
-    2. University lecture videos on YouTube (MIT OCW, Stanford, Yale Open Courses, etc.)
-    3. Educational platform content (Khan Academy, Coursera free lectures, edX)
-    4. Interactive learning sites (Paul's Online Math Notes, Physics Classroom, etc.)
+    **Priority Resource Types (in order):**
+    1. Open textbooks (OpenStax, MIT OpenCourseWare PDFs, LibreTexts, etc.) with similar table of contents
+    2. University course materials (MIT OCW, Stanford, Yale Open Courses) - PDFs and web pages with text content
+    3. Educational platform content (Khan Academy, Coursera free lectures, edX) - text-based materials
+    4. Interactive learning sites (Paul's Online Math Notes, Physics Classroom, etc.) with text content
     5. Peer-reviewed open access papers for advanced topics
-    6. High-quality educational YouTube channels relevant to the subject
+    6. University lecture videos on YouTube (MIT OCW, Stanford, Yale Open Courses, etc.) - as supplementary resources
     
     **Search Strategy:**
-    - For each major topic, find at least 1-2 resources
-    - Aim for 6-9 total resources across the entire course
-    - Prioritize comprehensive resources over fragmented ones
-    - Ensure variety in resource types (mix of videos, textbooks, interactive content)
-    - Match the course level (don't suggest PhD-level papers for intro courses)
+    - Focus on finding resources that cover similar topics to the book's chapters
+    - Aim for 5-7 total resources - quality over quantity
+    - Prioritize text-based resources (PDFs, web pages) that NotebookLM can easily process
+    - Include YouTube videos only as supplementary resources when high-quality text alternatives aren't available
+    - Match the course level (don't suggest PhD-level for intro books)
     
     **Quality Criteria:**
     - Must be legally free and publicly accessible (no pirated content)
     - Must be from reputable sources (universities, established ed platforms)
-    - Should provide substantial coverage (not just brief summaries)
-    - Must be compatible with NotebookLM (PDF, YouTube URL, or web page)
+    - Should align with the book's table of contents structure
+    - Must be compatible with NotebookLM (PDF, web page, or YouTube URL)
+    - Prioritize text-based content (PDFs, web pages) that NotebookLM can easily process and extract information from
+    - YouTube videos should only be included when they provide unique value not available in text format
     
-    Use web search capabilities to find these resources. Search terms should include:
-    - "[topic] open textbook pdf"
-    - "[topic] MIT OpenCourseWare"
-    - "[topic] lecture video university"
-    - "[topic] Khan Academy"
+    **Search Approach:**
+    Use web search to find resources. Search terms should prioritize text-based content:
+    - "[book title] open textbook pdf"
+    - "[book topic] open textbook pdf"
+    - "[book topic] MIT OpenCourseWare PDF"
+    - "[book topic] open access textbook"
+    - "[book topic] course notes pdf"
+    - "[book topic] lecture notes"
+    - "[book topic] university course materials"
+    - "[book topic] lecture video YouTube" (only if text alternatives are limited)
+    
+    Focus on finding resources that students can add to NotebookLM alongside their book
+    to create comprehensive study materials (flashcards, quizzes, etc.).
 
     Use the output from the course_analysis_task to guide your search.
   expected_output: >
-    A comprehensive list of 6-9 recommended resources (2-3 per major topic), each containing:
+    A curated list of 5-7 recommended resources that complement the student's book, each containing:
     
     - resource_title: Full title of the resource
     - resource_type: "open_textbook" | "video_lecture" | "lecture_series" | 
       "interactive_tutorial" | "course_notes" | "educational_video"
     - url: Direct link to the resource (must be accessible without login)
-    - coverage_topics: List of course topics this resource addresses
+    - coverage_topics: List of book topics/chapters this resource addresses
     - source_credibility: Origin (e.g., "MIT OpenCourseWare", "OpenStax", "Khan Academy")
     - content_scope: "comprehensive" | "supplementary" | "topic-specific"
     - access_notes: Confirmation that it's free, legal, and openly accessible
     - estimated_depth: "introductory" | "intermediate" | "advanced"
+    - alignment_with_book: Brief note on how this resource aligns with the book's structure
 
-    Organize resources by topic area for clarity. Include brief reasoning for why
-    each resource was selected.
+    Organize resources clearly. Include brief reasoning for why each resource was selected
+    and how it complements the student's book.
   agent: resource_discovery_agent
 
 resource_validation_task:
@@ -163,8 +184,8 @@ resource_validation_task:
     - Rejected: X
     - Average usefulness score: X.X
     
-    Only include APPROVED resources in the final list. Aim for 4-6 high-quality 
-    approved resources. If fewer than 4 pass validation, note this in the output.
+    Only include APPROVED resources in the final list. Aim for 5-7 high-quality 
+    approved resources total. If fewer than 5 pass validation, note this in the output.
   agent: resource_validator_agent
 
 final_output_task:
@@ -175,7 +196,7 @@ final_output_task:
     **Guide Structure:**
     
     1. **Course Overview Section:**
-       - Brief description of the course/subject
+       - Brief description of the course/book
        - Key topics that will be covered
        - Learning objectives or skills to develop
     

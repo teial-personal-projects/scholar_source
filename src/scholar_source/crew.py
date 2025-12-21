@@ -1,7 +1,12 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
-from crewai_tools import SerperDevTool
+from crewai_tools import (
+    SerperDevTool,
+    FileReadTool,
+    WebsiteSearchTool,
+    YoutubeVideoSearchTool
+)
 from typing import List
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
@@ -24,7 +29,8 @@ class ScholarSource():
     def course_intelligence_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['course_intelligence_agent'], # type: ignore[index]
-            verbose=True
+            verbose=True,
+            tools=[FileReadTool()]  # For reading PDF files
         )
 
     @agent
@@ -39,7 +45,11 @@ class ScholarSource():
     def resource_validator_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['resource_validator_agent'], # type: ignore[index]
-            verbose=True
+            verbose=True,
+            tools=[
+                WebsiteSearchTool(),  # For validating web pages
+                YoutubeVideoSearchTool()  # For validating YouTube videos
+            ]
         )
 
     @agent

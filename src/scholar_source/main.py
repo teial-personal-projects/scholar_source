@@ -18,96 +18,119 @@ def parse_arguments():
     All arguments are optional, but at least one must be provided.
     """
     parser = argparse.ArgumentParser(
-        description='Run ScholarSource crew to discover educational resources for courses.',
+        description='Run ScholarSource crew to discover educational resources similar to your course book.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s -u "MIT" -s "Computer Science"
-  %(prog)s --university-name "MIT" --subject "Computer Science"
-  %(prog)s -url "https://ocw.mit.edu/courses/6-034-artificial-intelligence-fall-2010/"
-  %(prog)s -t "Search algorithms, Machine learning, Neural networks"
+  %(prog)s --book-title "Introduction to Algorithms" --book-author "Cormen, Leiserson, Rivest, Stein"
+  %(prog)s --isbn "978-0262046305"
+  %(prog)s --book-url "https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/"
+  %(prog)s --course-info-url "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/"
+  %(prog)s --book-pdf-path "/path/to/textbook.pdf"
+  %(prog)s -u "MIT" -c "Introduction to Algorithms" --book-title "Introduction to Algorithms"
         """
     )
 
     parser.add_argument(
         '-u', '--university-name',
-        help='University name for formal courses (e.g., "MIT", "Stanford")'
+        help='University name (e.g., "MIT", "Stanford")'
     )
     parser.add_argument(
-        '-s', '--subject',
-        help='Subject area (e.g., "Computer Science", "Mathematics")'
-    )
-    parser.add_argument(
-        '-n', '--course-number',
-        help='Course identifier (e.g., "6.034", "CS229")'
+        '-c', '--course-name',
+        help='Course name (e.g., "Introduction to Algorithms")'
     )
     parser.add_argument(
         '-url', '--course-url',
         help='Course webpage URL'
     )
     parser.add_argument(
-        '-c', '--course-name',
-        help='Informal course name (e.g., "Introduction to AI")'
-    )
-    parser.add_argument(
         '-b', '--textbook',
-        help='Textbook information or title'
-    )
-    parser.add_argument(
-        '-syl', '--syllabus',
-        help='Syllabus text or URL'
+        help='Textbook information (legacy field, prefer --book-title and --book-author)'
     )
     parser.add_argument(
         '-t', '--topics-list',
         help='Comma-separated list of topics to cover'
     )
     parser.add_argument(
-        '-i', '--additional-info',
-        help='Any additional information or context'
+        '--book-title',
+        help='Book title (e.g., "Introduction to Algorithms")'
+    )
+    parser.add_argument(
+        '--book-author',
+        help='Book author(s) (e.g., "Cormen, Leiserson, Rivest, Stein")'
+    )
+    parser.add_argument(
+        '--isbn',
+        help='ISBN of the book (e.g., "978-0262046305")'
+    )
+    parser.add_argument(
+        '--book-pdf-path',
+        help='Local path to PDF copy of the course book'
+    )
+    parser.add_argument(
+        '--book-url',
+        help='Online link to the book (e.g., publisher website, Amazon, etc.)'
     )
 
     return parser.parse_args()
 
 def validate_inputs(inputs):
     """
-    Validate that at least one course-related input is provided.
+    Validate that required input combinations are provided.
+
+    Required combinations (at least one must be satisfied):
+    1. (course_name OR university_name) OR course_url
+    2. OR (book_title AND book_author) OR isbn
+    3. OR book_pdf_path
+    4. OR book_url
 
     Args:
         inputs: Dictionary of input values
 
     Raises:
-        ValueError: If no course-related inputs are provided
+        ValueError: If no valid input combination is provided
 
     Returns:
         The validated inputs dictionary
     """
-    # List of course-related input keys (excluding auto-populated fields like current_year)
-    course_input_keys = [
-        'university_name', 'subject', 'course_number', 'course_url',
-        'course_name', 'textbook', 'syllabus', 'topics_list', 'additional_info'
-    ]
+    # Check for valid input combinations
+    has_course_info = (
+        (inputs.get('course_name') or inputs.get('university_name')) or 
+        inputs.get('course_url')
+    )
+    
+    has_book_info = (
+        (inputs.get('book_title') and inputs.get('book_author')) or 
+        inputs.get('isbn')
+    )
+    
+    has_book_file = bool(inputs.get('book_pdf_path'))
+    has_book_link = bool(inputs.get('book_url'))
+    
+    # At least one combination must be satisfied
+    is_valid = has_course_info or has_book_info or has_book_file or has_book_link
 
-    # Check if at least one course input is provided
-    has_input = any(inputs.get(key) for key in course_input_keys)
-
-    if not has_input:
+    if not is_valid:
         error_msg = """
-Error: At least one course-related input must be provided.
+Error: You must provide one of the following input combinations:
 
-Available options:
-  -u, --university-name    University name for formal courses
-  -s, --subject            Subject area
-  -n, --course-number      Course identifier
-  -url, --course-url       Course webpage URL
-  -c, --course-name        Informal course name
-  -b, --textbook           Textbook information
-  -syl, --syllabus         Syllabus text or URL
-  -t, --topics-list        List of topics to cover
-  -i, --additional-info    Any additional context
+Required combinations (at least one):
+  1. Course information:
+     - (--course-name OR --university-name) OR --course-url
+  2. Book identification:
+     - (--book-title AND --book-author) OR --isbn
+  3. Book file:
+     - --book-pdf-path
+  4. Book link:
+     - --book-url
 
 Example usage:
-  scholar_source -u "MIT" -s "Computer Science"
-  scholar_source --university-name "MIT" --subject "Computer Science"
+  scholar_source --book-title "Introduction to Algorithms" --book-author "Cormen, Leiserson, Rivest, Stein"
+  scholar_source --isbn "978-0262046305"
+  scholar_source --book-url "https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/"
+  scholar_source --book-pdf-path "/path/to/textbook.pdf"
+  scholar_source -u "MIT" -c "Introduction to Algorithms"
+  scholar_source --course-url "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/"
 
 Use --help for more information.
         """
@@ -129,14 +152,15 @@ def build_inputs_from_args(args):
     # Map CLI arguments to input dictionary keys
     arg_mapping = {
         'university_name': args.university_name,
-        'subject': args.subject,
-        'course_number': args.course_number,
-        'course_url': args.course_url,
         'course_name': args.course_name,
+        'course_url': args.course_url,
         'textbook': args.textbook,
-        'syllabus': args.syllabus,
         'topics_list': args.topics_list,
-        'additional_info': args.additional_info,
+        'book_title': args.book_title,
+        'book_author': args.book_author,
+        'isbn': args.isbn,
+        'book_pdf_path': args.book_pdf_path,
+        'book_url': args.book_url,
     }
 
     # Include all keys, using empty string for None values
@@ -164,7 +188,7 @@ def run():
 def train():
     """
     Train the crew for a given number of iterations.
-    Usage: train <n_iterations> <filename> [--university-name ...] [--subject ...] etc.
+    Usage: train <n_iterations> <filename> [--university-name ...] [--book-title ...] etc.
     """
     try:
         args = parse_arguments()
@@ -190,7 +214,7 @@ def replay():
 def test():
     """
     Test the crew execution and returns the results.
-    Usage: test <n_iterations> <eval_llm> [--university-name ...] [--subject ...] etc.
+    Usage: test <n_iterations> <eval_llm> [--university-name ...] [--book-title ...] etc.
     """
     try:
         args = parse_arguments()
@@ -202,3 +226,4 @@ def test():
         sys.exit(1)
     except Exception as e:
         raise Exception(f"An error occurred while testing the crew: {e}")
+
