@@ -1,30 +1,41 @@
 course_analysis_task:
   description: >
     Analyze the provided book and course information to extract the book's table of contents,
-    key topics, and learning structure. The primary goal is to understand what topics the 
+    key topics, and learning structure. The primary goal is to understand what topics the
     student's book covers so we can find similar resources.
-    
+
     **Input Sources (use whatever is available):**
     - Book information: book_title, book_author, isbn, book_url
     - PDF file: book_pdf_path (use FileReadTool to read and extract table of contents)
-    - Course information: university_name, course_name, course_url
+    - Course information: course_url
     - Additional context: textbook, topics_list
-    
+
     **Your Analysis Tasks:**
-    1. Extract the book's table of contents and major topics/chapters
+    1. **If course_url is provided:**
+       - Use WebsiteSearchTool to search the course page for textbook information
+       - Look for sections like "Textbooks", "Required Texts", "Readings", "Materials"
+       - Extract textbook titles, authors, and ISBN numbers if mentioned
+       - Search for syllabus links or embedded syllabi on the course page
+       - If syllabus is found, extract weekly topics, units, and learning objectives
+       - Use the syllabus and textbook information to understand course structure
+
+    2. Extract the book's table of contents and major topics/chapters
        - If PDF is provided, read it to find the table of contents
        - If book_url is provided, extract book structure from web pages
        - If only book title/author/ISBN is provided, infer likely topics based on the book
-    2. Identify 5-10 major topic areas or chapters from the book
-    3. Determine course level (introductory/intermediate/advanced/professional)
-    4. Identify the discipline area (e.g., "Algorithms", "Calculus", "Organic Chemistry")
-    5. Note any specific learning objectives or skills the book focuses on
-    
+       - If course_url provided textbook info, use that to enhance your understanding
+
+    3. Identify 5-10 major topic areas or chapters from the book
+    4. Determine course level (introductory/intermediate/advanced/professional)
+    5. Identify the discipline area (e.g., "Algorithms", "Calculus", "Organic Chemistry")
+    6. Note any specific learning objectives or skills the book focuses on
+
     **Priority:**
+    - If course_url is provided, FIRST search it for textbook and syllabus information
     - If a PDF is provided, prioritize extracting the actual table of contents from it
     - If book_url is provided, extract book structure from web pages
     - Use book metadata (title, author, ISBN) to infer structure if other sources unavailable
-    - Use course information (university_name, course_name, course_url) for additional context
+    - Combine all available sources for the most complete understanding
     
     Available input variables (all optional):
     university_name, course_name, course_url, textbook, topics_list,
@@ -46,16 +57,19 @@ course_analysis_task:
     the book's structure and topics.
   expected_output: >
     A structured analysis containing:
-    
+
     - course_title: The formal or informal course name
     - topics: A comprehensive list of topics/units/concepts (minimum 3-5, maximum 15)
-    - official_textbooks: List of textbooks mentioned (title and author)
+    - official_textbooks: List of textbooks mentioned (title, author, ISBN if found) - extracted from course page if course_url provided
+    - syllabus_url: URL to syllabus if found on course page
+    - weekly_schedule: List of weekly topics if extracted from syllabus
     - course_level: "introductory" | "intermediate" | "advanced" | "professional"
     - key_concepts: List of the most important concepts students should master
     - discipline_area: The academic field (e.g., "Physics", "Computer Science")
     - estimated_duration: Rough estimate like "semester-long" or "self-paced"
     - learning_context: Brief note about the educational setting if known
-    
+    - textbook_source: Where textbook info came from ("course_page", "user_provided", "inferred", etc.)
+
     Format as a clean JSON object or structured text that subsequent agents can easily parse.
   agent: course_intelligence_agent
 
