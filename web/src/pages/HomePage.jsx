@@ -16,6 +16,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [searchTitle, setSearchTitle] = useState(null);
+  const [textbookInfo, setTextbookInfo] = useState(null);
   const [error, setError] = useState(null);
 
   const handleJobSubmitted = async (formData) => {
@@ -24,6 +25,7 @@ export default function HomePage() {
       setError(null);
       setResults(null);
       setSearchTitle(null);
+      setTextbookInfo(null);
       setJobId(null);
       setIsLoading(true);
 
@@ -36,9 +38,10 @@ export default function HomePage() {
     }
   };
 
-  const handleComplete = (resources, rawOutput, title) => {
+  const handleComplete = (resources, rawOutput, title, textbook) => {
     setResults(resources);
     setSearchTitle(title);
+    setTextbookInfo(textbook);
     setIsLoading(false);
   };
 
@@ -50,6 +53,7 @@ export default function HomePage() {
   const handleClearResults = () => {
     setResults(null);
     setSearchTitle(null);
+    setTextbookInfo(null);
     setJobId(null);
   };
 
@@ -110,6 +114,7 @@ export default function HomePage() {
             <ResultsTable
               resources={results}
               searchTitle={searchTitle}
+              textbookInfo={textbookInfo}
               onClear={handleClearResults}
             />
           )}

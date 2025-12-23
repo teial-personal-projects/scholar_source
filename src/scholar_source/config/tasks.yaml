@@ -75,31 +75,38 @@ course_analysis_task:
 
 resource_search_task:
   description: >
-    Based on the book analysis, search for 7-10 high-quality resources that follow a similar
-    structure to the student's book. These resources should complement the book's table of
-    contents and be suitable for adding to NotebookLM.
+    Based on the book analysis, search for 7-10 high-quality resources from USA-based
+    institutions and platforms that follow a similar structure to the student's book.
+    These resources should complement the book's table of contents and be suitable for
+    adding to NotebookLM.
+
+    **CRITICAL RESTRICTION:** ONLY include resources from United States universities,
+    institutions, and educational platforms. Do NOT include resources from universities
+    or institutions outside the USA.
 
     **Priority Resource Types (in order):**
-    1. Practice problems with answer keys (problem sets, practice exams, solved exercises from reputable universities)
+    1. Practice problems with answer keys (problem sets, practice exams, solved exercises from reputable US universities)
     2. Open textbooks (OpenStax, MIT OpenCourseWare PDFs, LibreTexts, etc.) with similar table of contents
-    3. University course materials (MIT OCW, Stanford, Yale Open Courses) - PDFs and web pages with text content
-    4. Educational platform content (Khan Academy, Coursera free lectures, edX) - text-based materials
+    3. US University course materials (MIT OCW, Stanford, Yale, Berkeley, etc.) - PDFs and web pages with text content
+    4. US Educational platform content (Khan Academy, Coursera, edX) - text-based materials
     5. Interactive learning sites (Paul's Online Math Notes, Physics Classroom, etc.) with text content
-    6. Peer-reviewed open access papers for advanced topics
-    7. University lecture videos on YouTube (MIT OCW, Stanford, Yale Open Courses, etc.) - as supplementary resources
-    
+    6. Peer-reviewed open access papers from US institutions for advanced topics
+    7. US University lecture videos on YouTube (MIT OCW, Stanford, Yale, etc.) - as supplementary resources
+
     **Search Strategy:**
     - Focus on finding resources that cover similar topics to the book's chapters
     - Aim for 7-10 total resources - quality over quantity
+    - **ONLY search for and include USA-based sources**
     - Prioritize text-based resources (PDFs, web pages) that NotebookLM can easily process
     - Include YouTube videos only as supplementary resources when high-quality text alternatives aren't available
     - Match the course level (don't suggest PhD-level for intro books)
-    - **For college-level courses:** Prioritize practice problems from reputable universities (MIT, Stanford, Berkeley, Yale, etc.)
-    - **For high school courses:** Look for practice problems from other high schools, AP exam practice tests, or established high school resources
+    - **For college-level courses:** Prioritize practice problems from reputable US universities (MIT, Stanford, Berkeley, Yale, etc.)
+    - **For high school courses:** Look for practice problems from US high schools, AP exam practice tests, or established US high school resources
     - **Critical:** Only include practice problems that come with answer keys or solutions
-    
+
     **Quality Criteria:**
     - Must be legally free and publicly accessible (no pirated content)
+    - **Must be from United States sources ONLY** (US universities, US institutions, US platforms)
     - Must be from reputable sources (universities, established ed platforms)
     - Should align with the book's table of contents structure
     - Must be compatible with NotebookLM (PDF, web page, or YouTube URL)
@@ -214,17 +221,22 @@ resource_validation_task:
 
 final_output_task:
   description: >
-    Create a student-friendly, actionable resource guide that students can 
+    Create a student-friendly, actionable resource guide that students can
     immediately use to enhance their learning with Google NotebookLM.
-    
+
     **Guide Structure:**
-    
-    1. **Course Overview Section:**
+
+    1. **Textbook Information Section:**
+       - Display the official textbook title and author(s) if available
+       - Show where this information was found (course page, user-provided, etc.)
+       - This helps students confirm the resources match their course textbook
+
+    2. **Course Overview Section:**
        - Brief description of the course/book
        - Key topics that will be covered
        - Learning objectives or skills to develop
-    
-    2. **Recommended Resources Section:**
+
+    3. **Recommended Resources Section:**
        - Organize resources by topic area or resource type (choose most logical)
        - For each resource include:
          * Clear title and resource type
@@ -232,13 +244,13 @@ final_output_task:
          * Brief description (2-3 sentences) of what it covers and why it's useful
          * Which specific topics it addresses
          * Estimated time/scope (e.g., "Full textbook", "5-part video series", "Single lecture")
-    
-    3. **How to Add to NotebookLM Section:**
+
+    4. **How to Add to NotebookLM Section:**
        - Step-by-step instructions for adding each type of resource
        - Tips for organizing sources within NotebookLM
        - Suggestions for how to use multiple sources effectively
-    
-    4. **Study Tips Section:**
+
+    5. **Study Tips Section:**
        - How to leverage NotebookLM's features with these sources
        - Suggested study workflow (e.g., create flashcards, generate practice questions)
        - Tips for getting the most value from multiple perspectives

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import './ResultsTable.css';
 
-export default function ResultsTable({ resources, searchTitle, onClear }) {
+export default function ResultsTable({ resources, searchTitle, textbookInfo, onClear }) {
   const [copiedUrl, setCopiedUrl] = useState(null);
   const [copiedAll, setCopiedAll] = useState(false);
 
@@ -59,6 +59,15 @@ export default function ResultsTable({ resources, searchTitle, onClear }) {
 
   return (
     <div className="results-card">
+      {textbookInfo && (textbookInfo.title || textbookInfo.author) && (
+        <div className="textbook-info-box">
+          <h3>📚 Course Textbook</h3>
+          {textbookInfo.title && <p className="textbook-title"><strong>Title:</strong> {textbookInfo.title}</p>}
+          {textbookInfo.author && <p className="textbook-author"><strong>Author(s):</strong> {textbookInfo.author}</p>}
+          {textbookInfo.source && <p className="textbook-source"><strong>Source:</strong> {textbookInfo.source}</p>}
+        </div>
+      )}
+
       <div className="results-header">
         <div>
           <h2>Discovered Resources</h2>

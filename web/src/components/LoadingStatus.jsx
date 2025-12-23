@@ -25,7 +25,8 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
         // Check if job is complete or failed
         if (data.status === 'completed') {
           clearInterval(intervalId);
-          onComplete(data.results, data.raw_output, data.search_title);
+          const textbookInfo = data.metadata?.textbook_info || null;
+          onComplete(data.results, data.raw_output, data.search_title, textbookInfo);
         } else if (data.status === 'failed') {
           clearInterval(intervalId);
           onError(data.error || 'Job failed with unknown error');

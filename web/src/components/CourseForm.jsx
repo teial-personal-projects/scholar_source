@@ -83,6 +83,9 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           <li>Book Title + Author</li>
           <li>Book ISBN</li>
         </ul>
+        <p className="usa-notice">
+          📍 <strong>Note:</strong> This app only searches for resources from USA-based institutions and educational platforms.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="course-form">

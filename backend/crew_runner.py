@@ -109,8 +109,18 @@ def _run_crew_worker(job_id: str, inputs: Dict[str, str]) -> None:
             # Use raw output as fallback
             markdown_content = raw_output
 
-        # Parse markdown into structured resources
-        resources = parse_markdown_to_resources(markdown_content)
+        # Parse markdown into structured resources and metadata
+        parsed_data = parse_markdown_to_resources(markdown_content)
+        resources = parsed_data.get("resources", [])
+        textbook_info = parsed_data.get("textbook_info")
+
+        # Prepare metadata
+        metadata = {
+            "resource_count": len(resources),
+            "crew_output_length": len(raw_output)
+        }
+        if textbook_info:
+            metadata["textbook_info"] = textbook_info
 
         # Update job with results
         update_job_status(
@@ -119,10 +129,7 @@ def _run_crew_worker(job_id: str, inputs: Dict[str, str]) -> None:
             status_message="Resource discovery completed successfully",
             results=resources,
             raw_output=markdown_content,
-            metadata={
-                "resource_count": len(resources),
-                "crew_output_length": len(raw_output)
-            }
+            metadata=metadata
         )
 
         # Send email notification if email was provided

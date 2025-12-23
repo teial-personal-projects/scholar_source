@@ -5,6 +5,33 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.textbook-info-box {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.textbook-info-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.textbook-info-box p {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #064e3b;
+  line-height: 1.5;
+}
+
+.textbook-info-box strong {
+  font-weight: 600;
+  color: #047857;
+}
+
 .results-header {
   display: flex;
   justify-content: space-between;

@@ -9,18 +9,19 @@ from typing import List, Dict, Any
 from backend.models import Resource
 
 
-def parse_markdown_to_resources(markdown_content: str) -> List[Dict[str, Any]]:
+def parse_markdown_to_resources(markdown_content: str) -> Dict[str, Any]:
     """
-    Parse markdown report into structured resources.
+    Parse markdown report into structured resources and metadata.
 
     Extracts resources from markdown sections and converts them to
-    a list of Resource dictionaries suitable for the frontend.
+    a list of Resource dictionaries suitable for the frontend, along
+    with textbook information if available.
 
     Args:
         markdown_content: Raw markdown content from crew output
 
     Returns:
-        List[Dict]: List of resource dictionaries with type, title, source, url, description
+        Dict with 'resources' (list) and 'textbook_info' (dict or None)
 
     Example markdown format expected:
         **1. Resource Title** (Type: Open Textbook)
@@ -41,7 +42,13 @@ def parse_markdown_to_resources(markdown_content: str) -> List[Dict[str, Any]]:
     if not resources:
         resources = _parse_all_links(markdown_content)
 
-    return resources
+    # Extract textbook information
+    textbook_info = _extract_textbook_info(markdown_content)
+
+    return {
+        "resources": resources,
+        "textbook_info": textbook_info
+    }
 
 
 def _parse_numbered_resources(content: str) -> List[Dict[str, Any]]:
@@ -313,3 +320,50 @@ def _extract_domain(url: str) -> str:
         domain = re.sub(r'\.(com|org|edu|net|io)$', '', domain)
         return domain.title()
     return "Unknown"
+
+
+def _extract_textbook_info(content: str) -> Dict[str, str]:
+    """
+    Extract textbook information from markdown content.
+
+    Looks for sections like "Textbook Information" or similar headings
+    and extracts title, author(s), and source information.
+
+    Returns:
+        Dict with 'title', 'author', and 'source' keys, or None if not found
+    """
+    # Try to find textbook information section
+    textbook_patterns = [
+        r'#+ Textbook Information[:\n]+(.*?)(?=\n#|$)',
+        r'#+ Course Textbook[:\n]+(.*?)(?=\n#|$)',
+        r'#+ Official Textbook[:\n]+(.*?)(?=\n#|$)',
+        r'\*\*Textbook:\*\*\s*([^\n]+)',
+        r'\*\*Official Textbook:\*\*\s*([^\n]+)'
+    ]
+
+    for pattern in textbook_patterns:
+        match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+        if match:
+            section_text = match.group(1).strip()
+
+            # Extract title
+            title_match = re.search(r'(?:\*\*)?(?:Title|Book)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
+            title = title_match.group(1).strip() if title_match else None
+
+            # Extract author(s)
+            author_match = re.search(r'(?:\*\*)?Author(?:s)?[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
+            author = author_match.group(1).strip() if author_match else None
+
+            # Extract source
+            source_match = re.search(r'(?:\*\*)?Source[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
+            source = source_match.group(1).strip() if source_match else None
+
+            # If we found at least title or author, return the info
+            if title or author:
+                return {
+                    "title": title,
+                    "author": author,
+                    "source": source
+                }
+
+    return None
