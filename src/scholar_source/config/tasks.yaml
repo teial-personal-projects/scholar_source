@@ -10,8 +10,17 @@ course_analysis_task:
     - Course information: course_url
     - Additional context: textbook, topics_list
 
-    **Your Analysis Tasks:**
-    1. **If course_url is provided:**
+    **CRITICAL VALIDATION - DO THIS FIRST:**
+    Before proceeding, validate that you can access at least one primary source:
+    - If course_url is provided, attempt to access it. If you CANNOT access or retrieve the course page, STOP and return an error.
+    - If book_url is provided, attempt to access it. If you CANNOT access or retrieve the book page, STOP and return an error.
+    - If book_pdf_path is provided, attempt to read it. If you CANNOT read the file, STOP and return an error.
+    - If NONE of the above sources are accessible, STOP and return an error indicating that no accessible sources were provided.
+
+    **ERROR FORMAT:** If you cannot access any primary sources, return: "ERROR: Cannot access provided resources. [specific details about what failed]"
+
+    **Your Analysis Tasks (only if validation passes):**
+    1. **If course_url is provided and accessible:**
        - Use WebsiteSearchTool to search the course page for textbook information
        - Look for sections like "Textbooks", "Required Texts", "Readings", "Materials"
        - Extract textbook titles, authors, and ISBN numbers if mentioned
@@ -31,9 +40,10 @@ course_analysis_task:
     6. Note any specific learning objectives or skills the book focuses on
 
     **Priority:**
-    - If course_url is provided, FIRST search it for textbook and syllabus information
-    - If a PDF is provided, prioritize extracting the actual table of contents from it
-    - If book_url is provided, extract book structure from web pages
+    - FIRST: Validate accessibility of provided sources (see CRITICAL VALIDATION above)
+    - If course_url is provided and accessible, search it for textbook and syllabus information
+    - If a PDF is provided and readable, prioritize extracting the actual table of contents from it
+    - If book_url is provided and accessible, extract book structure from web pages
     - Use book metadata (title, author, ISBN) to infer structure if other sources unavailable
     - Combine all available sources for the most complete understanding
     

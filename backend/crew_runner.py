@@ -6,6 +6,7 @@ Runs the ScholarSource crew in a background thread and manages job status update
 
 import sys
 import os
+import re
 import threading
 import traceback
 from io import StringIO
@@ -108,6 +109,21 @@ def _run_crew_worker(job_id: str, inputs: Dict[str, str]) -> None:
         else:
             # Use raw output as fallback
             markdown_content = raw_output
+
+        # Check if the crew returned an error (e.g., couldn't access sources)
+        if "ERROR:" in markdown_content[:500]:  # Check first 500 chars for error
+            # Extract error message
+            error_match = re.search(r'ERROR:\s*(.+?)(?:\n|$)', markdown_content)
+            error_msg = error_match.group(1) if error_match else "Cannot access provided resources"
+
+            update_job_status(
+                job_id,
+                status="failed",
+                error=error_msg,
+                status_message="Failed to access course or book resources",
+                raw_output=markdown_content[:1000]  # Store first 1000 chars for debugging
+            )
+            return
 
         # Parse markdown into structured resources and metadata
         parsed_data = parse_markdown_to_resources(markdown_content)
