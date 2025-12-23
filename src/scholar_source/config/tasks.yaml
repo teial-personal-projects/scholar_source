@@ -94,11 +94,12 @@ resource_search_task:
     
     **Search Approach:**
     Use web search to find resources. Search terms should prioritize text-based content:
+    - "[book topic] university course materials"
+    - "[book topic] university homework solutions pdf"
     - "[book topic] practice problems with solutions pdf"
     - "[book topic] problem set with answer key"
     - "[book topic] practice exam with solutions"
     - "[book topic] MIT OpenCourseWare problem set solutions"
-    - "[book topic] university homework solutions pdf"
     - "[book topic] AP practice test with answers" (for high school courses)
     - "[book title] open textbook pdf"
     - "[book topic] open textbook pdf"
@@ -106,7 +107,6 @@ resource_search_task:
     - "[book topic] open access textbook"
     - "[book topic] course notes pdf"
     - "[book topic] lecture notes"
-    - "[book topic] university course materials"
     - "[book topic] lecture video YouTube" (only if text alternatives are limited)
     
     Focus on finding resources that students can add to NotebookLM alongside their book
@@ -114,7 +114,7 @@ resource_search_task:
 
     Use the output from the course_analysis_task to guide your search.
   expected_output: >
-    A curated list of 5-7 recommended resources that complement the student's book, each containing:
+    A curated list of 7-10 recommended resources that complement the student's book, each containing:
     
     - resource_title: Full title of the resource
     - resource_type: "open_textbook" | "video_lecture" | "lecture_series" | 

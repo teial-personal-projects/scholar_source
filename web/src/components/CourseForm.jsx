@@ -9,16 +9,12 @@ import './CourseForm.css';
 
 export default function CourseForm({ onJobSubmitted, isLoading }) {
   const [formData, setFormData] = useState({
-    university_name: '',
-    course_name: '',
     course_url: '',
-    textbook: '',
-    topics_list: '',
+    book_url: '',
     book_title: '',
     book_author: '',
     isbn: '',
-    book_pdf_path: '',
-    book_url: '',
+    topics_list: '',
     email: ''
   });
 
@@ -37,15 +33,31 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
   };
 
   const validateForm = () => {
-    // Check if at least one field is filled
-    const hasAnyValue = Object.values(formData).some(value => value.trim() !== '');
+    // Must provide either Course URL, Book URL, or (Book Title + Author), or Book ISBN
+    const hasCourseUrl = formData.course_url.trim() !== '';
+    const hasBookUrl = formData.book_url.trim() !== '';
+    const hasBookTitleAndAuthor = formData.book_title.trim() !== '' && formData.book_author.trim() !== '';
+    const hasIsbn = formData.isbn.trim() !== '';
 
-    if (!hasAnyValue) {
-      setValidationError('Please fill in at least one field');
+    if (!hasCourseUrl && !hasBookUrl && !hasBookTitleAndAuthor && !hasIsbn) {
+      setValidationError('Please provide one of the following: Course URL, Book URL, Book Title + Author, or Book ISBN');
       return false;
     }
 
     return true;
+  };
+
+  const handleReset = () => {
+    setFormData({
+      course_url: '',
+      book_url: '',
+      book_title: '',
+      book_author: '',
+      isbn: '',
+      topics_list: '',
+      email: ''
+    });
+    setValidationError('');
   };
 
   const handleSubmit = (e) => {
@@ -61,37 +73,19 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
   return (
     <div className="course-form-card">
-      <h2>Course Information</h2>
+      <h2>Find Study Resources</h2>
+
+      <div className="requirements-info">
+        <strong>Required:</strong> Provide at least one of the following:
+        <ul>
+          <li>Course URL</li>
+          <li>Book URL</li>
+          <li>Book Title + Author</li>
+          <li>Book ISBN</li>
+        </ul>
+      </div>
 
       <form onSubmit={handleSubmit} className="course-form">
-        {/* University Name */}
-        <div className="form-group">
-          <label htmlFor="university_name">University Name</label>
-          <input
-            type="text"
-            id="university_name"
-            name="university_name"
-            value={formData.university_name}
-            onChange={handleChange}
-            placeholder="e.g., MIT, Stanford"
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* Course Name */}
-        <div className="form-group">
-          <label htmlFor="course_name">Course Name</label>
-          <input
-            type="text"
-            id="course_name"
-            name="course_name"
-            value={formData.course_name}
-            onChange={handleChange}
-            placeholder="e.g., Introduction to Algorithms"
-            disabled={isLoading}
-          />
-        </div>
-
         {/* Course URL */}
         <div className="form-group">
           <label htmlFor="course_url">Course URL <span className="optional">(optional)</span></label>
@@ -100,6 +94,20 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
             id="course_url"
             name="course_url"
             value={formData.course_url}
+            onChange={handleChange}
+            placeholder="https://..."
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Book URL */}
+        <div className="form-group">
+          <label htmlFor="book_url">Book URL <span className="optional">(optional)</span></label>
+          <input
+            type="url"
+            id="book_url"
+            name="book_url"
+            value={formData.book_url}
             onChange={handleChange}
             placeholder="https://..."
             disabled={isLoading}
@@ -136,7 +144,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
         {/* ISBN */}
         <div className="form-group">
-          <label htmlFor="isbn">ISBN <span className="optional">(optional)</span></label>
+          <label htmlFor="isbn">Book ISBN <span className="optional">(optional)</span></label>
           <input
             type="text"
             id="isbn"
@@ -144,20 +152,6 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
             value={formData.isbn}
             onChange={handleChange}
             placeholder="e.g., 978-0262046305"
-            disabled={isLoading}
-          />
-        </div>
-
-        {/* Book URL */}
-        <div className="form-group">
-          <label htmlFor="book_url">Book URL <span className="optional">(optional)</span></label>
-          <input
-            type="url"
-            id="book_url"
-            name="book_url"
-            value={formData.book_url}
-            onChange={handleChange}
-            placeholder="https://..."
             disabled={isLoading}
           />
         </div>
@@ -202,14 +196,24 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           </div>
         )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="submit-button"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Finding Resources...' : 'Find Resources'}
-        </button>
+        {/* Submit and Reset Buttons */}
+        <div className="button-group">
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Finding Resources...' : 'Find Resources'}
+          </button>
+          <button
+            type="button"
+            className="reset-button"
+            onClick={handleReset}
+            disabled={isLoading}
+          >
+            Reset
+          </button>
+        </div>
       </form>
     </div>
   );
