@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import './ResultsTable.css';
 
-export default function ResultsTable({ resources, searchTitle }) {
+export default function ResultsTable({ resources, searchTitle, onClear }) {
   const [copiedUrl, setCopiedUrl] = useState(null);
   const [copiedAll, setCopiedAll] = useState(false);
 
@@ -72,6 +72,15 @@ export default function ResultsTable({ resources, searchTitle }) {
           >
             {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
           </button>
+          {onClear && (
+            <button
+              onClick={onClear}
+              className="action-button secondary"
+              title="Clear results"
+            >
+              🗑️ Clear Results
+            </button>
+          )}
         </div>
       </div>
 

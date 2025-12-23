@@ -20,8 +20,11 @@ export default function HomePage() {
 
   const handleJobSubmitted = async (formData) => {
     try {
+      // Clear previous results and errors
       setError(null);
       setResults(null);
+      setSearchTitle(null);
+      setJobId(null);
       setIsLoading(true);
 
       // Submit job to backend
@@ -42,6 +45,12 @@ export default function HomePage() {
   const handleError = (errorMessage) => {
     setError(errorMessage);
     setIsLoading(false);
+  };
+
+  const handleClearResults = () => {
+    setResults(null);
+    setSearchTitle(null);
+    setJobId(null);
   };
 
   return (
@@ -101,6 +110,7 @@ export default function HomePage() {
             <ResultsTable
               resources={results}
               searchTitle={searchTitle}
+              onClear={handleClearResults}
             />
           )}
         </div>
