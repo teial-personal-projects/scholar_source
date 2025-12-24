@@ -1,81 +1,19 @@
 course_analysis_task:
   description: >
-    Analyze the course URL and provided information to identify the EXACT academic discipline
-    and specific topics covered. This is CRITICAL - you must correctly identify the field to
-    prevent recommending off-topic resources.
+    Analyze course/book info to identify academic discipline and topics. CRITICAL: correctly identify field to prevent off-topic resources.
 
-    **Input Sources (use whatever is available):**
-    - Course information: course_url (MOST IMPORTANT - use WebsiteSearchTool to analyze)
-    - Book information: book_title, book_author, isbn, book_url
-    - User-provided topics: topics_list
-    - Additional context: textbook
+    **VALIDATION:** If course_url provided, use WebsiteSearchTool with website={course_url} and search_query="textbook syllabus course description" to access content. If book_url provided, use WebsiteSearchTool similarly. If neither accessible, return "ERROR: Cannot access provided resources."
 
-    **CRITICAL VALIDATION - DO THIS FIRST:**
-    Before proceeding, validate that you can access at least one primary source:
-    - If course_url is provided, attempt to access it with WebsiteSearchTool. If you CANNOT access it, STOP and return an error.
-    - If book_url is provided, attempt to access it. If you CANNOT access it, STOP and return an error.
-    - If ONLY book_title/author/isbn/topics_list are provided, skip validation (these don't require access checks)
-    - If NONE of the above sources are provided or accessible, STOP and return an error.
+    **EXTRACTION:**
+    1. Course page: Use WebsiteSearchTool with website={course_url} and search_query="Textbook" or "Required Text" to find textbook info. Then search with search_query="Syllabus" or "Course Outline" for syllabus. Extract exact titles/authors/ISBNs.
+    2. Textbook ToC: Search web for "[title] [author] table of contents" to get chapter topics.
+    3. Topics: Combine from course page, syllabus, textbook ToC, or user topics_list (prioritize topics_list if provided).
 
-    **ERROR FORMAT:** If you cannot access any primary sources, return: "ERROR: Cannot access provided resources. [specific details about what failed]"
+    **ERROR IF:** Zero topics from all sources → "ERROR: Cannot determine course topics. Provide textbook PDF or topics list."
 
-    **STEP 1: Find the Textbook and Syllabus on Course Page**
-    If course_url is provided and accessible, use WebsiteSearchTool to:
-    1. **Find the textbook** - Search for:
-       - "Textbook", "Required Text", "Required Reading", "Course Materials", "Required Textbooks"
-       - Extract the EXACT textbook title, author, edition, ISBN if mentioned
-       - DO NOT make assumptions - only extract what's explicitly listed
+    **WEBSITESEARCHTOOL USAGE:** Call with website parameter set to the full URL (e.g., website="https://www.mccormick.northwestern.edu/civil-environmental/academics/courses/descriptions/GEN_ENG%20205-2.html") and search_query parameter set to what you're looking for (e.g., search_query="textbook").
 
-    2. **Find the syllabus** - Search for:
-       - "Syllabus", "Course Outline", "Schedule", "Weekly Topics"
-       - Extract syllabus URL if available as a link
-       - If syllabus content is on the page, extract the weekly topics/schedule
-
-    **STEP 2: Get Topics from the Textbook's Table of Contents**
-    1. **If textbook title was found on course page:**
-       - Search web for "[textbook title] [author] table of contents"
-       - Try to extract ALL chapter titles and section headings from the textbook's ToC
-       - If you CANNOT find the table of contents online, note this in your output
-
-    2. **If textbook title was provided by user (book_title/book_author):**
-       - Search web for the textbook's table of contents the same way
-       - If you CANNOT find it, note this in your output
-
-    **STEP 3: Extract Topics from Course Page or User Input**
-    1. Extract any topic list from the course description if present
-    2. Extract topics from syllabus if found
-    3. **If user provided topics_list, use that as the PRIMARY source**
-
-    **STEP 4: CRITICAL - Verify You Have Topics**
-    - If you have ZERO topics from ALL sources (no textbook ToC, no syllabus, no course topics, no user topics_list):
-      * STOP and return: "ERROR: Cannot determine course topics. Please provide either: (1) a PDF of the textbook, OR (2) a list of topics covered in the course."
-    - If you found the textbook title but CANNOT find its table of contents online:
-      * STOP and return: "ERROR: Found textbook [title] but cannot access its table of contents. Please provide either: (1) a PDF of the textbook, OR (2) a list of topics covered in the course."
-
-    **STEP 5: Compile Topics (only if you have topics)**
-    - Combine ALL topics from available sources
-    - List 5-15 specific topics
-    - Extract course title and course number from the page
-    
-    Available input variables (all optional):
-    university_name, course_name, course_url, textbook, topics_list,
-    book_title, book_author, isbn, book_pdf_path, book_url, desired_resource_types
-
-    The following inputs were provided:
-    {university_name}
-    {course_name}
-    {course_url}
-    {textbook}
-    {topics_list}
-    {book_title}
-    {book_author}
-    {isbn}
-    {book_pdf_path}
-    {book_url}
-    {desired_resource_types}
-
-    Note: Not all input variables will be populated. Use whatever is available to extract
-    the book's structure and topics.
+    Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list}, {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url}, {desired_resource_types}
   expected_output: >
     A structured analysis containing:
 
@@ -95,98 +33,25 @@ course_analysis_task:
 
 resource_search_task:
   description: >
-    Based on the topics and subject_keywords from the course analysis, search for 5-7 high-quality
-    resources from USA-based institutions that cover the same topics as the textbook.
+    Search for 5-7 high-quality resources from USA-based institutions matching the course topics.
 
-    **CRITICAL TOPIC MATCHING:**
-    - Read the topics list from the course analysis (e.g., ["Vectors", "Forces", "Equilibrium", "Centroids", "Moments of Inertia"])
-    - Read the subject_keywords (e.g., ["statics", "mechanics", "forces"])
-    - Search for resources that cover THESE SPECIFIC TOPICS
-    - Use the subject_keywords in your search terms to find relevant resources
-    - Verify that each resource actually covers the topics from the list
+    **TOPIC MATCHING:** Use topics and subject_keywords from course_analysis_task. Search queries must include these terms.
 
-    **CRITICAL RESTRICTION:** ONLY include resources from United States universities,
-    institutions, and educational platforms. Do NOT include resources from universities
-    or institutions outside the USA.
+    **USA ONLY:** Only include resources from US universities, institutions, and platforms.
 
-    **RESOURCE TYPE FILTERING (CRITICAL):**
-    The user may have specified desired_resource_types. Check the inputs for {desired_resource_types}.
-    
-    - desired_resource_types will be a list (array) of strings, or empty/null if not provided
-    - If desired_resource_types is provided and contains one or more values, you MUST ONLY search for and include resources that match these specific types:
-      * "textbooks" - Only search for open textbooks (OpenStax, LibreTexts, etc.)
-      * "practice_problem_sets" - Only search for practice problems, problem sets, homework with solutions
-      * "practice_exams_tests" - Only search for practice exams, tests, quizzes with answer keys
-      * "lecture_videos" - Only search for lecture videos (YouTube, course video series)
-    
-    - If desired_resource_types is empty list [], null, or not provided, search for ALL resource types using the priority order below.
-    
-    - When multiple types are specified (e.g., ["textbooks", "practice_problem_sets"]), search for resources matching ANY of the specified types.
-    
-    - When filtering by desired_resource_types:
-      * Match the resource_type in your output to the requested type
-      * If user wants "textbooks", only return resources with resource_type="open_textbook"
-      * If user wants "practice_problem_sets", only return resources with resource_type matching "practice_problem" or "problem_set"
-      * If user wants "practice_exams_tests", only return resources with resource_type matching "practice_exam" or "test"
-      * If user wants "lecture_videos", only return resources with resource_type="video_lecture" or "lecture_series" or "educational_video"
-      * DO NOT include resources that don't match the requested types
+    **RESOURCE TYPE FILTERING:** Check {desired_resource_types} input.
+    - If provided (non-empty list), ONLY search for matching types:
+      * "textbooks" → resource_type="open_textbook"
+      * "practice_problem_sets" → resource_type="practice_problem" or "problem_set"
+      * "practice_exams_tests" → resource_type="practice_exam" or "test"
+      * "lecture_videos" → resource_type="video_lecture" or "lecture_series" or "educational_video"
+    - If empty/null, use priority order: (1) Practice problems, (2) Open textbooks, (3) Course materials, (4) Platform content, (5) Papers
 
-    **Priority Resource Types (use this order ONLY if desired_resource_types is not specified):**
-    1. Practice problems with answer keys (problem sets, practice exams, solved exercises from reputable US universities)
-    2. Open textbooks (OpenStax, LibreTexts, etc.) covering the same topics
-    3. US University course materials (MIT OCW, Stanford, Berkeley, etc.) - PDFs and web pages
-    4. US Educational platform content (Khan Academy, Coursera, edX) - text-based materials
-    5. Peer-reviewed open access papers from US institutions for advanced topics
+    **SEARCH TOOL:** Use "Search the internet with Serper" with simple string queries like "statics practice problems MIT". Perform 5-7 targeted searches.
 
-    **HOW TO USE YOUR SEARCH TOOL:**
-    You have access to the "Search the internet with Serper" tool. To use it:
-    1. Call the tool with a simple search query string as the search_query parameter
-    2. Example: search_query="statics practice problems with solutions MIT"
-    3. DO NOT pass complex objects - only pass a simple string
-    4. The tool will return search results that you can analyze
+    **QUALITY:** Free, legal, US sources only. NotebookLM compatible (PDF/web/YouTube). Prioritize text-based content. Match course level.
 
-    **Search Strategy:**
-    - Use the subject_keywords from the analysis in your searches
-    - Combine keywords with topics to create search queries
-    - Example for topics ["Forces", "Equilibrium", "Moments"] with keywords ["statics", "mechanics"]:
-      * Use tool with search_query="statics practice problems with solutions"
-      * Use tool with search_query="mechanics equilibrium MIT OpenCourseWare"
-      * Use tool with search_query="statics moments of inertia problem sets"
-    - Perform 5-7 targeted searches to find high-quality resources
-    - Aim for 5-7 total resources - quality over quantity
-    - **ONLY search for and include USA-based sources**
-    - Match the course level (don't suggest PhD-level for intro courses)
-
-    **Quality Criteria:**
-    - Must be legally free and publicly accessible (no pirated content)
-    - **Must be from United States sources ONLY** (US universities, US institutions, US platforms)
-    - Must be from reputable sources (universities, established ed platforms)
-    - Should align with the book's table of contents structure
-    - Must be compatible with NotebookLM (PDF, web page, or YouTube URL)
-    - Prioritize text-based content (PDFs, web pages) that NotebookLM can easily process and extract information from
-    - YouTube videos should only be included when they provide unique value not available in text format
-
-    **Example Search Queries to Try:**
-    Use your search tool with queries like these (substitute with actual topics from the course):
-    - "[book topic] university course materials"
-    - "[book topic] university homework solutions pdf"
-    - "[book topic] practice problems with solutions pdf"
-    - "[book topic] problem set with answer key"
-    - "[book topic] practice exam with solutions"
-    - "[book topic] MIT OpenCourseWare problem set solutions"
-    - "[book topic] AP practice test with answers" (for high school courses)
-    - "[book title] open textbook pdf"
-    - "[book topic] open textbook pdf"
-    - "[book topic] MIT OpenCourseWare PDF"
-    - "[book topic] open access textbook"
-    - "[book topic] course notes pdf"
-    - "[book topic] lecture notes"
-    - "[book topic] lecture video YouTube" (only if text alternatives are limited)
-    
-    Focus on finding resources that students can add to NotebookLM alongside their book
-    to create comprehensive study materials (flashcards, quizzes, etc.).
-
-    Use the output from the course_analysis_task to guide your search.
+    Use course_analysis_task output to guide searches.
   expected_output: >
     A curated list of 5-7 recommended resources that complement the student's book, each containing:
     
@@ -207,48 +72,15 @@ resource_search_task:
 
 resource_validation_task:
   description: >
-    Validate each resource discovered by the resource_discovery_agent to ensure it
-    meets quality, legal, and technical requirements. For each resource:
-    
-    **Accessibility Checks:**
-    1. Verify the URL is functional and publicly accessible (no 404s, no paywalls)
-    2. Confirm no login or payment is required
-    3. Check that the content actually loads (use web_fetch if needed for URLs)
-    
-    **NotebookLM Compatibility Checks:**
-    1. Verify format compatibility:
-       - PDFs: Must be direct PDF links (not HTML pages about PDFs)
-       - YouTube: Must be standard youtube.com or youtu.be URLs
-       - Web pages: Must be publicly accessible HTML pages
-    2. Check file size if PDF (NotebookLM has limits, typically under 500MB)
-    
-    **Legal and Copyright Checks:**
-    1. Look for clear licensing information (Creative Commons, Open Access, etc.)
-    2. Verify the source is reputable and authorized to distribute
-    3. Flag any resources that appear to be pirated or unauthorized copies
-    4. Ensure it's not behind academic journal paywalls
-    
-    **Quality Checks:**
-    1. Assess content relevance to the course topics
-    2. Evaluate source credibility and academic rigor
-    3. Check for comprehensiveness (not just snippets or summaries)
-    4. Verify alignment with stated course level
-    
-    **Filtering Criteria - REMOVE resources that:**
-    - Require login, subscription, or payment
-    - Are pirated or copyright-infringing materials
-    - Have broken or inaccessible links
-    - Are low quality, incomplete, or off-topic
-    - Are not NotebookLM compatible
-    - Lack clear legal authorization for public access
-    
-    Score each approved resource on usefulness (1-10) based on:
-    - Relevance to course topics (40%)
-    - Comprehensiveness of coverage (30%)
-    - Source credibility (20%)
-    - User-friendliness (10%)
+    Validate resources from resource_discovery_agent for quality, legal, and technical requirements.
 
-    Use the resources discovered by the previous task as your input.
+    **CHECKS:** (1) URL accessible, no paywalls/login, (2) NotebookLM compatible (PDF/web/YouTube), (3) Legal/licensed (no pirated content), (4) Relevant, credible, comprehensive.
+
+    **REMOVE:** Requires payment/login, pirated, broken links, low quality, incompatible.
+
+    **SCORE:** Rate usefulness 1-10: relevance (40%), comprehensiveness (30%), credibility (20%), usability (10%).
+
+    Use resources from previous task.
   expected_output: >
     A filtered and validated list of resources, each containing:
     
@@ -274,56 +106,13 @@ resource_validation_task:
 
 final_output_task:
   description: >
-    Create a student-friendly, actionable resource guide that students can
-    immediately use to enhance their learning with Google NotebookLM.
+    Create student-friendly resource guide for NotebookLM use.
 
-    **Guide Structure:**
+    **STRUCTURE:** (1) Textbook info (title, author, source), (2) Course overview (description, topics), (3) Resources (organized by type/topic, with URLs, descriptions, topics covered), (4) NotebookLM instructions (how to add PDFs/videos/web pages), (5) Study tips (workflow, features).
 
-    1. **Textbook Information Section:**
-       - Display the official textbook title and author(s) if available
-       - Show where this information was found (course page, user-provided, etc.)
-       - This helps students confirm the resources match their course textbook
+    **FORMAT:** Clear headers, clickable URLs, bullet points, 2-4 pages. Tone: encouraging, clear, action-oriented.
 
-    2. **Course Overview Section:**
-       - Brief description of the course/book
-       - Key topics that will be covered
-       - Learning objectives or skills to develop
-
-    3. **Recommended Resources Section:**
-       - Organize resources by topic area or resource type (choose most logical)
-       - For each resource include:
-         * Clear title and resource type
-         * Direct clickable URL
-         * Brief description (2-3 sentences) of what it covers and why it's useful
-         * Which specific topics it addresses
-         * Estimated time/scope (e.g., "Full textbook", "5-part video series", "Single lecture")
-
-    4. **How to Add to NotebookLM Section:**
-       - Step-by-step instructions for adding each type of resource
-       - Tips for organizing sources within NotebookLM
-       - Suggestions for how to use multiple sources effectively
-
-    5. **Study Tips Section:**
-       - How to leverage NotebookLM's features with these sources
-       - Suggested study workflow (e.g., create flashcards, generate practice questions)
-       - Tips for getting the most value from multiple perspectives
-    
-    **Formatting Guidelines:**
-    - Use clear headers and subheaders
-    - Keep descriptions concise but informative
-    - Make URLs easily clickable
-    - Use bullet points and numbered lists for readability
-    - Add emoji or visual markers sparingly for key sections
-    - Keep total guide length to 2-4 pages when printed
-    
-    **Tone:**
-    - Encouraging and supportive
-    - Clear and jargon-free
-    - Action-oriented (tell students exactly what to do)
-    - Assume student may not be tech-savvy
-
-    Use the validated resources and course analysis from previous tasks to create
-    a comprehensive student-friendly guide.
+    Use validated resources and course analysis from previous tasks.
   expected_output: >
     A formatted markdown document ready to present to the student:
     

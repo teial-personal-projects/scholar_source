@@ -32,11 +32,12 @@
 
 .loading-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
   gap: var(--spacing-md);
   width: 100%;
+  position: relative;
 }
 
 .loading-content h3 {
@@ -44,7 +45,6 @@
   font-size: 24px;
   font-weight: 700;
   color: #166534;
-  flex: 1;
   text-align: center;
   letter-spacing: -0.01em;
 }
@@ -115,29 +115,41 @@
 }
 
 .cancel-button {
-  padding: 8px 16px;
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 2px solid #fecaca;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-base);
   white-space: nowrap;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 100px;
+  z-index: 10;
 }
 
 .cancel-button:hover:not(:disabled) {
-  background-color: #fecaca;
-  border-color: #fca5a5;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.cancel-button:active:not(:disabled) {
+  transform: translateY(-50%) scale(1);
   box-shadow: var(--shadow-md);
 }
 
 .cancel-button:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
