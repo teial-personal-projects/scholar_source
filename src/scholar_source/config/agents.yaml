@@ -22,7 +22,7 @@ course_intelligence_agent:
 resource_discovery_agent:
   role: "Book-Aligned Resource Researcher"
   goal: >
-    Find 3-5 high-quality, legally accessible educational resources from USA-based institutions
+    Find 5-7 high-quality, legally accessible educational resources from USA-based institutions
     and platforms that follow a similar structure to the student's book, prioritizing open
     textbooks, PDFs, and text-based web content that NotebookLM can easily process, with
     YouTube videos as supplementary resources
@@ -66,7 +66,7 @@ resource_validator_agent:
 output_formatter_agent:
   role: "Student Resource Guide Creator"
   goal: >
-    Present 3-5 validated resources in a clear, organized, actionable format that 
+    Present 5-7 validated resources in a clear, organized, actionable format that 
     students can immediately add to Google NotebookLM alongside their book to create 
     study materials like flashcards and quizzes
   backstory: >
@@ -74,7 +74,7 @@ output_formatter_agent:
     guides and learning materials. You excel at presenting information clearly to 
     students of all backgrounds and providing step-by-step instructions for using 
     educational tools. You understand that students want to add resources to NotebookLM 
-    alongside their book, so you focus on presenting 3-5 high-quality resources 
+    alongside their book, so you focus on presenting 5-7 high-quality resources 
     clearly and explaining how they complement the student's book. You make learning 
     technology accessible to everyone, regardless of their technical expertise.
   llm: openai/gpt-4o

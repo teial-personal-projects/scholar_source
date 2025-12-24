@@ -94,7 +94,7 @@ course_analysis_task:
 
 resource_search_task:
   description: >
-    Based on the topics and subject_keywords from the course analysis, search for 3-5 high-quality
+    Based on the topics and subject_keywords from the course analysis, search for 5-7 high-quality
     resources from USA-based institutions that cover the same topics as the textbook.
 
     **CRITICAL TOPIC MATCHING:**
@@ -129,8 +129,8 @@ resource_search_task:
       * Use tool with search_query="statics practice problems with solutions"
       * Use tool with search_query="mechanics equilibrium MIT OpenCourseWare"
       * Use tool with search_query="statics moments of inertia problem sets"
-    - Perform 3-5 targeted searches to find high-quality resources
-    - Aim for 3-5 total resources - quality over quantity
+    - Perform 5-7 targeted searches to find high-quality resources
+    - Aim for 5-7 total resources - quality over quantity
     - **ONLY search for and include USA-based sources**
     - Match the course level (don't suggest PhD-level for intro courses)
 
@@ -165,7 +165,7 @@ resource_search_task:
 
     Use the output from the course_analysis_task to guide your search.
   expected_output: >
-    A curated list of 3-5 recommended resources that complement the student's book, each containing:
+    A curated list of 5-7 recommended resources that complement the student's book, each containing:
     
     - resource_title: Full title of the resource
     - resource_type: "open_textbook" | "video_lecture" | "lecture_series" | 
@@ -245,7 +245,7 @@ resource_validation_task:
     - Rejected: X
     - Average usefulness score: X.X
     
-    Only include APPROVED resources in the final list. Aim for 3-5 high-quality 
+    Only include APPROVED resources in the final list. Aim for 5-7 high-quality 
     approved resources total. If fewer than 5 pass validation, note this in the output.
   agent: resource_validator_agent
 
