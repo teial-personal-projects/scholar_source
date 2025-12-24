@@ -22,6 +22,9 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
 
         setStatus(data.status);
         setStatusMessage(data.status_message || getDefaultMessage(data.status));
+        
+        // Debug: log status to help troubleshoot cancel button visibility
+        console.log('Job status:', data.status, 'Should show cancel:', data.status === 'pending' || data.status === 'running');
 
         // Check if job is complete or failed
         if (data.status === 'completed') {
@@ -104,6 +107,7 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
               disabled={isCancelling}
               className="cancel-button"
               title="Cancel this job"
+              type="button"
             >
               {isCancelling ? 'Cancelling...' : '✕ Cancel'}
             </button>

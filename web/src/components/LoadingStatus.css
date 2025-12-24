@@ -3,7 +3,6 @@
   border-radius: 8px;
   padding: 40px 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
 }
 
 .loading-spinner-container {
@@ -33,6 +32,12 @@
   align-items: center;
   margin-bottom: 8px;
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.loading-content {
+  text-align: center;
 }
 
 .loading-content h3 {
@@ -40,6 +45,8 @@
   font-size: 20px;
   font-weight: 600;
   color: #1f2937;
+  flex: 1;
+  text-align: center;
 }
 
 .cancel-button {
