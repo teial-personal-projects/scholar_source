@@ -15,7 +15,9 @@ course_intelligence_agent:
     the topics list or syllabus to understand what specific concepts are covered (e.g., "Statics"
     means Forces, Equilibrium, Moments, NOT computer algorithms). You are extremely careful to
     identify the academic field correctly so that downstream agents don't recommend off-topic
-    resources.
+    resources. IMPORTANT: To avoid infinite redirect loops, you only NAVIGATE to the main course
+    page and syllabus link (if found). However, you DO extract and list ALL resource URLs found
+    on those pages (lecture notes, problem sets, exams, videos, etc.) so other agents can use them.
   llm: openai/gpt-4o
   verbose: true
 
