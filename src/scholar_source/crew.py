@@ -3,11 +3,12 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import (
     SerperDevTool,
-    FileReadTool,
     WebsiteSearchTool,
     YoutubeVideoSearchTool
 )
 from typing import List
+import os
+
 # If you want to run a snippet of code before or after the crew starts,
 # you can use the @before_kickoff and @after_kickoff decorators
 # https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
@@ -19,12 +20,6 @@ class ScholarSource():
     agents: List[BaseAgent]
     tasks: List[Task]
 
-    # Learn more about YAML configuration files here:
-    # Agents: https://docs.crewai.com/concepts/agents#yaml-configuration-recommended
-    # Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
-    
-    # If you would like to add tools to your agents, you can learn more about it here:
-    # https://docs.crewai.com/concepts/agents#agent-tools
     @agent
     def course_intelligence_agent(self) -> Agent:
         return Agent(
@@ -55,36 +50,33 @@ class ScholarSource():
     @agent
     def output_formatter_agent(self) -> Agent:
         return Agent(
-            config=self.agents_config['output_formatter_agent'], # type: ignore[index]
+            config=self.agents_config['output_formatter_agent'],
             verbose=True
         )
 
-    # To learn more about structured task outputs,
-    # task dependencies, and task callbacks, check out the documentation:
-    # https://docs.crewai.com/concepts/tasks#overview-of-a-task
     @task
     def course_analysis_task(self) -> Task:
         return Task(
-            config=self.tasks_config['course_analysis_task'], # type: ignore[index]
+            config=self.tasks_config['course_analysis_task'],
         )
 
     @task
     def resource_search_task(self) -> Task:
         return Task(
-            config=self.tasks_config['resource_search_task'], # type: ignore[index]
+            config=self.tasks_config['resource_search_task'], 
             output_file='report.md'
         )
 
     @task
     def resource_validation_task(self) -> Task:
         return Task(
-            config=self.tasks_config['resource_validation_task'], # type: ignore[index]
+            config=self.tasks_config['resource_validation_task'],
         )
     
     @task
     def final_output_task(self) -> Task:
         return Task(
-            config=self.tasks_config['final_output_task'], # type: ignore[index]
+            config=self.tasks_config['final_output_task'],
             output_file='report.md'
         )
 
@@ -99,5 +91,6 @@ class ScholarSource():
             tasks=self.tasks, # Automatically created by the @task decorator
             process=Process.sequential,
             verbose=True,
+            max_iter=int(os.getenv('MAX_CREW_ITERATIONS', '15')),  # Read from environment or default to 15
             # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
         )

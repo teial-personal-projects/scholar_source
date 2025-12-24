@@ -338,13 +338,47 @@ def _extract_textbook_info(content: str) -> Dict[str, str]:
         r'#+ Course Textbook[:\n]+(.*?)(?=\n#|$)',
         r'#+ Official Textbook[:\n]+(.*?)(?=\n#|$)',
         r'\*\*Textbook:\*\*\s*([^\n]+)',
-        r'\*\*Official Textbook:\*\*\s*([^\n]+)'
+        r'\*\*Text:\*\*\s*([^\n]+)',
+        r'\*\*Official Textbook:\*\*\s*([^\n]+)',
+        r'Textbook:\s*([^\n]+)'  # Plain "Textbook: ..." format
     ]
 
     for pattern in textbook_patterns:
         match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
         if match:
             section_text = match.group(1).strip()
+
+            # For simple "Textbook: Author, Title" or "Text: Title by Author" formats
+            if ',' in section_text and not re.search(r'(?:Title|Author|Source):', section_text, re.IGNORECASE):
+                # Check for "by [author]" pattern: "Title, edition, by Author"
+                by_match = re.search(r'by\s+([^.\n]+)', section_text, re.IGNORECASE)
+                if by_match:
+                    # Extract author from "by xxx"
+                    author = by_match.group(1).strip()
+                    # Extract title (everything before "by")
+                    title_part = section_text[:by_match.start()].strip()
+                    # Remove edition info like "14th ed.," from title
+                    title = re.sub(r',\s*\d+(?:st|nd|rd|th)\s+ed\.?,?\s*$', '', title_part).strip()
+                    # Remove trailing commas
+                    title = title.rstrip(',').rstrip('.')
+                    return {
+                        "title": title,
+                        "author": author,
+                        "source": None
+                    }
+                else:
+                    # Original format: "Author, Title"
+                    parts = section_text.split(',', 1)
+                    if len(parts) == 2:
+                        author = parts[0].strip()
+                        title = parts[1].strip()
+                        # Remove any trailing period
+                        title = title.rstrip('.')
+                        return {
+                            "title": title,
+                            "author": author,
+                            "source": None
+                        }
 
             # Extract title
             title_match = re.search(r'(?:\*\*)?(?:Title|Book)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
