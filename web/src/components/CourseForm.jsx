@@ -16,11 +16,12 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
     book_author: '',
     isbn: '',
     topics_list: '',
-    email: ''
+    email: '',
+    desired_resource_types: []
   });
 
   const [validationError, setValidationError] = useState('');
-  const [isCourseDetailsExpanded, setIsCourseDetailsExpanded] = useState(true);
+  const [isDesiredResourcesExpanded, setIsDesiredResourcesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
   const [isEmailExpanded, setIsEmailExpanded] = useState(false);
 
@@ -31,6 +32,23 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       [name]: value
     }));
     // Clear validation error when user types
+    if (validationError) {
+      setValidationError('');
+    }
+  };
+
+  const handleResourceTypeChange = (resourceType) => {
+    setFormData(prev => {
+      const currentTypes = prev.desired_resource_types || [];
+      const newTypes = currentTypes.includes(resourceType)
+        ? currentTypes.filter(type => type !== resourceType)
+        : [...currentTypes, resourceType];
+      return {
+        ...prev,
+        desired_resource_types: newTypes
+      };
+    });
+    // Clear validation error when user changes selection
     if (validationError) {
       setValidationError('');
     }
@@ -51,7 +69,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       book_author: '',
       isbn: '',
       topics_list: formData.topics_list, // Keep topics_list
-      email: formData.email // Keep email
+      email: formData.email, // Keep email
+      desired_resource_types: formData.desired_resource_types // Keep desired_resource_types
     });
   };
 
@@ -104,9 +123,13 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       book_author: '',
       isbn: '',
       topics_list: '',
-      email: ''
+      email: '',
+      desired_resource_types: []
     });
     setValidationError('');
+    setIsDesiredResourcesExpanded(false);
+    setIsFocusTopicsExpanded(false);
+    setIsEmailExpanded(false);
   };
 
   const handleSubmit = (e) => {
@@ -146,15 +169,11 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
         {/* Search Parameters Section */}
         <div className="form-section">
-          <div className="section-header" onClick={() => setIsCourseDetailsExpanded(!isCourseDetailsExpanded)}>
+          <div className="section-header">
             <h3>📚 Course Details <span className="required">*</span></h3>
-            <button type="button" className="collapse-toggle" aria-label="Toggle section">
-              {isCourseDetailsExpanded ? '−' : '+'}
-            </button>
           </div>
 
-          {isCourseDetailsExpanded && (
-            <div className="section-content">
+          <div className="section-content">
               <div className="form-group">
                 <label htmlFor="search_param_type">Search Parameters <span className="required">*</span></label>
                 <select
@@ -257,15 +276,70 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                 </div>
               )}
             </div>
+        </div>
+
+        {/* Desired Resources Section */}
+        <div className="form-section">
+          <div className="section-header" onClick={() => setIsDesiredResourcesExpanded(!isDesiredResourcesExpanded)}>
+            <h3>🎯 Resource Types <span className="optional-label">(Optional)</span></h3>
+            <button type="button" className="collapse-toggle" aria-label="Toggle section">
+              {isDesiredResourcesExpanded ? '▼' : '▶'}
+            </button>
+          </div>
+
+          {isDesiredResourcesExpanded && (
+            <div className="section-content">
+              <div className="form-group">
+                <label>Filter by resource type (leave empty to find all types):</label>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.desired_resource_types?.includes('textbooks') || false}
+                      onChange={() => handleResourceTypeChange('textbooks')}
+                      disabled={isLoading}
+                    />
+                    <span>📚 Textbooks</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.desired_resource_types?.includes('practice_problem_sets') || false}
+                      onChange={() => handleResourceTypeChange('practice_problem_sets')}
+                      disabled={isLoading}
+                    />
+                    <span>📐 Practice Problem Sets</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.desired_resource_types?.includes('practice_exams_tests') || false}
+                      onChange={() => handleResourceTypeChange('practice_exams_tests')}
+                      disabled={isLoading}
+                    />
+                    <span>📋 Practice Exams/Tests</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.desired_resource_types?.includes('lecture_videos') || false}
+                      onChange={() => handleResourceTypeChange('lecture_videos')}
+                      disabled={isLoading}
+                    />
+                    <span>🎥 Lecture Videos</span>
+                  </label>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Optional Fields Section */}
+        {/* Focus Topics Section */}
         <div className="form-section">
           <div className="section-header" onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}>
             <h3>🎯 Focus Topics <span className="optional-label">(Optional)</span></h3>
             <button type="button" className="collapse-toggle" aria-label="Toggle section">
-              {isFocusTopicsExpanded ? '−' : '+'}
+              {isFocusTopicsExpanded ? '▼' : '▶'}
             </button>
           </div>
 
@@ -298,7 +372,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           <div className="section-header" onClick={() => setIsEmailExpanded(!isEmailExpanded)}>
             <h3>📧 Get Results by Email <span className="optional-label">(Optional)</span></h3>
             <button type="button" className="collapse-toggle" aria-label="Toggle section">
-              {isEmailExpanded ? '−' : '+'}
+              {isEmailExpanded ? '▼' : '▶'}
             </button>
           </div>
 

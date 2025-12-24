@@ -65,7 +65,7 @@ export default function HomePage() {
         <div className="header-logo">
           <span className="logo-icon">📚</span>
           <div className="logo-text-container">
-            <h1 className="logo-title">Scholar Source</h1>
+            <h1 className="logo-title">Scholar Resource Finder</h1>
           </div>
         </div>
 
@@ -75,20 +75,6 @@ export default function HomePage() {
           <p className="welcome-description">
             <strong>Enter your course info below</strong> to discover relevant videos, lecture notes, practice problems, and study guides matched to your course or textbook!
           </p>
-          <div className="welcome-features">
-            <div className="feature-tag feature-tag-math">
-              <span className="feature-icon">📐</span>
-              <span>Practice problems</span>
-            </div>
-            <div className="feature-tag feature-tag-test">
-              <span className="feature-icon">📋</span>
-              <span>Practice Tests</span>
-            </div>
-            <div className="feature-tag feature-tag-video">
-              <span className="feature-icon">🎥</span>
-              <span>Lecture Videos</span>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -107,9 +93,9 @@ export default function HomePage() {
           {!isLoading && !results && !error && (
             <div className="results-placeholder-card">
               <div className="results-placeholder-content">
-                <div className="results-placeholder-icon">📊</div>
-                <h3>Your results will appear here</h3>
-                <p>Fill out the form and click "Find Resources" to see curated study materials matched to your course.</p>
+                <div className="results-placeholder-icon">📚</div>
+                <h3>Your study kit will show up here</h3>
+                <p>Enter your course info and click 'Find resources' to generate videos, notes, practice, and more.</p>
               </div>
             </div>
           )}

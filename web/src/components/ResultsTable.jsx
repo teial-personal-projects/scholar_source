@@ -85,7 +85,10 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
       <div className="results-header">
         <div>
-          <h2>Discovered Resources</h2>
+          <h2>
+            Discovered Resources
+            <span className="resource-count-badge">{resources.length}</span>
+          </h2>
           {searchTitle && <p className="search-title">{searchTitle}</p>}
         </div>
         <div className="header-actions">

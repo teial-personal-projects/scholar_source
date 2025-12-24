@@ -96,22 +96,28 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str]) -> None:
             status_message="Initializing CrewAI agents..."
         )
 
-        # Normalize inputs - convert None to empty string
-        normalized_inputs = {
-            key: (value if value is not None else "")
-            for key, value in inputs.items()
-        }
+        # Normalize inputs - convert None to empty string, but preserve lists for desired_resource_types
+        normalized_inputs = {}
+        for key, value in inputs.items():
+            if key == 'desired_resource_types':
+                # Keep as list (empty list if None or empty)
+                normalized_inputs[key] = value if isinstance(value, list) else ([] if value is None else [])
+            else:
+                normalized_inputs[key] = (value if value is not None else "")
 
         # Ensure all required keys exist
         required_keys = [
             'university_name', 'course_name', 'course_url', 'textbook',
             'topics_list', 'book_title', 'book_author', 'isbn',
-            'book_pdf_path', 'book_url'
+            'book_pdf_path', 'book_url', 'desired_resource_types'
         ]
 
         for key in required_keys:
             if key not in normalized_inputs:
-                normalized_inputs[key] = ""
+                if key == 'desired_resource_types':
+                    normalized_inputs[key] = []
+                else:
+                    normalized_inputs[key] = ""
 
         # Update status
         update_job_status(

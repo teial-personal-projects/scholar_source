@@ -59,7 +59,7 @@ course_analysis_task:
     
     Available input variables (all optional):
     university_name, course_name, course_url, textbook, topics_list,
-    book_title, book_author, isbn, book_pdf_path, book_url
+    book_title, book_author, isbn, book_pdf_path, book_url, desired_resource_types
 
     The following inputs were provided:
     {university_name}
@@ -72,6 +72,7 @@ course_analysis_task:
     {isbn}
     {book_pdf_path}
     {book_url}
+    {desired_resource_types}
 
     Note: Not all input variables will be populated. Use whatever is available to extract
     the book's structure and topics.
@@ -108,7 +109,29 @@ resource_search_task:
     institutions, and educational platforms. Do NOT include resources from universities
     or institutions outside the USA.
 
-    **Priority Resource Types (in order):**
+    **RESOURCE TYPE FILTERING (CRITICAL):**
+    The user may have specified desired_resource_types. Check the inputs for {desired_resource_types}.
+    
+    - desired_resource_types will be a list (array) of strings, or empty/null if not provided
+    - If desired_resource_types is provided and contains one or more values, you MUST ONLY search for and include resources that match these specific types:
+      * "textbooks" - Only search for open textbooks (OpenStax, LibreTexts, etc.)
+      * "practice_problem_sets" - Only search for practice problems, problem sets, homework with solutions
+      * "practice_exams_tests" - Only search for practice exams, tests, quizzes with answer keys
+      * "lecture_videos" - Only search for lecture videos (YouTube, course video series)
+    
+    - If desired_resource_types is empty list [], null, or not provided, search for ALL resource types using the priority order below.
+    
+    - When multiple types are specified (e.g., ["textbooks", "practice_problem_sets"]), search for resources matching ANY of the specified types.
+    
+    - When filtering by desired_resource_types:
+      * Match the resource_type in your output to the requested type
+      * If user wants "textbooks", only return resources with resource_type="open_textbook"
+      * If user wants "practice_problem_sets", only return resources with resource_type matching "practice_problem" or "problem_set"
+      * If user wants "practice_exams_tests", only return resources with resource_type matching "practice_exam" or "test"
+      * If user wants "lecture_videos", only return resources with resource_type="video_lecture" or "lecture_series" or "educational_video"
+      * DO NOT include resources that don't match the requested types
+
+    **Priority Resource Types (use this order ONLY if desired_resource_types is not specified):**
     1. Practice problems with answer keys (problem sets, practice exams, solved exercises from reputable US universities)
     2. Open textbooks (OpenStax, LibreTexts, etc.) covering the same topics
     3. US University course materials (MIT OCW, Stanford, Berkeley, etc.) - PDFs and web pages

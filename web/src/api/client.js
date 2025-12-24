@@ -14,11 +14,24 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
  */
 export async function submitJob(inputs) {
   // Filter out empty strings and convert them to null/undefined
+  // Keep arrays (including empty ones) for desired_resource_types
   const cleanedInputs = Object.fromEntries(
-    Object.entries(inputs).map(([key, value]) => [
-      key,
-      typeof value === 'string' && value.trim() === '' ? null : value
-    ]).filter(([, value]) => value !== null && value !== undefined)
+    Object.entries(inputs)
+      .map(([key, value]) => {
+        // Handle empty strings
+        if (typeof value === 'string' && value.trim() === '') {
+          return [key, null];
+        }
+        return [key, value];
+      })
+      .filter(([key, value]) => {
+        // Always include desired_resource_types if it's an array (even if empty)
+        if (key === 'desired_resource_types' && Array.isArray(value)) {
+          return true;
+        }
+        // Filter out null and undefined for other fields
+        return value !== null && value !== undefined;
+      })
   );
 
   const response = await fetch(`${API_BASE_URL}/api/submit`, {

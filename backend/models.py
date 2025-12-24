@@ -24,6 +24,7 @@ class CourseInputRequest(BaseModel):
     book_pdf_path: Optional[str] = Field(None, description="Local PDF path")
     book_url: Optional[str] = Field(None, description="Book URL")
     email: Optional[str] = Field(None, description="Email address to receive results (optional)")
+    desired_resource_types: Optional[List[str]] = Field(None, description="List of desired resource types (textbooks, practice_problem_sets, practice_exams_tests, lecture_videos)")
 
     @model_validator(mode='before')
     @classmethod
