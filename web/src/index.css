@@ -38,7 +38,7 @@ p {
 }
 
 a {
-  color: #3b82f6;
+  color: #7C3AED;
   text-decoration: none;
 }
 
@@ -57,6 +57,6 @@ input, textarea, select {
 
 /* Remove default button focus outline, we'll add our own */
 button:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #7C3AED;
   outline-offset: 2px;
 }
