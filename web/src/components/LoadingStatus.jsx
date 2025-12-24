@@ -12,6 +12,7 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
   const [status, setStatus] = useState('pending');
   const [statusMessage, setStatusMessage] = useState('Initializing...');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [textbookInfo, setTextbookInfo] = useState(null);
 
   useEffect(() => {
     let intervalId;
@@ -22,6 +23,15 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
 
         setStatus(data.status);
         setStatusMessage(data.status_message || getDefaultMessage(data.status));
+        
+        // Update textbook info if available
+        if (data.book_title || data.book_author || data.metadata?.textbook_info) {
+          setTextbookInfo({
+            book_title: data.book_title || data.metadata?.textbook_info?.title,
+            book_author: data.book_author || data.metadata?.textbook_info?.author,
+            course_name: data.course_name
+          });
+        }
         
         // Debug: log status to help troubleshoot cancel button visibility
         console.log('Job status:', data.status, 'Should show cancel:', data.status === 'pending' || data.status === 'running');
@@ -113,6 +123,15 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
             </button>
           )}
         </div>
+        {textbookInfo && (textbookInfo.book_title || textbookInfo.book_author) && (
+          <div className="textbook-info-display">
+            <p className="textbook-label">📚 Searching for resources matching:</p>
+            <p className="textbook-name">
+              {textbookInfo.book_title}
+              {textbookInfo.book_author && ` by ${textbookInfo.book_author}`}
+            </p>
+          </div>
+        )}
         <p className="status-message">{statusMessage}</p>
 
         <div className="progress-steps">

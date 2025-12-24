@@ -50,6 +50,30 @@
   flex: 1;
 }
 
+.textbook-info-display {
+  margin: 0 0 var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  border-left: 3px solid #166534;
+}
+
+.textbook-label {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 13px;
+  color: #15803d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.textbook-name {
+  margin: 0;
+  font-size: 16px;
+  color: #166534;
+  font-weight: 700;
+}
+
 .status-message {
   margin: 0 0 var(--spacing-xl) 0;
   font-size: 16px;

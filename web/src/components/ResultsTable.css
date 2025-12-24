@@ -45,6 +45,12 @@
   box-shadow: var(--shadow-sm);
 }
 
+.course-book-info-box-top {
+  margin-bottom: var(--spacing-xl);
+  border-left-width: 5px;
+  box-shadow: var(--shadow-md);
+}
+
 .textbook-info-box h3,
 .course-book-info-box h3 {
   margin: 0 0 var(--spacing-md) 0;
@@ -75,6 +81,17 @@
   font-size: 14px;
   color: #064e3b;
   line-height: 1.6;
+}
+
+.info-item-textbook {
+  font-size: 16px !important;
+  font-weight: 600;
+}
+
+.textbook-name-highlight {
+  color: #047857;
+  font-weight: 700;
+  font-size: 17px;
 }
 
 /* Results Header */
