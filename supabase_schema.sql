@@ -4,7 +4,7 @@
 -- Jobs table to store job status and results
 CREATE TABLE jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'completed', 'failed')),
+    status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
     inputs JSONB NOT NULL,
     results JSONB,
     raw_output TEXT,

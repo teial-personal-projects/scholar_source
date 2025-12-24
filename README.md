@@ -11,7 +11,7 @@ ScholarSource is a web application that helps students discover curated educatio
 Students often struggle to find supplementary learning materials that align with their specific textbook. ScholarSource solves this by:
 
 1. **Analyzing your book's structure** - Extracts table of contents, topics, and key concepts from book metadata, PDFs, or course pages
-2. **Finding aligned resources** - Searches for 5-7 high-quality, legally accessible resources that follow similar structure to your textbook
+2. **Finding aligned resources** - Searches for 3-5 high-quality, legally accessible resources that follow similar structure to your textbook
 3. **Validating quality** - Ensures resources are free, legal, NotebookLM-compatible, and from reputable sources
 4. **Presenting actionable results** - Provides a student-friendly guide with direct links ready to import into NotebookLM
 
@@ -321,7 +321,7 @@ Students provide one or more of:
 - Outputs: course_title, topics list, key_concepts, course_level
 
 **Agent 2: Resource Discovery Agent (GPT-4o-mini)**
-- Searches for 5-7 resources using Serper API
+- Searches for 3-5 resources using Serper API
 - Prioritizes open textbooks, PDFs, course notes
 - Matches resources to book's table of contents
 - Ensures legal, free, publicly accessible content
@@ -517,7 +517,7 @@ ScholarSource uses a **sequential multi-agent workflow** powered by CrewAI:
 - **Output**: Course title, topics list, key concepts, course level
 
 ### 2. Resource Discovery Agent (`resource_discovery_agent`)
-- **Role**: Find 5-7 high-quality resources aligned with book structure
+- **Role**: Find 3-5 high-quality resources aligned with book structure
 - **Tools**: `SerperDevTool` (web search)
 - **Model**: GPT-4o-mini (cost-effective for search tasks)
 - **Priority**: Open textbooks, PDFs, course notes (text-based for NotebookLM)

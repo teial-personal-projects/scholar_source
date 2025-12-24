@@ -30,7 +30,7 @@ class ScholarSource():
         return Agent(
             config=self.agents_config['course_intelligence_agent'], # type: ignore[index]
             verbose=True,
-            tools=[FileReadTool()]  # For reading PDF files
+            tools=[WebsiteSearchTool()]  # For searching course pages
         )
 
     @agent

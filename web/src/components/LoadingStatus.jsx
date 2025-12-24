@@ -26,7 +26,14 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
         if (data.status === 'completed') {
           clearInterval(intervalId);
           const textbookInfo = data.metadata?.textbook_info || null;
-          onComplete(data.results, data.raw_output, data.search_title, textbookInfo);
+          // Pass course and book info for display
+          const courseInfo = {
+            course_name: data.course_name,
+            book_title: data.book_title,
+            book_author: data.book_author,
+            ...textbookInfo
+          };
+          onComplete(data.results, data.raw_output, data.search_title, courseInfo);
         } else if (data.status === 'failed') {
           clearInterval(intervalId);
           onError(data.error || 'Job failed with unknown error');

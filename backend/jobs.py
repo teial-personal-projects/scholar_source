@@ -82,7 +82,7 @@ def update_job_status(
 
     Args:
         job_id: UUID of the job
-        status: New status (pending, running, completed, failed)
+        status: New status (pending, running, completed, failed, cancelled)
         results: List of Resource dictionaries (optional)
         error: Error message if failed (optional)
         status_message: Current progress message (optional)
@@ -96,8 +96,8 @@ def update_job_status(
 
     update_data = {"status": status}
 
-    # Add completion timestamp if job is completed or failed
-    if status in ["completed", "failed"]:
+    # Add completion timestamp if job is completed, failed, or cancelled
+    if status in ["completed", "failed", "cancelled"]:
         update_data["completed_at"] = datetime.utcnow().isoformat()
 
     # Add optional fields if provided

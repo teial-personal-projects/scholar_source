@@ -104,13 +104,16 @@ class JobStatusResponse(BaseModel):
     """Response model for job status queries"""
 
     job_id: str = Field(..., description="UUID of the job")
-    status: str = Field(..., description="Job status (pending, running, completed, failed)")
+    status: str = Field(..., description="Job status (pending, running, completed, failed, cancelled)")
     status_message: Optional[str] = Field(None, description="Current progress message")
     search_title: Optional[str] = Field(None, description="User-friendly job name")
     results: Optional[List[Resource]] = Field(None, description="List of resources (if completed)")
     raw_output: Optional[str] = Field(None, description="Raw markdown output from crew")
     error: Optional[str] = Field(None, description="Error message (if failed)")
     metadata: Optional[dict] = Field(None, description="Additional job metadata")
+    course_name: Optional[str] = Field(None, description="Course name from inputs")
+    book_title: Optional[str] = Field(None, description="Book title from inputs")
+    book_author: Optional[str] = Field(None, description="Book author from inputs")
     created_at: str = Field(..., description="ISO timestamp of job creation")
     completed_at: Optional[str] = Field(None, description="ISO timestamp of completion")
 

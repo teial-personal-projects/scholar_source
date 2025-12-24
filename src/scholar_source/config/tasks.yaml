@@ -1,51 +1,61 @@
 course_analysis_task:
   description: >
-    Analyze the provided book and course information to extract the book's table of contents,
-    key topics, and learning structure. The primary goal is to understand what topics the
-    student's book covers so we can find similar resources.
+    Analyze the course URL and provided information to identify the EXACT academic discipline
+    and specific topics covered. This is CRITICAL - you must correctly identify the field to
+    prevent recommending off-topic resources.
 
     **Input Sources (use whatever is available):**
+    - Course information: course_url (MOST IMPORTANT - use WebsiteSearchTool to analyze)
     - Book information: book_title, book_author, isbn, book_url
-    - PDF file: book_pdf_path (use FileReadTool to read and extract table of contents)
-    - Course information: course_url
-    - Additional context: textbook, topics_list
+    - User-provided topics: topics_list
+    - Additional context: textbook
 
     **CRITICAL VALIDATION - DO THIS FIRST:**
     Before proceeding, validate that you can access at least one primary source:
-    - If course_url is provided, attempt to access it. If you CANNOT access or retrieve the course page, STOP and return an error.
-    - If book_url is provided, attempt to access it. If you CANNOT access or retrieve the book page, STOP and return an error.
-    - If book_pdf_path is provided, attempt to read it. If you CANNOT read the file, STOP and return an error.
-    - If NONE of the above sources are accessible, STOP and return an error indicating that no accessible sources were provided.
+    - If course_url is provided, attempt to access it with WebsiteSearchTool. If you CANNOT access it, STOP and return an error.
+    - If book_url is provided, attempt to access it. If you CANNOT access it, STOP and return an error.
+    - If ONLY book_title/author/isbn/topics_list are provided, skip validation (these don't require access checks)
+    - If NONE of the above sources are provided or accessible, STOP and return an error.
 
     **ERROR FORMAT:** If you cannot access any primary sources, return: "ERROR: Cannot access provided resources. [specific details about what failed]"
 
-    **Your Analysis Tasks (only if validation passes):**
-    1. **If course_url is provided and accessible:**
-       - Use WebsiteSearchTool to search the course page for textbook information
-       - Look for sections like "Textbooks", "Required Texts", "Readings", "Materials"
-       - Extract textbook titles, authors, and ISBN numbers if mentioned
-       - Search for syllabus links or embedded syllabi on the course page
-       - If syllabus is found, extract weekly topics, units, and learning objectives
-       - Use the syllabus and textbook information to understand course structure
+    **STEP 1: Find the Textbook and Syllabus on Course Page**
+    If course_url is provided and accessible, use WebsiteSearchTool to:
+    1. **Find the textbook** - Search for:
+       - "Textbook", "Required Text", "Required Reading", "Course Materials", "Required Textbooks"
+       - Extract the EXACT textbook title, author, edition, ISBN if mentioned
+       - DO NOT make assumptions - only extract what's explicitly listed
 
-    2. Extract the book's table of contents and major topics/chapters
-       - If PDF is provided, read it to find the table of contents
-       - If book_url is provided, extract book structure from web pages
-       - If only book title/author/ISBN is provided, infer likely topics based on the book
-       - If course_url provided textbook info, use that to enhance your understanding
+    2. **Find the syllabus** - Search for:
+       - "Syllabus", "Course Outline", "Schedule", "Weekly Topics"
+       - Extract syllabus URL if available as a link
+       - If syllabus content is on the page, extract the weekly topics/schedule
 
-    3. Identify 5-10 major topic areas or chapters from the book
-    4. Determine course level (introductory/intermediate/advanced/professional)
-    5. Identify the discipline area (e.g., "Algorithms", "Calculus", "Organic Chemistry")
-    6. Note any specific learning objectives or skills the book focuses on
+    **STEP 2: Get Topics from the Textbook's Table of Contents**
+    1. **If textbook title was found on course page:**
+       - Search web for "[textbook title] [author] table of contents"
+       - Try to extract ALL chapter titles and section headings from the textbook's ToC
+       - If you CANNOT find the table of contents online, note this in your output
 
-    **Priority:**
-    - FIRST: Validate accessibility of provided sources (see CRITICAL VALIDATION above)
-    - If course_url is provided and accessible, search it for textbook and syllabus information
-    - If a PDF is provided and readable, prioritize extracting the actual table of contents from it
-    - If book_url is provided and accessible, extract book structure from web pages
-    - Use book metadata (title, author, ISBN) to infer structure if other sources unavailable
-    - Combine all available sources for the most complete understanding
+    2. **If textbook title was provided by user (book_title/book_author):**
+       - Search web for the textbook's table of contents the same way
+       - If you CANNOT find it, note this in your output
+
+    **STEP 3: Extract Topics from Course Page or User Input**
+    1. Extract any topic list from the course description if present
+    2. Extract topics from syllabus if found
+    3. **If user provided topics_list, use that as the PRIMARY source**
+
+    **STEP 4: CRITICAL - Verify You Have Topics**
+    - If you have ZERO topics from ALL sources (no textbook ToC, no syllabus, no course topics, no user topics_list):
+      * STOP and return: "ERROR: Cannot determine course topics. Please provide either: (1) a PDF of the textbook, OR (2) a list of topics covered in the course."
+    - If you found the textbook title but CANNOT find its table of contents online:
+      * STOP and return: "ERROR: Found textbook [title] but cannot access its table of contents. Please provide either: (1) a PDF of the textbook, OR (2) a list of topics covered in the course."
+
+    **STEP 5: Compile Topics (only if you have topics)**
+    - Combine ALL topics from available sources
+    - List 5-15 specific topics
+    - Extract course title and course number from the page
     
     Available input variables (all optional):
     university_name, course_name, course_url, textbook, topics_list,
@@ -68,27 +78,31 @@ course_analysis_task:
   expected_output: >
     A structured analysis containing:
 
-    - course_title: The formal or informal course name
-    - topics: A comprehensive list of topics/units/concepts (minimum 3-5, maximum 15)
-    - official_textbooks: List of textbooks mentioned (title, author, ISBN if found) - extracted from course page if course_url provided
+    - course_title: The course name from the course page (e.g., "Engineering Analysis: Statics")
+    - course_number: The course number (e.g., "GEN_ENG 205-2")
+    - official_textbooks: Textbook title, author, edition, ISBN if found on course page
     - syllabus_url: URL to syllabus if found on course page
-    - weekly_schedule: List of weekly topics if extracted from syllabus
+    - topics: Comprehensive list of ALL topics from textbook ToC, syllabus, course page, or user input
+      (e.g., ["Vectors", "Forces", "Systems of Forces and Moments", "Equilibrium", "Structures",
+      "Centroids", "Centers of Mass", "Moments of Inertia", "Friction", "Internal Forces", "Virtual Work"])
     - course_level: "introductory" | "intermediate" | "advanced" | "professional"
-    - key_concepts: List of the most important concepts students should master
-    - discipline_area: The academic field (e.g., "Physics", "Computer Science")
-    - estimated_duration: Rough estimate like "semester-long" or "self-paced"
-    - learning_context: Brief note about the educational setting if known
-    - textbook_source: Where textbook info came from ("course_page", "user_provided", "inferred", etc.)
+    - textbook_source: Where textbook info came from ("course_page", "user_provided", "not_found")
+    - subject_keywords: List of keywords describing the subject based on topics (e.g., ["statics", "mechanics", "forces", "equilibrium"])
 
     Format as a clean JSON object or structured text that subsequent agents can easily parse.
   agent: course_intelligence_agent
 
 resource_search_task:
   description: >
-    Based on the book analysis, search for 7-10 high-quality resources from USA-based
-    institutions and platforms that follow a similar structure to the student's book.
-    These resources should complement the book's table of contents and be suitable for
-    adding to NotebookLM.
+    Based on the topics and subject_keywords from the course analysis, search for 3-5 high-quality
+    resources from USA-based institutions that cover the same topics as the textbook.
+
+    **CRITICAL TOPIC MATCHING:**
+    - Read the topics list from the course analysis (e.g., ["Vectors", "Forces", "Equilibrium", "Centroids", "Moments of Inertia"])
+    - Read the subject_keywords (e.g., ["statics", "mechanics", "forces"])
+    - Search for resources that cover THESE SPECIFIC TOPICS
+    - Use the subject_keywords in your search terms to find relevant resources
+    - Verify that each resource actually covers the topics from the list
 
     **CRITICAL RESTRICTION:** ONLY include resources from United States universities,
     institutions, and educational platforms. Do NOT include resources from universities
@@ -96,23 +110,29 @@ resource_search_task:
 
     **Priority Resource Types (in order):**
     1. Practice problems with answer keys (problem sets, practice exams, solved exercises from reputable US universities)
-    2. Open textbooks (OpenStax, MIT OpenCourseWare PDFs, LibreTexts, etc.) with similar table of contents
-    3. US University course materials (MIT OCW, Stanford, Yale, Berkeley, etc.) - PDFs and web pages with text content
+    2. Open textbooks (OpenStax, LibreTexts, etc.) covering the same topics
+    3. US University course materials (MIT OCW, Stanford, Berkeley, etc.) - PDFs and web pages
     4. US Educational platform content (Khan Academy, Coursera, edX) - text-based materials
-    5. Interactive learning sites (Paul's Online Math Notes, Physics Classroom, etc.) with text content
-    6. Peer-reviewed open access papers from US institutions for advanced topics
-    7. US University lecture videos on YouTube (MIT OCW, Stanford, Yale, etc.) - as supplementary resources
+    5. Peer-reviewed open access papers from US institutions for advanced topics
+
+    **HOW TO USE YOUR SEARCH TOOL:**
+    You have access to the "Search the internet with Serper" tool. To use it:
+    1. Call the tool with a simple search query string as the search_query parameter
+    2. Example: search_query="statics practice problems with solutions MIT"
+    3. DO NOT pass complex objects - only pass a simple string
+    4. The tool will return search results that you can analyze
 
     **Search Strategy:**
-    - Focus on finding resources that cover similar topics to the book's chapters
-    - Aim for 7-10 total resources - quality over quantity
+    - Use the subject_keywords from the analysis in your searches
+    - Combine keywords with topics to create search queries
+    - Example for topics ["Forces", "Equilibrium", "Moments"] with keywords ["statics", "mechanics"]:
+      * Use tool with search_query="statics practice problems with solutions"
+      * Use tool with search_query="mechanics equilibrium MIT OpenCourseWare"
+      * Use tool with search_query="statics moments of inertia problem sets"
+    - Perform 3-5 targeted searches to find high-quality resources
+    - Aim for 3-5 total resources - quality over quantity
     - **ONLY search for and include USA-based sources**
-    - Prioritize text-based resources (PDFs, web pages) that NotebookLM can easily process
-    - Include YouTube videos only as supplementary resources when high-quality text alternatives aren't available
-    - Match the course level (don't suggest PhD-level for intro books)
-    - **For college-level courses:** Prioritize practice problems from reputable US universities (MIT, Stanford, Berkeley, Yale, etc.)
-    - **For high school courses:** Look for practice problems from US high schools, AP exam practice tests, or established US high school resources
-    - **Critical:** Only include practice problems that come with answer keys or solutions
+    - Match the course level (don't suggest PhD-level for intro courses)
 
     **Quality Criteria:**
     - Must be legally free and publicly accessible (no pirated content)
@@ -122,9 +142,9 @@ resource_search_task:
     - Must be compatible with NotebookLM (PDF, web page, or YouTube URL)
     - Prioritize text-based content (PDFs, web pages) that NotebookLM can easily process and extract information from
     - YouTube videos should only be included when they provide unique value not available in text format
-    
-    **Search Approach:**
-    Use web search to find resources. Search terms should prioritize text-based content:
+
+    **Example Search Queries to Try:**
+    Use your search tool with queries like these (substitute with actual topics from the course):
     - "[book topic] university course materials"
     - "[book topic] university homework solutions pdf"
     - "[book topic] practice problems with solutions pdf"
@@ -145,7 +165,7 @@ resource_search_task:
 
     Use the output from the course_analysis_task to guide your search.
   expected_output: >
-    A curated list of 7-10 recommended resources that complement the student's book, each containing:
+    A curated list of 3-5 recommended resources that complement the student's book, each containing:
     
     - resource_title: Full title of the resource
     - resource_type: "open_textbook" | "video_lecture" | "lecture_series" | 
@@ -225,7 +245,7 @@ resource_validation_task:
     - Rejected: X
     - Average usefulness score: X.X
     
-    Only include APPROVED resources in the final list. Aim for 5-7 high-quality 
+    Only include APPROVED resources in the final list. Aim for 3-5 high-quality 
     approved resources total. If fewer than 5 pass validation, note this in the output.
   agent: resource_validator_agent
 

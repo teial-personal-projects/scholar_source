@@ -52,6 +52,12 @@ def _run_crew_worker(job_id: str, inputs: Dict[str, str]) -> None:
         job_id: UUID of the job
         inputs: Course input parameters
     """
+    # Check if job was cancelled before starting
+    job = get_job(job_id)
+    if job and job.get("status") == "cancelled":
+        print(f"[INFO] Job {job_id} was cancelled before execution started")
+        return
+
     try:
         # Update status to running
         update_job_status(
@@ -137,6 +143,12 @@ def _run_crew_worker(job_id: str, inputs: Dict[str, str]) -> None:
         }
         if textbook_info:
             metadata["textbook_info"] = textbook_info
+
+        # Check if job was cancelled during execution
+        job = get_job(job_id)
+        if job and job.get("status") == "cancelled":
+            print(f"[INFO] Job {job_id} was cancelled during execution, discarding results")
+            return
 
         # Update job with results
         update_job_status(
