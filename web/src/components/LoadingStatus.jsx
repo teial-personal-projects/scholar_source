@@ -5,12 +5,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { getJobStatus } from '../api/client';
+import { getJobStatus, cancelJob } from '../api/client';
 import './LoadingStatus.css';
 
 export default function LoadingStatus({ jobId, onComplete, onError }) {
   const [status, setStatus] = useState('pending');
   const [statusMessage, setStatusMessage] = useState('Initializing...');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     let intervalId;
@@ -34,9 +35,12 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
             ...textbookInfo
           };
           onComplete(data.results, data.raw_output, data.search_title, courseInfo);
-        } else if (data.status === 'failed') {
+        } else if (data.status === 'failed' || data.status === 'cancelled') {
           clearInterval(intervalId);
-          onError(data.error || 'Job failed with unknown error');
+          const errorMsg = data.status === 'cancelled' 
+            ? 'Job was cancelled' 
+            : (data.error || 'Job failed with unknown error');
+          onError(errorMsg);
         }
       } catch (error) {
         clearInterval(intervalId);
@@ -69,6 +73,22 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
     }
   };
 
+  const handleCancel = async () => {
+    if (!confirm('Are you sure you want to cancel this job? The search will be stopped.')) {
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      await cancelJob(jobId);
+      // The status will update on the next poll, which will trigger the error handler
+    } catch (error) {
+      onError(error.message || 'Failed to cancel job');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <div className="loading-status-card">
       <div className="loading-spinner-container">
@@ -76,7 +96,19 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
       </div>
 
       <div className="loading-content">
-        <h3>Finding Resources</h3>
+        <div className="loading-header">
+          <h3>Finding Resources</h3>
+          {(status === 'pending' || status === 'running') && (
+            <button
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="cancel-button"
+              title="Cancel this job"
+            >
+              {isCancelling ? 'Cancelling...' : '✕ Cancel'}
+            </button>
+          )}
+        </div>
         <p className="status-message">{statusMessage}</p>
 
         <div className="progress-steps">

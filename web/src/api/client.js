@@ -55,6 +55,28 @@ export async function getJobStatus(jobId) {
 }
 
 /**
+ * Cancel a running or pending job
+ *
+ * @param {string} jobId - UUID of the job to cancel
+ * @returns {Promise<Object>} Cancellation response
+ */
+export async function cancelJob(jobId) {
+  const response = await fetch(`${API_BASE_URL}/api/cancel/${jobId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail?.message || 'Failed to cancel job');
+  }
+
+  return response.json();
+}
+
+/**
  * Check API health
  *
  * @returns {Promise<Object>} Health status
