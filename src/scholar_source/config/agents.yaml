@@ -90,5 +90,5 @@ output_formatter_agent:
     alongside their book, so you focus on presenting 5-7 high-quality resources 
     clearly and explaining how they complement the student's book. You make learning 
     technology accessible to everyone, regardless of their technical expertise.
-  llm: openai/gpt-4o
+  llm: openai/gpt-4o-mini
   verbose: true
