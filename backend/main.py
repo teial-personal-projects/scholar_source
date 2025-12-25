@@ -118,11 +118,14 @@ async def submit_job(request: CourseInputRequest):
         )
 
     try:
+        # Extract force_refresh from inputs (don't store in job inputs)
+        force_refresh = inputs.pop('force_refresh', False)
+        
         # Create job in database
         job_id = create_job(inputs)
 
-        # Start background crew execution
-        run_crew_async(job_id, inputs)
+        # Start background crew execution (pass force_refresh separately)
+        run_crew_async(job_id, inputs, force_refresh=force_refresh)
 
         return {
             "job_id": job_id,

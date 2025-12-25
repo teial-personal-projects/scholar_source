@@ -17,7 +17,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
     isbn: '',
     topics_list: '',
     email: '',
-    desired_resource_types: []
+    desired_resource_types: [],
+    force_refresh: false
   });
 
   const [validationError, setValidationError] = useState('');
@@ -26,10 +27,10 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
   const [isEmailExpanded, setIsEmailExpanded] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     // Clear validation error when user types
     if (validationError) {
@@ -124,7 +125,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       isbn: '',
       topics_list: '',
       email: '',
-      desired_resource_types: []
+      desired_resource_types: [],
+      force_refresh: false
     });
     setValidationError('');
     setIsDesiredResourcesExpanded(false);
@@ -165,6 +167,22 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           >
             Reset
           </button>
+        </div>
+
+        {/* Force Refresh Option */}
+        <div className="form-group force-refresh-group">
+          <label htmlFor="force_refresh" className="checkbox-label">
+            <input
+              type="checkbox"
+              id="force_refresh"
+              name="force_refresh"
+              checked={formData.force_refresh}
+              onChange={handleChange}
+              disabled={isLoading}
+            />
+            <span>🔄 Force refresh (bypass cache and get fresh results)</span>
+          </label>
+          <p className="form-hint">Check this to ignore cached results and search for the latest resources. This may take longer but ensures you get the most up-to-date results.</p>
         </div>
 
         {/* Search Parameters Section */}

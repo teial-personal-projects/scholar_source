@@ -288,8 +288,22 @@
   border-left: 3px solid var(--color-primary);
 }
 
+/* Force Refresh Group */
+.force-refresh-group {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background-color: rgba(99, 102, 241, 0.05);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.force-refresh-group .checkbox-label {
+  margin-bottom: var(--spacing-xs);
+}
+
 /* Field Hints */
-.form-group .field-hint {
+.form-group .field-hint,
+.form-group .form-hint {
   margin: var(--spacing-xs) 0 0 0;
   font-size: 13px;
   color: var(--color-text-muted);
