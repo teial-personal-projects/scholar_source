@@ -9,7 +9,7 @@ invalidation when agent/task configurations change.
 """
 
 import hashlib
-import json
+import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -24,11 +24,6 @@ CONFIG_DIR = Path(__file__).parent.parent / "src" / "scholar_source" / "config"
 AGENTS_CONFIG_PATH = CONFIG_DIR / "agents.yaml"
 TASKS_CONFIG_PATH = CONFIG_DIR / "tasks.yaml"
 
-# Cache TTL Configuration
-# Can be overridden via environment variable CACHE_TTL_DAYS
-# Set to None for no expiration (not recommended for resource discovery)
-import os
-CACHE_TTL_DAYS = int(os.getenv('CACHE_TTL_DAYS', '7'))  # Default: 7 days
 
 # Separate TTL for course analysis vs full results
 # Course analysis (textbook extraction, topics) changes less frequently
