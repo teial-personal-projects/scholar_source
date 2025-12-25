@@ -10,28 +10,53 @@ course_analysis_task:
     - These extracted URLs will be used by other agents to find relevant study materials
     - This prevents infinite redirect loops while still capturing all course resources
 
-    **VALIDATION:** If course_url provided, use WebsiteSearchTool with website={course_url} and search_query="textbook syllabus course description" to access content. If book_url provided, use WebsiteSearchTool similarly. If neither accessible, return "ERROR: Cannot access provided resources."
+    **VALIDATION:** If course_url provided, use WebsiteSearchTool with website={course_url} and search_query="textbook" to access content. If book_url provided, use WebsiteSearchTool similarly. If neither accessible, return "ERROR: Cannot access provided resources."
 
     **EXTRACTION:**
-    1. Course page: Use WebsiteSearchTool with website={course_url} and search_query="Textbook" or "Required Text" to find textbook info. Then search with search_query="Syllabus" or "Course Outline" for syllabus. Extract exact titles/authors/ISBNs.
-    2. Syllabus ONLY: If you find a syllabus link on the main course page, you may visit it ONCE to extract textbook info and topics. Do not follow any other links from the syllabus.
-    3. Textbook ToC: Search web for "[title] [author] table of contents" to get chapter topics.
+    1. Course page textbook extraction - CRITICAL: 
+       - Use WebsiteSearchTool MULTIPLE times with different search queries to ensure you capture all content:
+         * First: website={course_url}, search_query="Textbook"
+         * Second: website={course_url}, search_query="Text:"  
+         * Third: website={course_url}, search_query="Required Text"
+         * Fourth: website={course_url}, search_query="Course Materials"
+         * Fifth: website={course_url}, search_query="" (empty string to get full page content)
+       - The textbook info appears as: "Textbook:" (label) followed by the book info on same or next line
+       - EXACT format example: "Textbook:\nEngineering Mechanics: Statics, Bedford, Fowler"
+       - Look for ANY text that contains book titles and author names together
+       - Common patterns: "Textbook: [Title], [Author1], [Author2]" or "Text: [Title] by [Author]"
+       - Extract the COMPLETE text that follows "Textbook:" or "Text:" labels
+       - Parse: Everything before the first comma is usually the title, everything after is author(s)
+       - Example: "Engineering Mechanics: Statics, Bedford, Fowler" → title="Engineering Mechanics: Statics", authors="Bedford, Fowler"
+       - If you see author names like "Bedford" or "Fowler" anywhere in the results, look for nearby book titles
+       - CRITICAL: If ANY WebsiteSearchTool call returns content containing both a book title and author names, you MUST extract them
+       - Don't give up if first query doesn't work - the empty string query ("") will return full page content
+       - Also look for syllabus links (may be relative URLs like "../documents/syllabus.pdf")
+    2. Syllabus: If you find a syllabus link, convert relative URLs to absolute URLs using the course page domain. You may visit the syllabus ONCE if it's an HTML page (skip PDFs). Extract textbook info and topics from syllabus.
+    3. Textbook ToC: If you found a textbook title and author, search web for "[title] [author] table of contents" to get chapter topics.
     4. Topics:
        - **IF user provided topics_list:** Use those topics as PRIMARY focus. Still identify general course subject, but mark user topics as the priority search targets.
-       - **IF NO topics_list:** Combine topics from course page, syllabus, textbook ToC to get comprehensive list.
+       - **IF NO topics_list:** Combine topics from course description, syllabus, textbook ToC to get comprehensive list. Even if limited info, extract what's available (e.g., "Statics", "Linear Algebra", "Vector Methods").
        - Always include both user_specified_topics (if any) and general_course_topics in output so downstream agents know what to prioritize.
 
-    **ERROR IF:** Zero topics from all sources → "ERROR: Cannot determine course topics. Provide textbook PDF or topics list."
+    **ERROR IF:** Zero topics AND no textbook found AND no course description → "ERROR: Cannot determine course topics. Provide textbook PDF or topics list."
+
+    **IMPORTANT:** If you find the textbook but limited topic information, that's OK. Extract what's available from the course description (e.g., "Statics", "Linear Algebra") and proceed. The resource discovery agent will use the textbook ToC to find more detailed topics.
 
     **WEBSITESEARCHTOOL USAGE:** Call with website parameter set to the full URL (e.g., website="https://www.mccormick.northwestern.edu/civil-environmental/academics/courses/descriptions/GEN_ENG%20205-2.html") and search_query parameter set to what you're looking for (e.g., search_query="textbook").
+
+    **IMPORTANT:** Only use WebsiteSearchTool on HTML pages (URLs ending in .html, .htm, .php, or no file extension). DO NOT use it on PDF files (.pdf), images (.jpg, .png), or other binary files. If you encounter binary data or an error, skip that URL and continue.
 
     Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list}, {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url}, {desired_resource_types}
   expected_output: >
     A structured analysis containing:
 
-    - course_title: The course name from the course page (e.g., "Engineering Analysis: Statics")
+    - course_title: The course name from the course page (e.g., "Engineering Analysis II")
     - course_number: The course number (e.g., "GEN_ENG 205-2")
-    - official_textbooks: Textbook title, author, edition, ISBN if found on course page
+    - textbook_title: Full textbook title (e.g., "Engineering Mechanics: Statics") - REQUIRED if found on page
+    - textbook_author: Author name(s) (e.g., "Bedford, Fowler") - REQUIRED if found on page
+    - textbook_edition: Edition if specified (e.g., "5th edition")
+    - textbook_isbn: ISBN if found
+    - textbook_source: Where textbook info came from ("course_page", "user_provided", "not_found")
     - syllabus_url: URL to syllabus if found on course page
     - user_specified_topics: Topics from user's topics_list input (e.g., ["line integrals", "surface integrals"]) - EMPTY if not provided
     - general_course_topics: Comprehensive list of ALL topics from textbook ToC, syllabus, course page
@@ -39,8 +64,17 @@ course_analysis_task:
       "Centroids", "Centers of Mass", "Moments of Inertia", "Friction", "Internal Forces", "Virtual Work"])
     - search_priority: "user_topics" if user_specified_topics is non-empty, otherwise "general_topics"
     - course_level: "introductory" | "intermediate" | "advanced" | "professional"
-    - textbook_source: Where textbook info came from ("course_page", "user_provided", "not_found")
     - subject_keywords: List of keywords describing the subject based on topics (e.g., ["statics", "mechanics", "forces", "equilibrium"])
+
+    **CRITICAL OUTPUT REQUIREMENT:**
+    After running ALL WebsiteSearchTool queries, examine the results for textbook information:
+    - Look for book titles containing colons (e.g., "Engineering Mechanics: Statics")
+    - Look for author last names (e.g., "Bedford", "Fowler")
+    - If you see BOTH together (e.g., "Engineering Mechanics: Statics, Bedford, Fowler"), parse into separate fields
+    - Split by first comma: everything before = title, everything after = author(s)
+    - You MUST output textbook_title and textbook_author if found, even if format is ambiguous
+    - If uncertain about parsing, include both fields with your best interpretation
+    - These fields are CRITICAL for the frontend display
 
     Format as a clean JSON object or structured text that subsequent agents can easily parse.
   agent: course_intelligence_agent
@@ -67,7 +101,13 @@ resource_search_task:
       * "lecture_videos" → resource_type="video_lecture" or "lecture_series" or "educational_video"
     - If empty/null, use priority order: (1) Practice problems, (2) Open textbooks, (3) Course materials, (4) Platform content, (5) Papers
 
-    **SEARCH TOOL:** Use "Search the internet with Serper" with simple string queries like "statics practice problems MIT". Perform 5-7 targeted searches.
+    **SEARCH TOOL USAGE - CRITICAL:**
+    You have access to "Search the internet with Serper" tool. 
+    - Call the tool with ONLY a string value for search_query parameter
+    - Example: search_query="statics practice problems MIT"
+    - DO NOT pass dictionaries, objects, or complex structures
+    - DO NOT pass description, metadata, or other fields - ONLY the search_query string
+    - Perform 5-7 targeted searches, each with a simple string query
 
     **QUALITY:** Free, legal, US sources only. NotebookLM compatible (PDF/web/YouTube). Prioritize text-based content. Match course level.
 
@@ -99,6 +139,8 @@ resource_validation_task:
     2. NotebookLM compatible (PDF/web/YouTube)
     3. Legal/licensed (no pirated content)
     4. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area. Use WebsiteSearchTool to check the actual content.
+       - ONLY use WebsiteSearchTool on HTML web pages (not PDFs, images, or binary files)
+       - For PDF resources, verify relevance from the URL, title, and source instead of trying to read content
        - For Vector Calculus course → REJECT probability, statistics, or unrelated math resources
        - For Renaissance History course → REJECT modern history, art history, or unrelated humanities resources
        - Verify course titles, topics, and descriptions match before approving
@@ -137,7 +179,10 @@ final_output_task:
     Create student-friendly resource guide for NotebookLM use.
 
     **STRUCTURE:**
-    1. Textbook info (title, author, source)
+    1. Textbook info - Extract from course_analysis_task output:
+       - Use textbook_title and textbook_author fields if present
+       - Use textbook_source to indicate where it was found
+       - If textbook info is missing, note that no textbook was specified
     2. Course overview (description, topics)
     3. **IF user_specified_topics were provided:** Add a clear note that resources were specifically searched for those topics (e.g., "These resources focus on your specified topics: line integrals, surface integrals")
     4. Resources (organized by type/topic, with URLs, descriptions, topics covered)
@@ -146,21 +191,32 @@ final_output_task:
 
     **FORMAT:** Clear headers, clickable URLs, bullet points, 2-4 pages. Tone: encouraging, clear, action-oriented.
 
+    **CRITICAL:** Check the course_analysis_task output for textbook_title and textbook_author fields. If they exist, include them in the Textbook Information section. If they don't exist, state "No textbook information was found."
+
     Use validated resources and course analysis from previous tasks.
   expected_output: >
     A formatted markdown document ready to present to the student:
-    
+
     # Study Resources for [Course Name]
-    
+
+    ## Textbook Information
+    **Textbook:** [Book Title]
+    **Author:** [Author Name(s)]
+    **Source:** [Where found - e.g., "Course Page", "User Provided"]
+
+    (If no textbook found, omit this section)
+
+    ---
+
     ## 📚 Course Overview
     [2-3 sentence description of what this course covers and what students will learn]
-    
+
     **Key Topics:**
     - Topic 1
     - Topic 2
     - Topic 3
     [etc.]
-    
+
     ---
     
     ## 🎯 Recommended Resources

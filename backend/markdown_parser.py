@@ -340,7 +340,9 @@ def _extract_textbook_info(content: str) -> Dict[str, str]:
         r'\*\*Textbook:\*\*\s*([^\n]+)',
         r'\*\*Text:\*\*\s*([^\n]+)',
         r'\*\*Official Textbook:\*\*\s*([^\n]+)',
-        r'Textbook:\s*([^\n]+)'  # Plain "Textbook: ..." format
+        r'(?:Textbook|Text):\s*([^\n]+)',  # Plain "Textbook:" or "Text:" format (same line)
+        r'(?:Textbook|Text):\s*\n\s*([^\n]+)',  # Textbook/Text on one line, value on next line
+        r'(?:\*\*Textbook:\*\*|\*\*Text:\*\*)\s*\n\s*([^\n]+)'  # Bold version with value on next line
     ]
 
     for pattern in textbook_patterns:
@@ -367,18 +369,30 @@ def _extract_textbook_info(content: str) -> Dict[str, str]:
                         "source": None
                     }
                 else:
-                    # Original format: "Author, Title"
-                    parts = section_text.split(',', 1)
-                    if len(parts) == 2:
-                        author = parts[0].strip()
-                        title = parts[1].strip()
-                        # Remove any trailing period
-                        title = title.rstrip('.')
-                        return {
-                            "title": title,
-                            "author": author,
-                            "source": None
-                        }
+                    # Try format: "Title, Author1, Author2" (e.g., "Engineering Mechanics: Statics, Bedford, Fowler")
+                    # Split by comma and check if first part looks like a title (contains colon or is long)
+                    parts = section_text.split(',')
+                    if len(parts) >= 2:
+                        first_part = parts[0].strip()
+                        # If first part has a colon or is longer than typical author name, it's likely the title
+                        if ':' in first_part or len(first_part) > 30:
+                            title = first_part
+                            # Everything after first comma is the author(s)
+                            author = ', '.join([p.strip() for p in parts[1:]]).rstrip('.')
+                            return {
+                                "title": title,
+                                "author": author,
+                                "source": None
+                            }
+                        else:
+                            # Original format: "Author, Title"
+                            author = first_part
+                            title = ', '.join([p.strip() for p in parts[1:]]).rstrip('.')
+                            return {
+                                "title": title,
+                                "author": author,
+                                "source": None
+                            }
 
             # Extract title
             title_match = re.search(r'(?:\*\*)?(?:Title|Book)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
