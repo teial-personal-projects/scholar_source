@@ -14,13 +14,17 @@ _logging_configured = False
 
 def configure_logging(
     log_level: str = "INFO",
-    log_file: Optional[str] = "cache.log",
-    log_dir: Optional[Path] = None
+    log_file: Optional[str] = None,
+    log_dir: Optional[Path] = None,
+    console_output: bool = True
 ) -> None:
     """
     Configure logging for the entire application.
 
     This should be called once at application startup. Subsequent calls are ignored.
+    
+    This configuration is designed to work alongside CrewAI's logging system.
+    It preserves existing handlers and ensures CrewAI loggers are properly configured.
 
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
@@ -34,37 +38,55 @@ def configure_logging(
 
     # Determine log directory
     if log_dir is None:
-        # Default to /logs directory in project root
-        log_dir = Path(__file__).parent.parent / "logs"
+        # Default to ./logs directory in project root (relative to backend/)
+        project_root = Path(__file__).parent.parent
+        log_dir = project_root / "logs"
 
     # Create log directory if it doesn't exist
     if log_file:
-        log_dir.mkdir(exist_ok=True)
+        log_dir.mkdir(exist_ok=True, parents=True)
+        # Verify directory was created
+        if not log_dir.exists():
+            raise OSError(f"Failed to create log directory: {log_dir}")
 
-    # Create handlers
-    handlers = []
+    # Configure logging ONLY for our application modules, not for CrewAI
+    # CrewAI uses print() statements for verbose output, not logging
+    # We don't want to interfere with CrewAI's output
+    
+    # Get root logger
+    root_logger = logging.getLogger()
+    
+    # Only configure if root logger has no handlers (to avoid interfering with CrewAI)
+    # If handlers already exist, don't add more
+    if not root_logger.handlers:
+        # Create handlers only for our application logging
+        handlers = []
 
-    # Console handler (always included)
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(
-        logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    )
-    handlers.append(console_handler)
+        # Console handler for our application logs (only if requested)
+        if console_output:
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(
+                logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            )
+            handlers.append(console_handler)
 
-    # File handler (optional)
-    if log_file:
-        file_handler = logging.FileHandler(log_dir / log_file)
-        file_handler.setFormatter(
-            logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        )
-        handlers.append(file_handler)
+        # File handler (optional) for our application logs
+        if log_file:
+            file_handler = logging.FileHandler(log_dir / log_file)
+            file_handler.setFormatter(
+                logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            )
+            handlers.append(file_handler)
 
-    # Configure root logger
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper()),
-        handlers=handlers,
-        force=True  # Override any existing configuration
-    )
+        # Configure root logger level
+        root_logger.setLevel(getattr(logging, log_level.upper()))
+
+        # Add our handlers to the root logger
+        for handler in handlers:
+            root_logger.addHandler(handler)
+    
+    # Don't configure CrewAI loggers - let CrewAI handle its own output
+    # CrewAI's verbose=True uses print() statements, not logging
 
     _logging_configured = True
 
@@ -84,10 +106,13 @@ def get_logger(name: str) -> logging.Logger:
     Returns:
         Logger instance
     """
-    # Auto-configure if not already done
-    if not _logging_configured:
-        configure_logging()
-
+    # DON'T auto-configure - let the application explicitly configure logging
+    # Auto-configuring interferes with CrewAI's print() statements
+    # If logging isn't configured, Python's default logging will be used (which is fine)
+    # return logging.getLogger(name)
+    
+    # Actually, let's just return the logger without configuring
+    # The application should explicitly call configure_logging() if needed
     return logging.getLogger(name)
 
 
@@ -97,3 +122,15 @@ def set_debug_mode():
     global _logging_configured
     _logging_configured = False  # Reset to allow reconfiguration
     configure_logging(log_level="DEBUG")
+
+
+def ensure_crewai_logging():
+    """
+    No-op function - CrewAI uses print() statements, not logging.
+    
+    This function exists for compatibility but doesn't do anything.
+    CrewAI's verbose=True output goes directly to stdout via print().
+    """
+    # CrewAI doesn't use Python logging for verbose output
+    # It uses print() statements, so we don't need to configure anything
+    pass

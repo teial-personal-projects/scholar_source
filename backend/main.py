@@ -5,6 +5,7 @@ Main FastAPI application for ScholarSource web interface.
 Handles job submission and status polling.
 """
 
+import os
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from backend.models import (
@@ -15,6 +16,18 @@ from backend.models import (
 )
 from backend.jobs import create_job, get_job
 from backend.crew_runner import run_crew_async, validate_crew_inputs
+from backend.logging_config import configure_logging, get_logger
+
+# Configure centralized logging (console only, no log file)
+configure_logging(
+    log_level=os.getenv("LOG_LEVEL", "INFO"),
+    log_file=None,
+    console_output=True
+)
+
+# Get logger for this module
+logger = get_logger(__name__)
+logger.info("Starting ScholarSource API...")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -105,9 +118,12 @@ async def submit_job(request: CourseInputRequest):
     try:
         # Extract force_refresh from inputs (don't store in job inputs)
         force_refresh = inputs.pop('force_refresh', False)
-        
+
+        logger.info(f"Creating new job with inputs: {inputs}")
+
         # Create job in database
         job_id = create_job(inputs)
+        logger.info(f"Job created with ID: {job_id}")
 
         # Start background crew execution (pass force_refresh separately)
         run_crew_async(job_id, inputs, force_refresh=force_refresh)
@@ -119,6 +135,7 @@ async def submit_job(request: CourseInputRequest):
         }
 
     except Exception as e:
+        logger.error(f"Job creation failed: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail={

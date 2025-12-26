@@ -12,10 +12,6 @@ import traceback
 from io import StringIO
 from pathlib import Path
 from typing import Dict
-from backend.logging_config import get_logger
-
-# Configure logger
-logger = get_logger(__name__)
 
 # Add src to path to import ScholarSource
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -137,8 +133,8 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
         )
 
         if cached_analysis:
-            logger.info(f"✅ CACHE HIT - Job {job_id}: Using cached course analysis")
-            logger.debug(f"Cache data: textbook_title={cached_analysis.get('textbook_title', 'N/A')}")
+            print(f"✅ CACHE HIT - Job {job_id}: Using cached course analysis")
+            print(f"[DEBUG] Cache data: textbook_title={cached_analysis.get('textbook_title', 'N/A')}")
             update_job_status(
                 job_id,
                 status="running",
@@ -146,7 +142,7 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
             )
         else:
             cache_reason = "force_refresh=True" if force_refresh else "no cached data found"
-            logger.info(f"❌ CACHE MISS - Job {job_id}: Running fresh analysis ({cache_reason})")
+            print(f"❌ CACHE MISS - Job {job_id}: Running fresh analysis ({cache_reason})")
             update_job_status(
                 job_id,
                 status="running",
@@ -157,7 +153,12 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
         crew_instance = ScholarSource()
         crew = crew_instance.crew()
 
+        # Log that we're starting the crew
+        print(f"🚀 Starting CrewAI execution for job {job_id}")
+
         # Create async task for crew execution
+        # Note: CrewAI's verbose=True uses print() statements, not logging
+        # These will go to stdout/stderr and should appear in console
         crew_task = asyncio.create_task(crew.kickoff_async(inputs=normalized_inputs))
 
         # Store task so it can be cancelled
@@ -231,8 +232,9 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
 
             # Cache the results for future requests
             set_cached_analysis(normalized_inputs, analysis_results, cache_type="analysis")
-            logger.info(f"💾 CACHE STORED - Job {job_id}: Cached analysis for future use")
-            logger.debug(f"Cached: title='{textbook_info.get('title', 'N/A')}', author='{textbook_info.get('author', 'N/A')}'")
+            print(f"💾 CACHE STORED - Job {job_id}: Cached analysis for future use")
+            if textbook_info:
+                print(f"[DEBUG] Cached: title='{textbook_info.get('title', 'N/A')}', author='{textbook_info.get('author', 'N/A')}'")
 
         # Prepare metadata
         metadata = {
