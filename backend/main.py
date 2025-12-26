@@ -7,7 +7,6 @@ Handles job submission and status polling.
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
 from backend.models import (
     CourseInputRequest,
     JobSubmitResponse,
@@ -28,16 +27,16 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Vite dev server (primary port)
+        "http://localhost:3000",  # Vite dev server (legacy port)
         "http://127.0.0.1:3000",
-        "http://localhost:5173",  # Alternative Vite port (for reference)
+        "http://localhost:5173",  # Standard Vite port
         "http://127.0.0.1:5173",
-        # Add production origins when deploying
-        "https://scholar_source.pages.dev"
+        "https://scholar-source.pages.dev",  # Cloudflare Pages
+        # Add custom domain when configured:
         # "https://yourdomain.com",
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS"],  # OPTIONS required for CORS preflight
     allow_headers=["*"],
     expose_headers=["*"],
 )
@@ -68,12 +67,6 @@ async def health_check():
         "version": "0.1.0",
         "database": "skipped"
     }
-
-
-@app.options("/api/submit", tags=["Jobs"])
-async def submit_job_options():
-    """Handle CORS preflight for submit endpoint"""
-    return Response(status_code=200)
 
 
 @app.post("/api/submit", response_model=JobSubmitResponse, tags=["Jobs"])
