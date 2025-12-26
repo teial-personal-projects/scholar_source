@@ -217,11 +217,11 @@ SUPABASE_KEY=eyJhbGc...your_anon_key_here
 
 ### 2.5 Verify Backend Deployment
 
-1. Copy your Railway deployment URL (e.g., `https://your-app.up.railway.app`)
+1. Copy your Railway deployment URL (e.g., `https://scholarsource-dev.up.railway.app`)
 2. Test the health endpoint:
 
 ```bash
-curl https://your-app.up.railway.app/api/health
+curl https://scholarsource-dev.up.railway.app/api/health
 ```
 
 **Expected response:**

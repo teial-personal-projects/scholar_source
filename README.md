@@ -148,7 +148,14 @@ pip install uv
 crewai install
 ```
 
-3. **Set up environment variables** (`.env` file):
+3. **Update dependencies** (when adding/changing packages in `pyproject.toml`):
+```bash
+uv pip compile pyproject.toml -o requirements.txt
+git add requirements.txt
+git commit -m "Update dependencies"
+```
+
+4. **Set up environment variables** (`.env` file):
 ```bash
 # OpenAI API
 OPENAI_API_KEY=your_openai_api_key
@@ -161,7 +168,7 @@ SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_KEY=your_anon_or_service_role_key
 ```
 
-4. **Create Supabase database table**:
+5. **Create Supabase database table**:
 
 Go to Supabase Dashboard → SQL Editor and run:
 
