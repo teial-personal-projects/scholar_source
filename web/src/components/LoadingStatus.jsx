@@ -39,6 +39,7 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
         // Check if job is complete or failed
         if (data.status === 'completed') {
           clearInterval(intervalId);
+
           const textbookInfo = data.metadata?.textbook_info || null;
           // Pass course and book info for display
           const courseInfo = {
