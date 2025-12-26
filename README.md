@@ -30,7 +30,7 @@ ScholarSource is a full-stack application with a modern, scalable architecture:
 │  React + Vite Frontend (Cloudflare Pages - Free)                │
 │  - Course/Book input form (9 optional fields)                    │
 │  - Real-time job status polling                                  │
-│  - Results table with shareable links                            │
+│  - Results table with resource links                             │
 │  - Export to NotebookLM functionality                            │
 └────────────────────────┬────────────────────────────────────────┘
                          │
@@ -59,7 +59,7 @@ ScholarSource is a full-stack application with a modern, scalable architecture:
 │  Supabase PostgreSQL (Free tier / $25/mo Pro)                   │
 │  - Jobs table (UUID-based, persistent storage)                  │
 │  - Job states: pending → running → completed/failed             │
-│  - Shareable links that survive server restarts                 │
+│  - Persistent job results that survive server restarts          │
 │  - JSONB fields for flexible data storage                       │
 └────────────────────────┬────────────────────────────────────────┘
                          │
@@ -418,7 +418,7 @@ Get job status and results (for polling).
 ```
 
 ### `GET /api/results/{job_id}`
-Get completed job results (for shareable links).
+Get completed job results.
 
 Returns 404 if job doesn't exist or isn't completed yet.
 

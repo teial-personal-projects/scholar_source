@@ -187,7 +187,15 @@ def _parse_all_links(content: str) -> List[Dict[str, Any]]:
 
 
 def _extract_url(text: str) -> str:
-    """Extract URL from text block"""
+    """
+    Extract URL from text block using multiple patterns.
+
+    Args:
+        text: Text block to search for URLs
+
+    Returns:
+        URL string if found, empty string otherwise
+    """
     # Try markdown link format first
     link_match = re.search(r'\[.*?\]\((https?://[^\)]+)\)', text)
     if link_match:
@@ -207,7 +215,15 @@ def _extract_url(text: str) -> str:
 
 
 def _extract_source(text: str) -> str:
-    """Extract source/provider from text"""
+    """
+    Extract source/provider information from text.
+
+    Args:
+        text: Text block to search for source information
+
+    Returns:
+        Source name if found, empty string otherwise
+    """
     source_patterns = [
         r'(?:Source|Provider|From):\s*([^\n\-\*]+)',
         r'\(([^)]*(?:MIT|Stanford|OpenStax|Khan|Coursera|edX|LibreTexts)[^)]*)\)',
@@ -224,7 +240,15 @@ def _extract_source(text: str) -> str:
 
 
 def _extract_description(text: str) -> str:
-    """Extract description from text block"""
+    """
+    Extract description from text block.
+
+    Args:
+        text: Text block to search for descriptions
+
+    Returns:
+        Description string if found, None otherwise
+    """
     desc_patterns = [
         r'(?:What it covers|Description|Best for):\s*([^\n]+)',
         r'[-•]\s*([^\n]{30,200})'  # Bullet points with substantial text
@@ -239,7 +263,16 @@ def _extract_description(text: str) -> str:
 
 
 def _extract_title_from_context(context: str, url: str) -> str:
-    """Extract title from context around URL"""
+    """
+    Extract title from context surrounding a URL.
+
+    Args:
+        context: Text context around the URL
+        url: The URL to extract title for
+
+    Returns:
+        Title string if found, None otherwise
+    """
     # Try to find text before the URL that looks like a title
     before_url = context[:context.find(url)]
     title_match = re.search(r'(?:\*\*|##)\s*([^\*\#\n]+?)(?:\*\*|##|\n|$)', before_url)
@@ -255,7 +288,15 @@ def _extract_title_from_context(context: str, url: str) -> str:
 
 
 def _extract_type_from_context(context: str) -> str:
-    """Extract resource type from context"""
+    """
+    Extract resource type from surrounding context.
+
+    Args:
+        context: Text context to search
+
+    Returns:
+        Normalized resource type string
+    """
     type_match = re.search(r'(?:Type|Format):\s*([^\n\)\-]+)', context, re.IGNORECASE)
     if type_match:
         return _normalize_type(type_match.group(1).strip())
@@ -264,7 +305,15 @@ def _extract_type_from_context(context: str) -> str:
 
 
 def _infer_type_from_url(url: str) -> str:
-    """Infer resource type from URL"""
+    """
+    Infer resource type by analyzing URL patterns.
+
+    Args:
+        url: URL to analyze
+
+    Returns:
+        Inferred resource type (Video, PDF, Textbook, Course, etc.)
+    """
     url_lower = url.lower()
 
     if 'youtube.com' in url_lower or 'youtu.be' in url_lower:
@@ -282,7 +331,15 @@ def _infer_type_from_url(url: str) -> str:
 
 
 def _normalize_type(type_str: str) -> str:
-    """Normalize resource type to standard categories"""
+    """
+    Normalize resource type to standard categories.
+
+    Args:
+        type_str: Raw type string from parsing
+
+    Returns:
+        Normalized type (Textbook, Video, Course, Notes, etc.)
+    """
     type_lower = type_str.lower()
 
     type_map = {
@@ -312,7 +369,15 @@ def _normalize_type(type_str: str) -> str:
 
 
 def _extract_domain(url: str) -> str:
-    """Extract domain name from URL for source"""
+    """
+    Extract and clean domain name from URL for use as source.
+
+    Args:
+        url: Full URL
+
+    Returns:
+        Cleaned domain name (e.g., "mit.edu" becomes "Mit")
+    """
     domain_match = re.search(r'https?://(?:www\.)?([^/]+)', url)
     if domain_match:
         domain = domain_match.group(1)
