@@ -9,7 +9,6 @@ from typing import Optional, List
 from datetime import datetime
 import re
 
-
 class CourseInputRequest(BaseModel):
     """Request model for course input form submission"""
 
