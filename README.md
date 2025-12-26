@@ -19,6 +19,79 @@ Students often struggle to find supplementary learning materials that align with
 
 ---
 
+## ⚡ Quick Start
+
+Get ScholarSource running locally in 5 minutes!
+
+### Prerequisites
+- Python >=3.10 <3.13 with virtual environment
+- Node.js >=18 and npm
+- Supabase project with jobs table created
+- Environment variables configured (see [Installation](#-installation) for details)
+
+### 1. Install Dependencies
+
+**Backend:**
+```bash
+# From project root
+pip install -e .
+```
+
+**Frontend:**
+```bash
+cd web
+npm install
+```
+
+### 2. Start Services
+
+Open two terminal windows:
+
+**Terminal 1 - Backend:**
+```bash
+source .venv/bin/activate
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+✅ Backend running at: http://localhost:8000
+
+**Terminal 2 - Frontend:**
+```bash
+cd web
+npm run dev
+```
+✅ Frontend running at: http://localhost:5173
+
+### 3. Test It!
+
+1. Open http://localhost:5173 in your browser
+2. Fill in "Course Name" field (e.g., "Introduction to Algorithms")
+3. Click "Find Resources"
+4. Wait 1-5 minutes for AI agents to discover resources
+5. Copy URLs and paste into NotebookLM!
+
+### Verify It's Working
+
+**Check Backend Health:**
+```bash
+curl http://localhost:8000/api/health
+```
+
+Should return:
+```json
+{
+  "status": "healthy",
+  "version": "0.1.0",
+  "database": "connected"
+}
+```
+
+**Check Frontend:**
+Open http://localhost:5173 - you should see the course input form.
+
+> **Need help?** See the [Troubleshooting](#-troubleshooting) section below for common issues.
+
+---
+
 ## 🏗️ Architecture
 
 ScholarSource is a full-stack application with a modern, scalable architecture:
@@ -217,6 +290,8 @@ VITE_API_URL=http://localhost:8000
 
 ## 🎮 Running the Application
 
+> **First time?** See the [Quick Start](#-quick-start) section above for a streamlined setup guide.
+
 ### Development Mode
 
 **Terminal 1 - Start Backend API:**
@@ -234,6 +309,12 @@ npm run dev
 ```
 
 **Access the app:** http://localhost:5173
+
+**Development Workflow:**
+1. Both servers auto-reload on file changes
+2. Make changes to backend code → backend auto-reloads
+3. Make changes to frontend code → frontend hot-reloads in browser
+4. Test changes immediately without manual restarts
 
 ### CLI Testing (Without Web UI)
 
@@ -587,6 +668,19 @@ npm run dev
 
 ## 🛠️ Troubleshooting
 
+### Startup Issues
+
+**Problem**: Backend won't start
+- **Check**: `.env` has `SUPABASE_URL` and `SUPABASE_KEY` configured
+- **Check**: Virtual environment is activated (`source .venv/bin/activate`)
+- **Check**: Dependencies installed correctly (`pip install -e .`)
+- **Check**: Port 8000 isn't already in use
+
+**Problem**: Frontend won't start
+- **Check**: Dependencies installed (`cd web && npm install`)
+- **Check**: Port 5173 isn't already in use
+- **Check**: `VITE_API_URL` set in `web/.env.local`
+
 ### CrewAI Execution Issues
 
 **Problem**: Agents can't find resources
@@ -602,8 +696,8 @@ npm run dev
 ### API Connection Issues
 
 **Problem**: Frontend can't connect to backend
-- **Check**: CORS is configured in `backend/main.py` for frontend origin
-- **Check**: `VITE_API_URL` in `web/.env.local` matches backend URL
+- **Check**: CORS is configured in `backend/main.py` for frontend origin (should include `http://localhost:5173`)
+- **Check**: `VITE_API_URL` in `web/.env.local` matches backend URL (`http://localhost:8000`)
 - **Check**: Backend is running on expected port (8000)
 
 **Problem**: 404 on `/api/status/{job_id}`
@@ -615,8 +709,9 @@ npm run dev
 
 **Problem**: Jobs not persisting
 - **Check**: Supabase credentials in `.env`
-- **Check**: `jobs` table exists (run SQL schema from Installation section)
+- **Check**: `jobs` table exists (run SQL schema from [Installation](#-installation) section)
 - **Check**: Row Level Security policies are set correctly
+- **Check**: Supabase project is active (not paused)
 
 ---
 
