@@ -103,19 +103,19 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
   };
 
   return (
-    <div className="bg-transparent rounded-xl p-0 text-center">
+    <div className="bg-transparent rounded-2xl p-0 text-center">
       <div className="mb-8 flex justify-center">
-        <div className="w-14 h-14 border-4 border-gray-100 border-t-primary rounded-full animate-spin motion-reduce:animate-none"></div>
+        <div className="w-14 h-14 border-4 border-slate-200 border-t-primary rounded-full animate-spin motion-reduce:animate-none"></div>
       </div>
 
       <div>
         <div className="flex justify-between items-center mb-6 gap-4 w-full relative">
-          <h3 className="m-0 text-2xl font-bold text-green-800 text-center tracking-tight flex-1">Finding Resources</h3>
+          <h3 className="m-0 text-2xl font-bold text-slate-900 text-center tracking-tight flex-1">Finding Resources</h3>
           {(status === 'pending' || status === 'running') && (
             <button
               onClick={handleCancel}
               disabled={isCancelling}
-              className="px-5 py-2.5 bg-gradient-to-br from-red-500 to-red-600 text-white border-2 border-white/30 rounded-lg text-sm font-bold cursor-pointer transition-all whitespace-nowrap shadow-md flex-shrink-0 min-w-[100px] hover:not(:disabled):bg-gradient-to-br hover:not(:disabled):from-red-600 hover:not(:disabled):to-red-700 hover:not(:disabled):border-white/50 hover:not(:disabled):scale-105 hover:not(:disabled):shadow-lg active:not(:disabled):scale-100 active:not(:disabled):shadow-md disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-gradient-to-br disabled:from-gray-400 disabled:to-gray-500 motion-reduce:hover:not(:disabled):scale-100"
+              className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm flex-shrink-0 min-w-[100px] hover:not(:disabled):shadow-md hover:not(:disabled):-translate-y-0.5 hover:not(:disabled):from-red-600 hover:not(:disabled):to-red-700 active:not(:disabled):translate-y-0 active:not(:disabled):shadow-sm disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:hover:not(:disabled):translate-y-0 focus:outline-none focus:ring-4 focus:ring-red-500/20 focus:ring-offset-2"
               title="Cancel this job"
               type="button"
             >
@@ -124,44 +124,44 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
           )}
         </div>
         {textbookInfo && (textbookInfo.book_title || textbookInfo.book_author) && (
-          <div className="m-0 mb-4 p-4 bg-white/30 rounded-lg border-l-[3px] border-green-800">
-            <p className="m-0 mb-1 text-xs text-green-700 font-semibold uppercase tracking-wide">📚 Searching for resources matching:</p>
-            <p className="m-0 text-base text-green-800 font-bold">
+          <div className="m-0 mb-4 p-4 bg-white/40 backdrop-blur rounded-xl border-l-4 border-primary">
+            <p className="m-0 mb-1 text-xs text-slate-600 font-semibold uppercase tracking-wide">📚 Searching for resources matching:</p>
+            <p className="m-0 text-base text-slate-900 font-bold">
               {textbookInfo.book_title}
               {textbookInfo.book_author && ` by ${textbookInfo.book_author}`}
             </p>
           </div>
         )}
-        <p className="m-0 mb-8 text-base text-green-700 font-medium">{statusMessage}</p>
+        <p className="m-0 mb-8 text-base text-slate-700 font-medium">{statusMessage}</p>
 
         <div className="flex justify-center gap-8 mb-6 flex-wrap">
           <div className={`flex flex-col items-center gap-2 transition-opacity ${status !== 'pending' ? 'opacity-100' : 'opacity-40'}`}>
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all border-2 ${
               status !== 'pending'
                 ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-primary shadow-md scale-110 motion-reduce:scale-100'
-                : 'bg-gray-100 text-gray-500 border-gray-200'
+                : 'bg-slate-100 text-slate-500 border-slate-200'
             }`}>1</div>
-            <div className="text-xs text-green-700 font-semibold text-center">Analyzing Course</div>
+            <div className="text-xs text-slate-700 font-semibold text-center">Analyzing Course</div>
           </div>
           <div className={`flex flex-col items-center gap-2 transition-opacity ${status === 'completed' ? 'opacity-100' : 'opacity-40'}`}>
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all border-2 ${
               status === 'completed'
                 ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-primary shadow-md scale-110 motion-reduce:scale-100'
-                : 'bg-gray-100 text-gray-500 border-gray-200'
+                : 'bg-slate-100 text-slate-500 border-slate-200'
             }`}>2</div>
-            <div className="text-xs text-green-700 font-semibold text-center">Discovering Resources</div>
+            <div className="text-xs text-slate-700 font-semibold text-center">Discovering Resources</div>
           </div>
           <div className={`flex flex-col items-center gap-2 transition-opacity ${status === 'completed' ? 'opacity-100' : 'opacity-40'}`}>
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all border-2 ${
               status === 'completed'
                 ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-primary shadow-md scale-110 motion-reduce:scale-100'
-                : 'bg-gray-100 text-gray-500 border-gray-200'
+                : 'bg-slate-100 text-slate-500 border-slate-200'
             }`}>3</div>
-            <div className="text-xs text-green-700 font-semibold text-center">Validating Quality</div>
+            <div className="text-xs text-slate-700 font-semibold text-center">Validating Quality</div>
           </div>
         </div>
 
-        <p className="m-0 text-sm text-green-700 italic">This may take 1-5 minutes...</p>
+        <p className="m-0 text-sm text-slate-600 italic">This may take 1-5 minutes...</p>
       </div>
     </div>
   );

@@ -9,9 +9,7 @@
   }
 
   :root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -19,11 +17,15 @@
   }
 
   body {
-    @apply m-0 p-0 min-w-[320px] min-h-screen;
+    @apply m-0 p-0 min-w-[320px] min-h-screen text-base leading-relaxed;
+    font-size: 16px;
+    line-height: 1.6;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply m-0 font-semibold;
+    @apply m-0 font-serif;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 600; /* semibold as recommended */
   }
 
   p {
@@ -31,7 +33,7 @@
   }
 
   a {
-    @apply text-purple-600 no-underline;
+    @apply text-blue-600 no-underline;
   }
 
   a:hover {
@@ -47,7 +49,7 @@
   }
 
   button:focus-visible {
-    @apply outline-2 outline-purple-600 outline-offset-2;
+    @apply outline-2 outline-blue-600 outline-offset-2;
   }
 
   #root {

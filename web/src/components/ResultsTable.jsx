@@ -58,30 +58,30 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
   if (!resources || resources.length === 0) {
     return (
-      <div className="relative bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-8 shadow-lg border-2 border-green-200 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(34,197,94,0.05)_0%,transparent_70%)] before:animate-[pulseGreen_4s_ease-in-out_infinite] before:pointer-events-none hover:border-green-300 hover:shadow-xl">
+      <div className="relative rounded-2xl bg-white/80 backdrop-blur p-6 sm:p-8 border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)] border border-indigo-200/70 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] before:pointer-events-none hover:border-indigo-300 hover:shadow-xl">
         <div className="p-12 text-center">
           <div className="text-6xl mb-6 opacity-50">📭</div>
-          <h3 className="m-0 mb-4 text-xl font-bold text-gray-800">No resources found</h3>
-          <p className="m-0 text-base text-gray-600 leading-relaxed">Try adjusting your search criteria or selecting a different search type.</p>
+          <h3 className="m-0 mb-4 text-xl font-bold text-slate-800">No resources found</h3>
+          <p className="m-0 text-base text-slate-600 leading-relaxed">Try adjusting your search criteria or selecting a different search type.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-8 shadow-lg border-2 border-green-200 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(34,197,94,0.05)_0%,transparent_70%)] before:animate-[pulseGreen_4s_ease-in-out_infinite] before:pointer-events-none hover:border-green-300 hover:shadow-xl">
-      <div className="flex justify-between items-start mb-8 gap-4 flex-wrap pb-4 border-b-2 border-gray-100">
+    <div className="relative rounded-2xl bg-white/80 backdrop-blur p-6 sm:p-8 border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)] border border-indigo-200/70 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] before:pointer-events-none hover:border-indigo-300 hover:shadow-xl">
+      <div className="flex justify-between items-start mb-8 gap-4 flex-wrap pb-4 border-b border-slate-200/60">
         <div>
-          <h2 className="m-0 text-2xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
+          <h2 className="m-0 text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             Discovered Resources
             <span className="inline-flex items-center justify-center min-w-[32px] h-8 px-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-full text-sm font-bold shadow-sm ml-2">{resources.length}</span>
           </h2>
-          {searchTitle && <p className="mt-1 mb-0 text-sm text-gray-600 font-medium">{searchTitle}</p>}
+          {searchTitle && <p className="mt-1 mb-0 text-sm text-slate-600 font-medium">{searchTitle}</p>}
         </div>
-        <div className="flex gap-2 flex-wrap max-md:w-full">
+        <div className="flex gap-2 flex-shrink-0 flex-wrap max-md:w-full">
           <button
             onClick={copyAllUrls}
-            className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 max-md:flex-1"
+            className="px-4 py-2.5 bg-blue-600 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-blue-700 hover:shadow-md active:translate-y-0 max-md:flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             title="Copy all URLs for NotebookLM"
           >
             {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
@@ -89,7 +89,7 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
           {onClear && (
             <button
               onClick={onClear}
-              className="px-5 py-2.5 bg-gray-50 text-gray-600 border-2 border-gray-200 rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-gray-100 hover:border-primary-light hover:-translate-y-px active:translate-y-0 max-md:flex-1"
+              className="px-4 py-2.5 bg-cyan-500 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-cyan-600 hover:shadow-md active:translate-y-0 max-md:flex-1 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
               title="Clear results"
             >
               🗑️ Clear Results
@@ -124,7 +124,7 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
         className={`relative flex flex-col gap-6 max-h-[600px] overflow-y-auto pr-2 after:content-['↓_Scroll_for_more'] after:sticky after:bottom-0 after:left-0 after:right-0 after:flex after:items-center after:justify-center after:p-4 after:bg-gradient-to-t after:from-white/95 after:via-white/80 after:to-transparent after:text-primary after:text-xs after:font-bold after:text-center after:pointer-events-none after:opacity-0 after:transition-opacity after:backdrop-blur-sm ${isScrolledToBottom ? '' : 'after:opacity-100'} [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-primary [&::-webkit-scrollbar-thumb]:to-primary-dark [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-all hover:[&::-webkit-scrollbar-thumb]:from-primary-dark hover:[&::-webkit-scrollbar-thumb]:to-indigo-800`}
       >
         {resources.map((resource, index) => (
-          <div key={index} className="relative p-8 border-2 border-gray-100 rounded-xl bg-gradient-to-br from-white to-gray-50 transition-all overflow-visible shadow-sm hover:border-primary-light hover:shadow-lg hover:-translate-y-1 hover:from-white hover:to-gray-100">
+          <div key={index} className="relative p-8 border border-slate-200/60 rounded-xl bg-gradient-to-br from-white to-gray-50 transition-all overflow-visible shadow-sm hover:border-primary-light hover:shadow-lg hover:-translate-y-1 hover:from-white hover:to-gray-100">
             <div className="flex items-start gap-4 mb-6 flex-wrap">
               <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${
                 resource.type?.toUpperCase().includes('PDF') || resource.type?.toUpperCase().includes('TEXTBOOK')
@@ -135,11 +135,11 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
                   ? 'bg-gradient-to-br from-green-100 to-green-200 text-green-900'
                   : resource.type?.toUpperCase().includes('WEBSITE') || resource.type?.toUpperCase().includes('WEB')
                   ? 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-900'
-                  : 'bg-gray-100 text-gray-600'
+                  : 'bg-gray-100 text-slate-600'
               }`}>
                 {resource.type}
               </span>
-              <h3 className="m-0 text-xl font-bold text-gray-800 flex-1 tracking-tight leading-snug">{resource.title}</h3>
+              <h3 className="m-0 text-xl font-bold text-slate-800 flex-1 tracking-tight leading-snug">{resource.title}</h3>
             </div>
 
             <div className="flex items-center gap-2 mb-4 py-3 px-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-gray-100 transition-all min-h-[50px] overflow-visible hover:from-slate-100 hover:to-slate-200 hover:border-primary-light">
@@ -164,7 +164,7 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
         ))}
       </div>
 
-      <div className="mt-8 pt-6 border-t-2 border-gray-100">
+      <div className="mt-8 pt-6 border-t border-slate-200/60">
         <div className="py-4 px-6 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-primary rounded-lg text-sm text-blue-900 leading-relaxed shadow-sm">
           💡 <strong className="font-bold">Tip:</strong> Click "Copy All URLs" above, then paste them into{' '}
           <a
