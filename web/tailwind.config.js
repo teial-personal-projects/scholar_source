@@ -31,10 +31,15 @@ export default {
           '0%, 100%': { transform: 'scale(1)', opacity: '0.3' },
           '50%': { transform: 'scale(1.1)', opacity: '0.5' },
         },
+        pulseGreen: {
+          '0%, 100%': { transform: 'scale(1)', opacity: '0.3' },
+          '50%': { transform: 'scale(1.1)', opacity: '0.5' },
+        },
       },
       animation: {
         slideDown: 'slideDown 0.2s ease-out',
         pulse: 'pulse 4s ease-in-out infinite',
+        pulseGreen: 'pulseGreen 4s ease-in-out infinite',
       },
     },
   },
