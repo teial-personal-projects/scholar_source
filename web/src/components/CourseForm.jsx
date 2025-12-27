@@ -392,7 +392,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                   value={formData.topics_list}
                   onChange={handleChange}
                   placeholder="e.g., Midterm review, Chapter 4, Dynamic programming, Sorting algorithms"
-                  rows="3"
+                  rows="2"
                   disabled={isLoading}
                 />
                 <div className="tip-callout">
