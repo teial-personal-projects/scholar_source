@@ -464,7 +464,6 @@ export default function HomePage() {
           {/* Empty State */}
           {!isLoading && !results && !error && (
             <div className="bg-white rounded-xl p-12 shadow-lg border-2 border-gray-100 text-center">
-              <div className="text-6xl mb-6 opacity-70" aria-hidden="true">📚</div>
               <h2 className="m-0 mb-3 text-xl font-bold text-gray-900">
                 Your study resources will appear here
               </h2>
