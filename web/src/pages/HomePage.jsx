@@ -403,11 +403,11 @@ export default function HomePage() {
             {/* Optional Sections - Side-by-side on desktop, stacked on mobile */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
               {/* Resource Types Accordion */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
                 <button
                   type="button"
                   onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
                 >
                   <div className="flex items-baseline gap-2">
                     <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Resource Types</span>
@@ -418,7 +418,7 @@ export default function HomePage() {
                   </svg>
                 </button>
                 {isResourceTypesExpanded && (
-                  <div className="px-4 py-3 bg-white border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
+                  <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
                     {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
                       <label key={type} className="flex items-start gap-2 py-1 cursor-pointer min-w-0">
                         <input
@@ -436,11 +436,11 @@ export default function HomePage() {
               </div>
 
               {/* Focus Topics Accordion */}
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
+              <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
                 <button
                   type="button"
                   onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
                 >
                   <div className="flex items-baseline gap-2">
                     <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Focus Topics</span>
@@ -451,7 +451,7 @@ export default function HomePage() {
                   </svg>
                 </button>
                 {isFocusTopicsExpanded && (
-                  <div className="px-4 py-3 bg-white border-t border-slate-200">
+                  <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200">
                     <TextLabel htmlFor="topics_list">
                       Topics List
                     </TextLabel>
