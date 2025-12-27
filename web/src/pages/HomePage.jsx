@@ -253,6 +253,7 @@ export default function HomePage() {
                     value={searchParamType}
                     onChange={handleSearchParamChange}
                     disabled={isLoading}
+                    aria-describedby="search-type-helper"
                   >
                     <option value="">Select type...</option>
                     <option value="course_url">Course URL</option>
@@ -261,6 +262,15 @@ export default function HomePage() {
                     <option value="isbn">Book ISBN</option>
                   </TextInput>
                 </div>
+                <p id="search-type-helper" className="mt-2 text-sm leading-5 text-slate-700">
+                  {!searchParamType && "Selecting a search type will show required fields below."}
+                  {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
+                  {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
+                  {searchParamType === 'book_title_author' && (
+                    <>Enter both the <span className="font-medium">book title</span> and at least one <span className="font-medium">author</span>.</>
+                  )}
+                  {searchParamType === 'isbn' && "Enter the ISBN of the book you want to search."}
+                </p>
               </div>
 
               {/* Dynamic Input Field */}
