@@ -494,33 +494,19 @@ export default function HomePage() {
           </form>
         </section>
 
-        {/* Results Section */}
-        <section>
-          {/* Empty State */}
-          {!isLoading && !results && !error && (
-            <div className="rounded-xl border border-slate-200 bg-white p-10 sm:p-12 text-center shadow-sm">
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 m-0">
-                Your study resources will appear here
-              </h2>
-              <p className="mt-2 text-sm sm:text-base leading-6 text-slate-600 max-w-md mx-auto">
-                Select a search type, enter your course or book information, and click "Find Resources" to discover personalized study materials.
-              </p>
-              <p className="mt-3 text-sm text-slate-700">
-                Start by selecting a <span className="font-semibold">Search Type</span>.
-              </p>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {isLoading && jobId && (
-            <div className="bg-blue-50 rounded-xl p-8 shadow-sm border border-blue-200">
-              <LoadingStatus
-                jobId={jobId}
-                onComplete={handleComplete}
-                onError={handleError}
-              />
-            </div>
-          )}
+        {/* Results Section - Only show after search is initiated */}
+        {(jobId !== null || results !== null || error !== null) && (
+          <section>
+            {/* Loading State */}
+            {isLoading && jobId && (
+              <div className="bg-blue-50 rounded-xl p-8 shadow-sm border border-blue-200">
+                <LoadingStatus
+                  jobId={jobId}
+                  onComplete={handleComplete}
+                  onError={handleError}
+                />
+              </div>
+            )}
 
           {/* Error State */}
           {error && (
@@ -641,7 +627,8 @@ export default function HomePage() {
               </div>
             </div>
           )}
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );
