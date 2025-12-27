@@ -110,7 +110,7 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
 
       <div>
         <div className="flex justify-between items-center mb-6 gap-4 w-full relative">
-          <h3 className="m-0 text-2xl font-bold text-slate-900 text-center tracking-tight flex-1">Finding Resources</h3>
+          <h3 className="m-0 text-2xl font-bold text-slate-900 text-center tracking-tight flex-1">Finding Resources ...</h3>
           {(status === 'pending' || status === 'running') && (
             <button
               onClick={handleCancel}
