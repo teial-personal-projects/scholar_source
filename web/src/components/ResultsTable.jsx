@@ -87,30 +87,6 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
   return (
     <div className="results-card">
-      {/* Course and Book Information - Display prominently at top */}
-      {(textbookInfo?.course_name || textbookInfo?.book_title || textbookInfo?.book_author || 
-        textbookInfo?.title || textbookInfo?.author) && (
-        <div className="course-book-info-box course-book-info-box-top">
-          <h3>
-            {textbookInfo?.course_name ? '📖 Course & Textbook Information' : '📚 Textbook Information'}
-          </h3>
-          {textbookInfo?.course_name && (
-            <p className="info-item"><strong>Course:</strong> {textbookInfo.course_name}</p>
-          )}
-          {(textbookInfo?.book_title || textbookInfo?.title) && (
-            <p className="info-item info-item-textbook">
-              <strong>Textbook:</strong> <span className="textbook-name-highlight">{textbookInfo.book_title || textbookInfo.title}</span>
-            </p>
-          )}
-          {(textbookInfo?.book_author || textbookInfo?.author) && (
-            <p className="info-item"><strong>Author(s):</strong> {textbookInfo.book_author || textbookInfo.author}</p>
-          )}
-          {textbookInfo?.source && (
-            <p className="info-item"><strong>Source:</strong> {textbookInfo.source}</p>
-          )}
-        </div>
-      )}
-
       <div className="results-header">
         <div>
           <h2>
@@ -138,6 +114,27 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
           )}
         </div>
       </div>
+
+      {/* Course and Book Information - Display under Discovered Resources */}
+      {(textbookInfo?.course_name || textbookInfo?.book_title || textbookInfo?.book_author || 
+        textbookInfo?.title || textbookInfo?.author) && (
+        <div className="course-book-info-box course-book-info-box-compact">
+          {textbookInfo?.course_name && (
+            <span className="info-item"><strong>Course:</strong> {textbookInfo.course_name}</span>
+          )}
+          {(textbookInfo?.book_title || textbookInfo?.title) && (
+            <span className="info-item info-item-textbook">
+              <strong>Textbook:</strong> <span className="textbook-name-highlight">{textbookInfo.book_title || textbookInfo.title}</span>
+            </span>
+          )}
+          {(textbookInfo?.book_author || textbookInfo?.author) && (
+            <span className="info-item"><strong>Author(s):</strong> {textbookInfo.book_author || textbookInfo.author}</span>
+          )}
+          {textbookInfo?.source && (
+            <span className="info-item"><strong>Source:</strong> {textbookInfo.source}</span>
+          )}
+        </div>
+      )}
 
       <div
         ref={listRef}
