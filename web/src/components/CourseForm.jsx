@@ -75,6 +75,26 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
     });
   };
 
+  const isFormValid = () => {
+    if (!searchParamType) {
+      return false;
+    }
+
+    // Check if required fields are filled based on selected search parameter type
+    switch (searchParamType) {
+      case 'course_url':
+        return formData.course_url.trim() !== '';
+      case 'book_url':
+        return formData.book_url.trim() !== '';
+      case 'book_title_author':
+        return formData.book_title.trim() !== '' && formData.book_author.trim() !== '';
+      case 'isbn':
+        return formData.isbn.trim() !== '';
+      default:
+        return false;
+    }
+  };
+
   const validateForm = () => {
     if (!searchParamType) {
       setValidationError('Please select a search parameter type');
@@ -155,7 +175,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           <button
             type="submit"
             className="submit-button"
-            disabled={isLoading}
+            disabled={isLoading || !isFormValid()}
           >
             {isLoading ? '🔍 Finding Resources...' : '🔍 Find Resources'}
           </button>
