@@ -24,7 +24,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
   const [validationError, setValidationError] = useState('');
   const [isDesiredResourcesExpanded, setIsDesiredResourcesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
-  const [isEmailExpanded, setIsEmailExpanded] = useState(false);
+  // Email section - COMMENTED OUT
+  // const [isEmailExpanded, setIsEmailExpanded] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -151,7 +152,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
     setValidationError('');
     setIsDesiredResourcesExpanded(false);
     setIsFocusTopicsExpanded(false);
-    setIsEmailExpanded(false);
+    // Email section - COMMENTED OUT
+    // setIsEmailExpanded(false);
   };
 
   const handleSubmit = (e) => {
@@ -405,8 +407,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           )}
         </div>
 
-        {/* Email Section */}
-        <div className="form-section">
+        {/* Email Section - COMMENTED OUT */}
+        {/* <div className="form-section">
           <div className="section-header" onClick={() => setIsEmailExpanded(!isEmailExpanded)}>
             <h3>📧 Get Results by Email <span className="optional-label">(Optional)</span></h3>
             <button type="button" className="collapse-toggle" aria-label="Toggle section">
@@ -416,7 +418,6 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
           {isEmailExpanded && (
             <div className="section-content">
-              {/* Email Address */}
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
                 <input
@@ -434,7 +435,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Validation Error */}
         {validationError && (

@@ -19,7 +19,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from scholar_source.crew import ScholarSource
 from backend.jobs import update_job_status, get_job
 from backend.markdown_parser import parse_markdown_to_resources
-from backend.email_service import send_results_email
+# Email service - COMMENTED OUT
+# from backend.email_service import send_results_email
 from backend.cache import (
     get_cached_analysis,
     set_cached_analysis
@@ -265,23 +266,23 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
             metadata=metadata
         )
 
-        # Send email notification if email was provided
-        email = inputs.get('email')
-        if email:
-            # Get job data for search title
-            job = get_job(job_id)
-            search_title = job.get('search_title', 'Your Search') if job else 'Your Search'
-
-            # Send email (non-blocking, failure won't affect job status)
-            try:
-                send_results_email(
-                    to_email=email,
-                    search_title=search_title,
-                    resources=resources,
-                    job_id=job_id
-                )
-            except Exception as email_error:
-                logger.warning(f"Failed to send email to {email}: {str(email_error)}")
+        # Email notification - COMMENTED OUT
+        # email = inputs.get('email')
+        # if email:
+        #     # Get job data for search title
+        #     job = get_job(job_id)
+        #     search_title = job.get('search_title', 'Your Search') if job else 'Your Search'
+        #
+        #     # Send email (non-blocking, failure won't affect job status)
+        #     try:
+        #         send_results_email(
+        #             to_email=email,
+        #             search_title=search_title,
+        #             resources=resources,
+        #             job_id=job_id
+        #         )
+        #     except Exception as email_error:
+        #         logger.warning(f"Failed to send email to {email}: {str(email_error)}")
 
     except Exception as e:
         # Log error and update job

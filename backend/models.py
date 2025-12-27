@@ -23,7 +23,8 @@ class CourseInputRequest(BaseModel):
     isbn: Optional[str] = Field(None, description="Book ISBN")
     book_pdf_path: Optional[str] = Field(None, description="Local PDF path")
     book_url: Optional[str] = Field(None, description="Book URL")
-    email: Optional[str] = Field(None, description="Email address to receive results (optional)")
+    # Email field - COMMENTED OUT but kept for API compatibility
+    email: Optional[str] = Field(None, description="Email address to receive results (optional, currently disabled)")
     desired_resource_types: Optional[List[str]] = Field(None, description="List of desired resource types (textbooks, practice_problem_sets, practice_exams_tests, lecture_videos)")
     force_refresh: Optional[bool] = Field(False, description="Force refresh - bypass cache and get fresh results")
 
@@ -38,20 +39,21 @@ class CourseInputRequest(BaseModel):
             }
         return data
 
-    @field_validator('email', mode='after')
-    @classmethod
-    def validate_email(cls, v):
-        """Validate email format if provided"""
-        if v is None:
-            return None
-        if isinstance(v, str):
-            # Basic email validation regex
-            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-            if re.match(email_pattern, v.strip()):
-                return v.strip()
-            # If invalid format, return None (don't raise error for optional field)
-            return None
-        return v
+    # Email validation - COMMENTED OUT
+    # @field_validator('email', mode='after')
+    # @classmethod
+    # def validate_email(cls, v):
+    #     """Validate email format if provided"""
+    #     if v is None:
+    #         return None
+    #     if isinstance(v, str):
+    #         # Basic email validation regex
+    #         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    #         if re.match(email_pattern, v.strip()):
+    #             return v.strip()
+    #         # If invalid format, return None (don't raise error for optional field)
+    #         return None
+    #     return v
 
     class Config:
         json_schema_extra = {
