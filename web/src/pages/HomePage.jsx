@@ -204,16 +204,16 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4">
 
         {/* Search Toolbar Panel */}
-        <section className="rounded-xl bg-white shadow-lg border border-slate-200 p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+        <section className="rounded-xl bg-white shadow-lg border border-slate-200 p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-3">
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 m-0">
                 Search Parameters
               </h2>
-              <div className="mt-3 border-t border-slate-200" />
+              <div className="mt-2 border-t border-slate-200" />
             </div>
 
             {/* Action Buttons */}
@@ -239,7 +239,7 @@ export default function HomePage() {
 
           <form id="search-form" onSubmit={handleSubmit}>
             {/* Primary Controls Row */}
-            <div className="grid grid-cols-1 gap-5 mb-5">
+            <div className="grid grid-cols-1 gap-4 mb-4">
               {/* Search Type Dropdown */}
               <div>
                 <TextLabel htmlFor="search_param_type" required>
@@ -375,7 +375,7 @@ export default function HomePage() {
             </div>
 
             {/* Force Refresh Toggle - Mobile: separate row, Desktop: inline with buttons */}
-            <div className="mb-5 lg:hidden">
+            <div className="mb-4 lg:hidden">
               <label htmlFor="bypass_cache_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
                 <input
                   type="checkbox"
@@ -396,7 +396,7 @@ export default function HomePage() {
             </div>
 
             {/* Force Refresh Toggle - Desktop only: inline */}
-            <div className="hidden lg:block mb-5">
+            <div className="hidden lg:block mb-4">
               <label htmlFor="bypass_cache" className="flex items-center gap-2 py-1 cursor-pointer">
                 <input
                   type="checkbox"
@@ -417,7 +417,7 @@ export default function HomePage() {
             </div>
 
             {/* Optional Sections - Side-by-side on desktop, stacked on mobile */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               {/* Resource Types Accordion */}
               <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
                 <button
