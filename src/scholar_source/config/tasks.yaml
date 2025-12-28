@@ -147,10 +147,14 @@ resource_validation_task:
     **CHECKS (EFFICIENT - MINIMIZE API CALLS):**
     1. URL format check: Verify URL structure (PDFs end in .pdf, YouTube URLs contain youtube.com, etc.)
     2. **URL ACCESSIBILITY (CRITICAL):** For web resources, verify the URL is likely valid:
-       - Check for common 404 patterns (e.g., OpenStax URLs like "/details/books/[topic]" may not exist)
-       - If URL looks suspicious or uses an uncommon format, perform a quick web search to verify the correct URL
-       - For OpenStax: Use URLs like "openstax.org/books/[book-name]" NOT "openstax.org/details/books/[book-name]"
-       - Reject resources with clearly broken or non-existent URLs
+       - Check for common 404 patterns and incomplete URLs
+       - REJECT any URL that appears truncated or incomplete (e.g., ends abruptly without proper path)
+       - LibreTexts URLs: Must be complete paths like "math.libretexts.org/Bookshelves/Calculus/Calculus_(OpenStax)/[chapter]/[section]"
+         * REJECT if URL ends with incomplete path like "/Calculus_(OpenStax" or "/Bookshelves/Calculus/Calculus_(OpenStax"
+         * Must have full chapter and section path to be valid
+       - OpenStax: Use URLs like "openstax.org/books/[book-name]" NOT "openstax.org/details/books/[book-name]"
+       - If URL looks suspicious, incomplete, or uses an uncommon format, perform a quick web search to verify the correct URL
+       - Reject resources with clearly broken, incomplete, or non-existent URLs
     3. NotebookLM compatibility: Check format from URL extension and resource_type (PDF/web/YouTube)
     4. Source credibility: Verify from URL domain and source_credibility field (MIT OCW, OpenStax, etc.)
     5. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area
