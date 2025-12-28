@@ -113,30 +113,30 @@ def _generate_cache_key(inputs: Dict[str, Any], config_hash: str) -> str:
 
 
 def get_cached_analysis(
-    inputs: Dict[str, Any], 
+    inputs: Dict[str, Any],
     cache_type: str = "analysis",
-    force_refresh: bool = False
+    bypass_cache: bool = False
 ) -> Optional[Dict[str, Any]]:
     """
     Check cache for existing course analysis results.
-    
+
     Returns cached results if:
     1. Cache entry exists for the given inputs
     2. Config hash matches current config files (ensures cache is valid)
     3. Cache entry hasn't expired (if TTL is set)
-    4. force_refresh is False
-    
+    4. bypass_cache is False
+
     Args:
         inputs: Course input parameters
-        cache_type: Type of cache entry ("analysis" for course analysis only, 
+        cache_type: Type of cache entry ("analysis" for course analysis only,
                    "full" for complete results including resources)
-        force_refresh: If True, bypass cache and return None
-        
+        bypass_cache: If True, bypass cache and return None
+
     Returns:
         dict | None: Cached results (textbook_info, topics, etc.) or None if not found
     """
-    # Force refresh bypasses cache
-    if force_refresh:
+    # Bypass cache if requested
+    if bypass_cache:
         return None
     
     try:

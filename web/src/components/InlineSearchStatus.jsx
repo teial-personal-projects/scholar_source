@@ -115,7 +115,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
             onClick={handleCancel}
             disabled={isCancelling}
             type="button"
-            className="min-h-[44px] flex-shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-[44px] flex-shrink-0 rounded-lg border-2 border-red-500 bg-white px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Cancel this search"
           >
             {isCancelling ? 'Cancelling…' : 'Cancel'}

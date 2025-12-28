@@ -116,8 +116,8 @@ async def submit_job(request: CourseInputRequest):
         )
 
     try:
-        # Extract force_refresh from inputs (don't store in job inputs)
-        force_refresh = inputs.pop('force_refresh', False)
+        # Extract bypass_cache from inputs (don't store in job inputs)
+        bypass_cache = inputs.pop('bypass_cache', False)
 
         logger.info(f"Creating new job with inputs: {inputs}")
 
@@ -125,8 +125,8 @@ async def submit_job(request: CourseInputRequest):
         job_id = create_job(inputs)
         logger.info(f"Job created with ID: {job_id}")
 
-        # Start background crew execution (pass force_refresh separately)
-        run_crew_async(job_id, inputs, force_refresh=force_refresh)
+        # Start background crew execution (pass bypass_cache separately)
+        run_crew_async(job_id, inputs, bypass_cache=bypass_cache)
 
         return {
             "job_id": job_id,

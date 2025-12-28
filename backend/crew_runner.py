@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 _active_tasks = {}
 
 
-def run_crew_async(job_id: str, inputs: Dict[str, str], force_refresh: bool = False) -> None:
+def run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None:
     """
     Run the ScholarSource crew asynchronously with cancellation support.
 
@@ -48,7 +48,7 @@ def run_crew_async(job_id: str, inputs: Dict[str, str], force_refresh: bool = Fa
     Args:
         job_id: UUID of the job to run
         inputs: Dictionary of course input parameters
-        force_refresh: If True, bypass cache and get fresh results
+        bypass_cache: If True, bypass cache and get fresh results
     """
     import threading
 
@@ -58,7 +58,7 @@ def run_crew_async(job_id: str, inputs: Dict[str, str], force_refresh: bool = Fa
         asyncio.set_event_loop(loop)
 
         try:
-            loop.run_until_complete(_run_crew_worker(job_id, inputs, force_refresh=force_refresh))
+            loop.run_until_complete(_run_crew_worker(job_id, inputs, bypass_cache=bypass_cache))
         finally:
             loop.close()
 
@@ -84,14 +84,14 @@ def cancel_crew_job(job_id: str) -> bool:
     return False
 
 
-async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: bool = False) -> None:
+async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None:
     """
     Worker function that runs in background thread.
 
     Args:
         job_id: UUID of the job
         inputs: Course input parameters
-        force_refresh: If True, bypass cache and get fresh results
+        bypass_cache: If True, bypass cache and get fresh results
     """
     # Check if job was cancelled before starting
     job = get_job(job_id)
@@ -134,7 +134,7 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
         cached_analysis = get_cached_analysis(
             normalized_inputs,
             cache_type="analysis",
-            force_refresh=force_refresh
+            bypass_cache=bypass_cache
         )
 
         if cached_analysis:
@@ -146,7 +146,7 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
                 status_message="Using cached course analysis, discovering resources..."
             )
         else:
-            cache_reason = "force_refresh=True" if force_refresh else "no cached data found"
+            cache_reason = "bypass_cache=True" if bypass_cache else "no cached data found"
             logger.info(f"❌ CACHE MISS - Job {job_id}: Running fresh analysis ({cache_reason})")
             update_job_status(
                 job_id,

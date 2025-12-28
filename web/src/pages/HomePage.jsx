@@ -33,7 +33,7 @@ export default function HomePage() {
     isbn: '',
     topics_list: '',
     desired_resource_types: [],
-    force_refresh: false
+    bypass_cache: false
   });
   const [validationError, setValidationError] = useState('');
   const [isResourceTypesExpanded, setIsResourceTypesExpanded] = useState(false);
@@ -72,7 +72,7 @@ export default function HomePage() {
       isbn: '',
       topics_list: formData.topics_list,
       desired_resource_types: formData.desired_resource_types,
-      force_refresh: formData.force_refresh
+      bypass_cache: formData.bypass_cache
     });
   };
 
@@ -97,7 +97,7 @@ export default function HomePage() {
       isbn: '',
       topics_list: '',
       desired_resource_types: [],
-      force_refresh: false
+      bypass_cache: false
     });
     setValidationError('');
     setIsResourceTypesExpanded(false);
@@ -376,38 +376,44 @@ export default function HomePage() {
 
             {/* Force Refresh Toggle - Mobile: separate row, Desktop: inline with buttons */}
             <div className="mb-5 lg:hidden">
-              <label htmlFor="force_refresh_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
+              <label htmlFor="bypass_cache_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
                 <input
                   type="checkbox"
-                  id="force_refresh_mobile"
-                  name="force_refresh"
-                  checked={formData.force_refresh}
+                  id="bypass_cache_mobile"
+                  name="bypass_cache"
+                  checked={formData.bypass_cache}
                   onChange={handleChange}
                   disabled={isLoading}
                   className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <span className="text-sm sm:text-base text-slate-800 select-none">
-                  🔄 Force refresh (bypass cache)
+                  Bypass cache
                 </span>
               </label>
+              <p className="m-0 ml-6 text-xs text-slate-600">
+                Don't use cached results from previous searches
+              </p>
             </div>
 
             {/* Force Refresh Toggle - Desktop only: inline */}
-            <div className="hidden lg:flex items-center gap-3 mb-5">
-              <label htmlFor="force_refresh" className="flex items-center gap-2 py-1 cursor-pointer">
+            <div className="hidden lg:block mb-5">
+              <label htmlFor="bypass_cache" className="flex items-center gap-2 py-1 cursor-pointer">
                 <input
                   type="checkbox"
-                  id="force_refresh"
-                  name="force_refresh"
-                  checked={formData.force_refresh}
+                  id="bypass_cache"
+                  name="bypass_cache"
+                  checked={formData.bypass_cache}
                   onChange={handleChange}
                   disabled={isLoading}
                   className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <span className="text-sm sm:text-base text-slate-800 select-none">
-                  🔄 Force refresh (bypass cache)
+                  Bypass cache
                 </span>
               </label>
+              <p className="m-0 ml-6 text-xs text-slate-600">
+                Don't use cached results from previous searches
+              </p>
             </div>
 
             {/* Optional Sections - Side-by-side on desktop, stacked on mobile */}
@@ -565,16 +571,24 @@ export default function HomePage() {
                 {/* Textbook Info */}
                 {(textbookInfo?.course_name || textbookInfo?.book_title || textbookInfo?.book_author ||
                   textbookInfo?.title || textbookInfo?.author) && (
-                  <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap gap-3 text-xs sm:text-sm text-slate-700">
-                    {textbookInfo?.course_name && (
-                      <span><strong className="font-semibold text-slate-900">Course:</strong> {textbookInfo.course_name}</span>
-                    )}
-                    {(textbookInfo?.book_title || textbookInfo?.title) && (
-                      <span><strong className="font-semibold text-slate-900">Textbook:</strong> {textbookInfo.book_title || textbookInfo.title}</span>
-                    )}
-                    {(textbookInfo?.book_author || textbookInfo?.author) && (
-                      <span><strong className="font-semibold text-slate-900">Author:</strong> {textbookInfo.book_author || textbookInfo.author}</span>
-                    )}
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <p className="m-0 mb-2 text-sm font-semibold text-slate-700">
+                      Here's the textbook for the course:
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {(textbookInfo?.book_title || textbookInfo?.title) && (
+                        <span>
+                          <span className="text-base font-bold text-slate-900">Textbook: </span>
+                          <span className="text-base sm:text-lg text-slate-900">{textbookInfo.book_title || textbookInfo.title}</span>
+                        </span>
+                      )}
+                      {(textbookInfo?.book_author || textbookInfo?.author) && (
+                        <span>
+                          <span className="text-base font-bold text-slate-900">Author: </span>
+                          <span className="text-base sm:text-lg text-slate-900">{textbookInfo.book_author || textbookInfo.author}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -26,7 +26,7 @@ class CourseInputRequest(BaseModel):
     # Email field - COMMENTED OUT but kept for API compatibility
     email: Optional[str] = Field(None, description="Email address to receive results (optional, currently disabled)")
     desired_resource_types: Optional[List[str]] = Field(None, description="List of desired resource types (textbooks, practice_problem_sets, practice_exams_tests, lecture_videos)")
-    force_refresh: Optional[bool] = Field(False, description="Force refresh - bypass cache and get fresh results")
+    bypass_cache: Optional[bool] = Field(False, description="Bypass cache - skip cached results and get fresh results")
 
     @model_validator(mode='before')
     @classmethod

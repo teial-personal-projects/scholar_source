@@ -131,14 +131,14 @@ Cache the results from `course_analysis_task` (textbook info, topics) and use th
 
 from backend.cache import get_cached_analysis, set_cached_analysis
 
-async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: bool = False) -> None:
+async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None:
     # ... existing code ...
     
     # Check cache before running crew (cache_type="analysis" for course analysis only)
     cached_results = get_cached_analysis(
         normalized_inputs, 
         cache_type="analysis",
-        force_refresh=force_refresh
+        bypass_cache=bypass_cache
     )
     
     if cached_results:
@@ -172,7 +172,7 @@ Cache course analysis separately, and use it to populate task inputs:
 # Cache course analysis results, then use them in subsequent tasks
 # This avoids re-analyzing the same course page multiple times
 
-cached_analysis = get_cached_analysis(normalized_inputs, cache_type="analysis", force_refresh=force_refresh)
+cached_analysis = get_cached_analysis(normalized_inputs, cache_type="analysis", bypass_cache=bypass_cache)
 if cached_analysis:
     # Merge cached analysis into inputs for downstream tasks
     normalized_inputs.update({
@@ -264,7 +264,7 @@ Users can force a refresh to bypass the cache and get fresh results. This is use
 cached_results = get_cached_analysis(
     inputs, 
     cache_type="analysis",
-    force_refresh=True  # Always returns None
+    bypass_cache=True  # Always returns None
 )
 
 # Useful for:
@@ -282,9 +282,9 @@ cached_results = get_cached_analysis(
 // Checkbox in form
 <input
   type="checkbox"
-  id="force_refresh"
-  name="force_refresh"
-  checked={formData.force_refresh}
+  id="bypass_cache"
+  name="bypass_cache"
+  checked={formData.bypass_cache}
   onChange={handleChange}
 />
 ```
@@ -293,25 +293,25 @@ cached_results = get_cached_analysis(
 
 1. **API Request** (`backend/models.py`):
    ```python
-   force_refresh: Optional[bool] = Field(False, description="Force refresh - bypass cache")
+   bypass_cache: Optional[bool] = Field(False, description="Force refresh - bypass cache")
    ```
 
 2. **Job Submission** (`backend/main.py`):
    ```python
-   force_refresh = inputs.pop('force_refresh', False)
-   run_crew_async(job_id, inputs, force_refresh=force_refresh)
+   bypass_cache = inputs.pop('bypass_cache', False)
+   run_crew_async(job_id, inputs, bypass_cache=bypass_cache)
    ```
 
 3. **Crew Execution** (`backend/crew_runner.py`):
    ```python
-   async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: bool = False):
+   async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False):
        # When cache is integrated:
        cached_results = get_cached_analysis(
            normalized_inputs, 
            cache_type="analysis",
-           force_refresh=force_refresh  # Bypasses cache if True
+           bypass_cache=bypass_cache  # Bypasses cache if True
        )
-       if cached_results and not force_refresh:
+       if cached_results and not bypass_cache:
            # Use cached results
            textbook_info = cached_results.get("textbook_info")
            topics = cached_results.get("topics")
@@ -350,8 +350,8 @@ cached_results = get_cached_analysis(
 
 ### Technical Notes
 
-- `force_refresh` is **not stored** in the job inputs (removed before saving to DB)
-- `force_refresh` is passed separately to `run_crew_async()`
+- `bypass_cache` is **not stored** in the job inputs (removed before saving to DB)
+- `bypass_cache` is passed separately to `run_crew_async()`
 - Default value is `False` (normal caching behavior)
 - The checkbox state is reset when the form is reset
 
@@ -416,7 +416,7 @@ results2 = get_cached_analysis(inputs1, cache_type="analysis")  # {"textbook_tit
 results3 = get_cached_analysis(
     inputs1, 
     cache_type="analysis", 
-    force_refresh=True
+    bypass_cache=True
 )  # None (bypassed)
 
 # Test config invalidation

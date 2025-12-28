@@ -41,10 +41,10 @@ This plan implements the **Option A: Cache Course Analysis Only** approach from 
   - Return sorted dict
 - **Returns**: Normalized dict for hashing
 
-#### 1.3. `get_cached_analysis(inputs: Dict[str, Any], cache_type: str = "analysis", force_refresh: bool = False) -> Optional[Dict[str, Any]]`
+#### 1.3. `get_cached_analysis(inputs: Dict[str, Any], cache_type: str = "analysis", bypass_cache: bool = False) -> Optional[Dict[str, Any]]`
 - **Purpose**: Retrieve cached course analysis results
 - **Implementation**:
-  - If `force_refresh=True`, return `None` immediately
+  - If `bypass_cache=True`, return `None` immediately
   - Get current config hash via `get_config_hash()`
   - Normalize inputs via `normalize_cache_inputs()`
   - Create cache key: `f"{cache_type}:{json_hash(normalized_inputs)}"`
@@ -133,7 +133,7 @@ from backend.cache import (
 
 **New flow with cache**:
 1. Normalize inputs
-2. **CHECK CACHE**: `get_cached_analysis(normalized_inputs, cache_type="analysis", force_refresh=force_refresh)`
+2. **CHECK CACHE**: `get_cached_analysis(normalized_inputs, cache_type="analysis", bypass_cache=bypass_cache)`
 3. **IF CACHE HIT**:
    - Extract cached `textbook_title`, `textbook_author`, `topics`, etc.
    - Skip `course_analysis_task` execution
@@ -151,7 +151,7 @@ from backend.cache import (
 **Solution**: Run tasks individually instead of using `crew.kickoff()`:
 
 ```python
-async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: bool = False) -> None:
+async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None:
     # ... existing job status update ...
 
     # Normalize inputs for cache
@@ -168,7 +168,7 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], force_refresh: b
     cached_analysis = get_cached_analysis(
         normalized_inputs,
         cache_type="analysis",
-        force_refresh=force_refresh
+        bypass_cache=bypass_cache
     )
 
     if cached_analysis:
@@ -369,7 +369,7 @@ print(stats)
 - [x] ✅ Add cache check at start of `_run_crew_worker()`
 - [x] ✅ Extract analysis results after crew execution
 - [x] ✅ Cache analysis results for future use
-- [x] ✅ Handle `force_refresh` parameter correctly
+- [x] ✅ Handle `bypass_cache` parameter correctly
 
 ### Phase 3: Testing ✅
 - [✅] Test cache hit scenario

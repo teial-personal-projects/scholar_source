@@ -17,7 +17,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
     topics_list: '',
     email: '',
     desired_resource_types: [],
-    force_refresh: false
+    bypass_cache: false
   });
 
   const [validationError, setValidationError] = useState('');
@@ -146,7 +146,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       topics_list: '',
       email: '',
       desired_resource_types: [],
-      force_refresh: false
+      bypass_cache: false
     });
     setValidationError('');
     setIsDesiredResourcesExpanded(false);
@@ -192,12 +192,12 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
         {/* Force Refresh Option */}
         <div className="px-3 py-2 bg-primary/10 rounded-xl border border-primary/20">
-          <label htmlFor="force_refresh" className="flex items-center gap-2 cursor-pointer select-none">
+          <label htmlFor="bypass_cache" className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
-              id="force_refresh"
-              name="force_refresh"
-              checked={formData.force_refresh}
+              id="bypass_cache"
+              name="bypass_cache"
+              checked={formData.bypass_cache}
               onChange={handleChange}
               disabled={isLoading}
               className="w-4 h-4 cursor-pointer accent-primary flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
