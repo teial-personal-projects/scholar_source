@@ -533,9 +533,10 @@ export default function HomePage() {
           {/* Results State */}
           {results && !isLoading && (
             <div className="space-y-6">
-              {/* Results Header */}
-              <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white/90 backdrop-blur border-b sticky top-20 z-10">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Results Header - Unified with Textbook Info */}
+              <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white/90 backdrop-blur sticky top-20 z-10">
+                {/* Top row: Title + Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                   <div>
                     <div className="flex items-center gap-3 flex-wrap">
                       <h2 className="m-0 text-xl sm:text-2xl font-semibold text-slate-900">
@@ -568,26 +569,26 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Textbook Info */}
-                {(textbookInfo?.course_name || textbookInfo?.book_title || textbookInfo?.book_author ||
-                  textbookInfo?.title || textbookInfo?.author) && (
-                  <div className="mt-4 pt-4 border-t border-slate-200">
-                    <p className="m-0 mb-2 text-sm font-semibold text-slate-700">
-                      Here's the textbook for the course:
-                    </p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      {(textbookInfo?.book_title || textbookInfo?.title) && (
-                        <span>
-                          <span className="text-base font-bold text-slate-900">Textbook: </span>
-                          <span className="text-base sm:text-lg text-slate-900">{textbookInfo.book_title || textbookInfo.title}</span>
-                        </span>
-                      )}
-                      {(textbookInfo?.book_author || textbookInfo?.author) && (
-                        <span>
-                          <span className="text-base font-bold text-slate-900">Author: </span>
-                          <span className="text-base sm:text-lg text-slate-900">{textbookInfo.book_author || textbookInfo.author}</span>
-                        </span>
-                      )}
+                {/* Textbook Info - Prominently displayed */}
+                {(textbookInfo?.book_title || textbookInfo?.book_author || textbookInfo?.title || textbookInfo?.author) && (
+                  <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
+                      <div className="min-w-0 flex-1">
+                        <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                          Course Textbook
+                        </p>
+                        {(textbookInfo?.book_title || textbookInfo?.title) && (
+                          <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                            {textbookInfo.book_title || textbookInfo.title}
+                          </p>
+                        )}
+                        {(textbookInfo?.book_author || textbookInfo?.author) && (
+                          <p className="m-0 text-sm text-slate-700 font-medium">
+                            by {textbookInfo.book_author || textbookInfo.author}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

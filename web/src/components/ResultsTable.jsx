@@ -65,54 +65,61 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
   return (
     <div className="relative rounded-2xl bg-white/80 backdrop-blur p-6 sm:p-8 border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)] border border-indigo-200/70 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] before:pointer-events-none hover:border-indigo-300 hover:shadow-xl">
-      <div className="flex justify-between items-start mb-8 gap-4 flex-wrap pb-4 border-b border-slate-200/60">
-        <div>
-          <h2 className="m-0 text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            Discovered Resources
-            <span className="inline-flex items-center justify-center min-w-[32px] h-8 px-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-full text-sm font-bold shadow-sm ml-2">{resources.length}</span>
-          </h2>
-          {searchTitle && <p className="mt-1 mb-0 text-sm text-slate-600 font-medium">{searchTitle}</p>}
-        </div>
-        <div className="flex gap-2 flex-shrink-0 flex-wrap max-md:w-full">
-          <button
-            onClick={copyAllUrls}
-            className="px-4 py-2.5 bg-blue-600 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-blue-700 hover:shadow-md active:translate-y-0 max-md:flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            title="Copy all URLs for NotebookLM"
-          >
-            {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
-          </button>
-          {onClear && (
+      {/* Unified Header with Textbook Context */}
+      <div className="mb-6">
+        {/* Top row: Title + Actions */}
+        <div className="flex justify-between items-start gap-4 flex-wrap mb-4">
+          <div>
+            <h2 className="m-0 text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+              Discovered Resources
+              <span className="inline-flex items-center justify-center min-w-[32px] h-8 px-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-full text-sm font-bold shadow-sm ml-2">{resources.length}</span>
+            </h2>
+            {searchTitle && <p className="mt-1 mb-0 text-sm text-slate-600 font-medium">{searchTitle}</p>}
+          </div>
+          <div className="flex gap-2 flex-shrink-0 flex-wrap max-md:w-full">
             <button
-              onClick={onClear}
-              className="px-4 py-2.5 bg-cyan-500 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-cyan-600 hover:shadow-md active:translate-y-0 max-md:flex-1 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
-              title="Clear results"
+              onClick={copyAllUrls}
+              className="px-4 py-2.5 bg-blue-600 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-blue-700 hover:shadow-md active:translate-y-0 max-md:flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              title="Copy all URLs for NotebookLM"
             >
-              🗑️ Clear Results
+              {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
             </button>
-          )}
+            {onClear && (
+              <button
+                onClick={onClear}
+                className="px-4 py-2.5 bg-cyan-500 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-cyan-600 hover:shadow-md active:translate-y-0 max-md:flex-1 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
+                title="Clear results"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Course and Book Information - Display under Discovered Resources */}
-      {(textbookInfo?.course_name || textbookInfo?.book_title || textbookInfo?.book_author ||
-        textbookInfo?.title || textbookInfo?.author) && (
-        <div className="py-2 px-4 mb-4 flex flex-wrap gap-4 items-center bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 border-l-4 border-l-primary rounded-lg shadow-sm">
-          {textbookInfo?.course_name && (
-            <span className="m-0 text-xs text-blue-900 leading-snug whitespace-nowrap"><strong className="font-bold text-blue-950">Course:</strong> {textbookInfo.course_name}</span>
-          )}
-          {(textbookInfo?.book_title || textbookInfo?.title) && (
-            <span className="m-0 text-sm text-blue-900 leading-snug font-semibold">
-              <strong className="font-bold text-blue-950">Textbook:</strong> <span className="text-sm text-blue-950 font-bold">{textbookInfo.book_title || textbookInfo.title}</span>
-            </span>
-          )}
-          {(textbookInfo?.book_author || textbookInfo?.author) && (
-            <span className="m-0 text-xs text-blue-900 leading-snug whitespace-nowrap"><strong className="font-bold text-blue-950">Author(s):</strong> {textbookInfo.book_author || textbookInfo.author}</span>
-          )}
-          {textbookInfo?.source && (
-            <span className="m-0 text-xs text-blue-900 leading-snug whitespace-nowrap"><strong className="font-bold text-blue-950">Source:</strong> {textbookInfo.source}</span>
-          )}
-        </div>
-      )}
+        {/* Textbook Info - Prominently displayed */}
+        {(textbookInfo?.book_title || textbookInfo?.book_author || textbookInfo?.title || textbookInfo?.author) && (
+          <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
+              <div className="min-w-0 flex-1">
+                <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                  Course Textbook
+                </p>
+                {(textbookInfo?.book_title || textbookInfo?.title) && (
+                  <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                    {textbookInfo.book_title || textbookInfo.title}
+                  </p>
+                )}
+                {(textbookInfo?.book_author || textbookInfo?.author) && (
+                  <p className="m-0 text-sm text-slate-700 font-medium">
+                    by {textbookInfo.book_author || textbookInfo.author}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div
         ref={listRef}
