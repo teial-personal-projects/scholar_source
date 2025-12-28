@@ -102,67 +102,93 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
     }
   };
 
-  return (
-    <div className="bg-transparent rounded-2xl p-0 text-center">
-      <div className="mb-8 flex justify-center">
-        <div className="w-14 h-14 border-4 border-slate-200 border-t-primary rounded-full animate-spin motion-reduce:animate-none"></div>
+return (
+  <div className="bg-transparent rounded-2xl p-0">
+    <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white px-6 py-6 sm:px-8 sm:py-7 shadow-sm">
+      {/* Header row: inline spinner + title + subtle cancel */}
+      <div className="flex items-start gap-4">
+        <div
+          className="mt-1 h-5 w-5 rounded-full border-2 border-slate-200 border-t-primary animate-spin motion-reduce:animate-none"
+          aria-hidden="true"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="m-0 text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
+              Finding resources
+            </h3>
+
+            {(status === 'pending' || status === 'running') && (
+              <button
+                onClick={handleCancel}
+                disabled={isCancelling}
+                type="button"
+                className="min-h-[44px] rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Cancel this search"
+              >
+                {isCancelling ? 'Cancelling…' : 'Cancel'}
+              </button>
+            )}
+          </div>
+
+          {/* aria-live status line */}
+          <p
+            className="mt-2 mb-0 text-sm sm:text-base text-slate-700 font-medium"
+            aria-live="polite"
+          >
+            {statusMessage}
+          </p>
+        </div>
       </div>
 
-      <div>
-        <div className="flex justify-between items-center mb-6 gap-4 w-full relative">
-          <h3 className="m-0 text-2xl font-bold text-slate-900 text-center tracking-tight flex-1">Finding Resources ...</h3>
-          {(status === 'pending' || status === 'running') && (
-            <button
-              onClick={handleCancel}
-              disabled={isCancelling}
-              className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm flex-shrink-0 min-w-[100px] hover:not(:disabled):shadow-md hover:not(:disabled):-translate-y-0.5 hover:not(:disabled):from-red-600 hover:not(:disabled):to-red-700 active:not(:disabled):translate-y-0 active:not(:disabled):shadow-sm disabled:opacity-50 disabled:cursor-not-allowed motion-reduce:hover:not(:disabled):translate-y-0 focus:outline-none focus:ring-4 focus:ring-red-500/20 focus:ring-offset-2"
-              title="Cancel this job"
-              type="button"
-            >
-              {isCancelling ? 'Cancelling...' : '✕ Cancel'}
-            </button>
-          )}
+      {/* Optional context (book/course) */}
+      {textbookInfo && (textbookInfo.book_title || textbookInfo.book_author) && (
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Searching for resources matching
+          </p>
+          <p className="mt-1 mb-0 text-sm sm:text-base font-semibold text-slate-900 break-words">
+            {textbookInfo.book_title}
+            {textbookInfo.book_author && ` by ${textbookInfo.book_author}`}
+          </p>
         </div>
-        {textbookInfo && (textbookInfo.book_title || textbookInfo.book_author) && (
-          <div className="m-0 mb-4 p-4 bg-white/40 backdrop-blur rounded-xl border-l-4 border-primary">
-            <p className="m-0 mb-1 text-xs text-slate-600 font-semibold uppercase tracking-wide">📚 Searching for resources matching:</p>
-            <p className="m-0 text-base text-slate-900 font-bold">
-              {textbookInfo.book_title}
-              {textbookInfo.book_author && ` by ${textbookInfo.book_author}`}
-            </p>
-          </div>
-        )}
-        <p className="m-0 mb-8 text-base text-slate-700 font-medium">{statusMessage}</p>
+      )}
 
-        <div className="flex justify-center gap-8 mb-6 flex-wrap">
-          <div className={`flex flex-col items-center gap-2 transition-opacity ${status !== 'pending' ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all border-2 ${
-              status !== 'pending'
-                ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-primary shadow-md scale-110 motion-reduce:scale-100'
-                : 'bg-slate-100 text-slate-500 border-slate-200'
-            }`}>1</div>
-            <div className="text-xs text-slate-700 font-semibold text-center">Analyzing Course</div>
+      {/* Stepper row (compact) */}
+      <div className="mt-6 flex flex-wrap items-center gap-x-10 gap-y-3">
+        {/* Step 1 - active when pending/running */}
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+            1
           </div>
-          <div className={`flex flex-col items-center gap-2 transition-opacity ${status === 'completed' ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all border-2 ${
-              status === 'completed'
-                ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-primary shadow-md scale-110 motion-reduce:scale-100'
-                : 'bg-slate-100 text-slate-500 border-slate-200'
-            }`}>2</div>
-            <div className="text-xs text-slate-700 font-semibold text-center">Discovering Resources</div>
-          </div>
-          <div className={`flex flex-col items-center gap-2 transition-opacity ${status === 'completed' ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base transition-all border-2 ${
-              status === 'completed'
-                ? 'bg-gradient-to-r from-primary to-primary-dark text-white border-primary shadow-md scale-110 motion-reduce:scale-100'
-                : 'bg-slate-100 text-slate-500 border-slate-200'
-            }`}>3</div>
-            <div className="text-xs text-slate-700 font-semibold text-center">Validating Quality</div>
-          </div>
+          <span className="text-sm font-semibold text-slate-900">Analyzing</span>
         </div>
 
-        <p className="m-0 text-sm text-slate-600 italic">This may take 1-5 minutes...</p>
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-full border-2 border-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">
+            2
+          </div>
+          <span className="text-sm font-medium text-slate-500">Discovering</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-full border-2 border-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">
+            3
+          </div>
+          <span className="text-sm font-medium text-slate-500">Validating</span>
+        </div>
       </div>
+
+      {/* Divider + expectations (compact) */}
+      <div className="my-5 h-px w-full bg-slate-200" />
+
+      <p className="m-0 text-sm text-slate-700 font-medium">
+        Usually takes <span className="font-semibold text-slate-900">1–5 minutes</span>.
+      </p>
+      <p className="mt-2 mb-0 text-sm text-slate-600">
+        We prioritize high-quality, up-to-date materials.
+      </p>
     </div>
-  );
+  </div>
+);
+
 }

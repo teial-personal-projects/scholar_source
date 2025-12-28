@@ -1,8 +1,8 @@
 /**
  * ResultCard Component
  *
- * Reusable card component for displaying individual resource results.
- * Mobile-first design with accessible focus and hover states.
+ * Compact search result card with title-first design.
+ * Focus on scannability and clear actions.
  */
 
 import { useState } from 'react';
@@ -26,74 +26,92 @@ export default function ResultCard({ resource, index, onCopy }) {
     const upperType = type?.toUpperCase() || '';
 
     if (upperType.includes('PDF') || upperType.includes('TEXTBOOK')) {
-      return 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-900 border-blue-300';
+      return 'bg-blue-100 text-blue-900';
     }
     if (upperType.includes('VIDEO') || upperType.includes('YOUTUBE')) {
-      return 'bg-gradient-to-br from-red-100 to-red-200 text-red-900 border-red-300';
+      return 'bg-red-100 text-red-900';
     }
     if (upperType.includes('COURSE')) {
-      return 'bg-gradient-to-br from-green-100 to-green-200 text-green-900 border-green-300';
+      return 'bg-green-100 text-green-900';
     }
     if (upperType.includes('WEBSITE') || upperType.includes('WEB')) {
-      return 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-900 border-amber-300';
+      return 'bg-amber-100 text-amber-900';
     }
     if (upperType.includes('PRACTICE') || upperType.includes('PROBLEM')) {
-      return 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-900 border-purple-300';
+      return 'bg-purple-100 text-purple-900';
     }
-    return 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 border-gray-300';
+    return 'bg-gray-100 text-gray-900';
   };
 
-  // Check if title is just the URL (to avoid redundancy)
-  const isTitleUrl = resource.title === resource.url;
+  // Get hostname from URL for display
+  const getHostname = (url) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
+    }
+  };
+
+  // Get friendly title or fallback to hostname
+  const getDisplayTitle = () => {
+    if (resource.title && resource.title !== resource.url) {
+      return resource.title;
+    }
+    return `${getHostname(resource.url)} resource`;
+  };
+
+  const hostname = getHostname(resource.url);
+  const displaySource = resource.source || hostname;
 
   return (
-    <article
-      className="group relative rounded-2xl bg-white/80 backdrop-blur p-4 sm:p-6 border border-slate-200 shadow-sm transition-all duration-200 hover:border-primary-light hover:shadow-md hover:-translate-y-1 focus-within:ring-4 focus-within:ring-primary/20 focus-within:ring-offset-2"
-    >
-      {/* Type Badge & Title */}
-      <div className="flex items-start gap-3 mb-4 flex-wrap">
-        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getBadgeClasses(resource.type)} flex-shrink-0`}>
+    <article className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition">
+      {/* Header: Badge + Title */}
+      <div className="flex items-start gap-3 mb-2">
+        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${getBadgeClasses(resource.type)} flex-shrink-0`}>
           {resource.type}
         </span>
-        {!isTitleUrl && (
-          <h3 className="m-0 text-lg sm:text-xl font-bold text-slate-900 flex-1 min-w-0 tracking-tight leading-snug">
-            {resource.title}
-          </h3>
-        )}
       </div>
 
-      {/* Source Information (if available) */}
-      {resource.source && (
-        <p className="text-sm text-slate-600 mb-3">
-          <span className="font-medium">{resource.source}</span>
-        </p>
-      )}
-
-      {/* Description (if available) */}
-      {resource.description && (
-        <p className="text-sm text-slate-700 mb-4 leading-relaxed line-clamp-2 sm:line-clamp-none">
-          {resource.description}
-        </p>
-      )}
-
-      {/* URL Section with Copy Button */}
-      <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 transition-all hover:from-slate-100 hover:to-slate-200 hover:border-primary-light">
+      {/* Title as clickable link */}
+      <h3 className="m-0 mb-2">
         <a
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 min-w-0 text-xs sm:text-sm text-primary font-medium no-underline break-all leading-relaxed transition-colors hover:text-primary-dark hover:underline focus:outline-none focus:ring-4 focus:ring-primary/20 focus:ring-offset-2 focus:rounded"
-          aria-label={`Visit ${resource.title}`}
+          className="text-base sm:text-lg font-semibold text-slate-900 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded"
         >
-          {resource.url}
+          {getDisplayTitle()}
+        </a>
+      </h3>
+
+      {/* Source/hostname line */}
+      <p className="m-0 mb-2 text-xs sm:text-sm text-slate-600 truncate">
+        {displaySource}
+      </p>
+
+      {/* Description (clamped to 2 lines) */}
+      {resource.description && (
+        <p className="m-0 mb-3 text-sm text-slate-700 line-clamp-2">
+          {resource.description}
+        </p>
+      )}
+
+      {/* Actions row */}
+      <div className="flex items-center gap-2">
+        <a
+          href={resource.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-semibold text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded"
+        >
+          Open
         </a>
         <button
           onClick={handleCopy}
-          className="flex-shrink-0 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-semibold transition-all hover:bg-primary hover:text-white hover:border-primary hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:ring-offset-2"
-          title="Copy URL to clipboard"
-          aria-label={`Copy URL for ${resource.title}`}
+          className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 min-h-[40px]"
+          title="Copy link"
         >
-          {copied ? '✓' : '📋'}
+          {copied ? '✓ Copied' : '📋 Copy'}
         </button>
       </div>
     </article>

@@ -5,21 +5,16 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import ResultCard from './ResultCard';
 
 export default function ResultsTable({ resources, searchTitle, textbookInfo, onClear }) {
-  const [copiedUrl, setCopiedUrl] = useState(null);
   const [copiedAll, setCopiedAll] = useState(false);
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
   const listRef = useRef(null);
 
-  const copyToClipboard = async (text, identifier = null) => {
+  const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-
-      if (identifier) {
-        setCopiedUrl(identifier);
-        setTimeout(() => setCopiedUrl(null), 2000);
-      }
     } catch (error) {
       console.error('Failed to copy:', error);
     }
@@ -121,46 +116,15 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
       <div
         ref={listRef}
-        className={`relative flex flex-col gap-6 max-h-[600px] overflow-y-auto pr-2 after:content-['↓_Scroll_for_more'] after:sticky after:bottom-0 after:left-0 after:right-0 after:flex after:items-center after:justify-center after:p-4 after:bg-gradient-to-t after:from-white/95 after:via-white/80 after:to-transparent after:text-primary after:text-xs after:font-bold after:text-center after:pointer-events-none after:opacity-0 after:transition-opacity after:backdrop-blur-sm ${isScrolledToBottom ? '' : 'after:opacity-100'} [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-primary [&::-webkit-scrollbar-thumb]:to-primary-dark [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-all hover:[&::-webkit-scrollbar-thumb]:from-primary-dark hover:[&::-webkit-scrollbar-thumb]:to-indigo-800`}
+        className={`relative flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2 after:content-['↓_Scroll_for_more'] after:sticky after:bottom-0 after:left-0 after:right-0 after:flex after:items-center after:justify-center after:p-4 after:bg-gradient-to-t after:from-white/95 after:via-white/80 after:to-transparent after:text-primary after:text-xs after:font-bold after:text-center after:pointer-events-none after:opacity-0 after:transition-opacity after:backdrop-blur-sm ${isScrolledToBottom ? '' : 'after:opacity-100'} [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-primary [&::-webkit-scrollbar-thumb]:to-primary-dark [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-all hover:[&::-webkit-scrollbar-thumb]:from-primary-dark hover:[&::-webkit-scrollbar-thumb]:to-indigo-800`}
       >
         {resources.map((resource, index) => (
-          <div key={index} className="relative p-8 border border-slate-200/60 rounded-xl bg-gradient-to-br from-white to-gray-50 transition-all overflow-visible shadow-sm hover:border-primary-light hover:shadow-lg hover:-translate-y-1 hover:from-white hover:to-gray-100">
-            <div className="flex items-start gap-4 mb-6 flex-wrap">
-              <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${
-                resource.type?.toUpperCase().includes('PDF') || resource.type?.toUpperCase().includes('TEXTBOOK')
-                  ? 'bg-gradient-to-br from-blue-100 to-blue-200 text-blue-900'
-                  : resource.type?.toUpperCase().includes('VIDEO') || resource.type?.toUpperCase().includes('YOUTUBE')
-                  ? 'bg-gradient-to-br from-red-100 to-red-200 text-red-900'
-                  : resource.type?.toUpperCase().includes('COURSE')
-                  ? 'bg-gradient-to-br from-green-100 to-green-200 text-green-900'
-                  : resource.type?.toUpperCase().includes('WEBSITE') || resource.type?.toUpperCase().includes('WEB')
-                  ? 'bg-gradient-to-br from-amber-100 to-amber-200 text-amber-900'
-                  : 'bg-gray-100 text-slate-600'
-              }`}>
-                {resource.type}
-              </span>
-              <h3 className="m-0 text-xl font-bold text-slate-800 flex-1 tracking-tight leading-snug">{resource.title}</h3>
-            </div>
-
-            <div className="flex items-center gap-2 mb-4 py-3 px-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-gray-100 transition-all min-h-[50px] overflow-visible hover:from-slate-100 hover:to-slate-200 hover:border-primary-light">
-              <a
-                href={resource.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 text-xs text-primary no-underline break-all font-medium transition-colors leading-relaxed hover:text-primary-dark hover:underline focus:outline-2 focus:outline-primary focus:outline-offset-2 focus:rounded"
-              >
-                {resource.url}
-              </a>
-              <button
-                onClick={() => copyToClipboard(resource.url, index)}
-                className="px-3 py-1.5 bg-white border-2 border-gray-300 rounded text-sm font-semibold flex-shrink-0 cursor-pointer transition-all hover:bg-primary hover:text-white hover:border-primary hover:scale-105 active:scale-95"
-                title="Copy URL"
-              >
-                {copiedUrl === index ? '✓' : '📋'}
-              </button>
-            </div>
-
-          </div>
+          <ResultCard
+            key={index}
+            resource={resource}
+            index={index}
+            onCopy={copyToClipboard}
+          />
         ))}
       </div>
 

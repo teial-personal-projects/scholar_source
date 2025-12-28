@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import { submitJob } from '../api/client';
-import LoadingStatus from '../components/LoadingStatus';
+import InlineSearchStatus from '../components/InlineSearchStatus';
 import ResultCard from '../components/ResultCard';
 import { TextLabel, HelperText, OptionalBadge, TextInput, Button } from '../components/ui';
 
@@ -492,22 +492,20 @@ export default function HomePage() {
               </div>
             )}
           </form>
+
+          {/* Inline Loading Status - shown while search is running */}
+          {isLoading && jobId && (
+            <InlineSearchStatus
+              jobId={jobId}
+              onComplete={handleComplete}
+              onError={handleError}
+            />
+          )}
         </section>
 
         {/* Results Section - Only show after search is initiated */}
         {(jobId !== null || results !== null || error !== null) && (
           <section>
-            {/* Loading State */}
-            {isLoading && jobId && (
-              <div className="bg-blue-50 rounded-xl p-8 shadow-sm border border-blue-200">
-                <LoadingStatus
-                  jobId={jobId}
-                  onComplete={handleComplete}
-                  onError={handleError}
-                />
-              </div>
-            )}
-
           {/* Error State */}
           {error && (
             <div className="bg-white rounded-xl p-8 shadow-lg border-l-4 border-red-500 text-center">
@@ -530,7 +528,7 @@ export default function HomePage() {
           {results && !isLoading && (
             <div className="space-y-6">
               {/* Results Header */}
-              <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white sticky top-20 z-10">
+              <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white/90 backdrop-blur border-b sticky top-20 z-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-3 flex-wrap">
@@ -582,7 +580,7 @@ export default function HomePage() {
               </div>
 
               {/* Results Grid - Full Width */}
-              <div className="grid grid-cols-1 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 gap-3">
                 {results.map((resource, index) => (
                   <ResultCard
                     key={index}
