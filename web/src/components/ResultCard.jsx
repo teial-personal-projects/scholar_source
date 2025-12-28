@@ -60,20 +60,17 @@ export default function ResultCard({ resource, index, onCopy }) {
     return `${getHostname(resource.url)} resource`;
   };
 
-  const hostname = getHostname(resource.url);
-  const displaySource = resource.source || hostname;
-
   return (
-    <article className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-slate-300 transition">
+    <article className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm hover:shadow-md hover:border-slate-300 transition">
       {/* Header: Badge + Title */}
-      <div className="flex items-start gap-3 mb-2">
+      <div className="flex items-start gap-2 mb-1.5">
         <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${getBadgeClasses(resource.type)} flex-shrink-0`}>
           {resource.type}
         </span>
       </div>
 
       {/* Title as clickable link */}
-      <h3 className="m-0 mb-2">
+      <h3 className="m-0 mb-1.5">
         <a
           href={resource.url}
           target="_blank"
@@ -84,14 +81,9 @@ export default function ResultCard({ resource, index, onCopy }) {
         </a>
       </h3>
 
-      {/* Source/hostname line */}
-      <p className="m-0 mb-2 text-xs sm:text-sm text-slate-600 truncate">
-        {displaySource}
-      </p>
-
       {/* Description (clamped to 2 lines) */}
       {resource.description && (
-        <p className="m-0 mb-3 text-sm text-slate-700 line-clamp-2">
+        <p className="m-0 mb-2 text-sm text-slate-700 line-clamp-2">
           {resource.description}
         </p>
       )}
@@ -102,9 +94,9 @@ export default function ResultCard({ resource, index, onCopy }) {
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-semibold text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded"
+          className="text-sm font-semibold text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded inline-flex items-center gap-1"
         >
-          Open
+          Visit resource →
         </a>
         <button
           onClick={handleCopy}
