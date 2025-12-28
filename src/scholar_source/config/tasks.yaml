@@ -17,18 +17,28 @@ course_analysis_task:
 
     **TEXTBOOK EXTRACTION - CRITICAL:**
     1. Fetch course page using "Webpage Content Fetcher" tool with the course_url
-    2. In the fetched content, look for the word "Textbook:" or "Text:"
-    3. The textbook info appears on the same line or the next line after the label
-    4. Format is typically: "Title, Author1, Author2" or "Title by Author"
-    5. Examples:
-       - "Textbook:\nEngineering Mechanics: Statics, Bedford, Fowler" → title="Engineering Mechanics: Statics", author="Bedford, Fowler"
-       - "Text: Calculus, 8th Edition by Stewart" → title="Calculus", author="Stewart"
-    6. Parsing rules:
-       - If the line contains a colon followed by a comma (e.g., "Engineering Mechanics: Statics, Bedford"),
-         split at the FIRST comma: everything before = title, everything after = author(s)
-       - If the line contains "by", split at "by": everything before = title, everything after = author
-    7. Return separate textbook_title and textbook_author fields
-    8. Also look for syllabus links (may be relative URLs like "../documents/syllabus.pdf")
+    2. In the fetched content, look for textbook information with these patterns:
+       - "Textbook:" or "Text:" or "Required text:" or "Required textbook:"
+       - "Book:" or "Required book:"
+       - Look in sections labeled "Materials", "Required Materials", "Course Materials", "Resources"
+    3. The textbook info may appear on the same line, next line, or in nearby lines
+    4. Common formats to handle:
+       - "Textbook: Title, Author1, Author2"
+       - "Text: Title by Author"
+       - "Textbook: Title. Author."
+       - "Title (Author)"
+       - "Author1, Author2, Title" (author-first format)
+       - Multi-line format where title is on one line and author on the next (or vice versa)
+    5. Parsing rules (try in order):
+       - If line contains " by " → split at " by ": before = title, after = author
+       - If line has format "Title (Author)" → extract both
+       - If comma-separated AND contains ":" in textbook context → Look for common author last names (Bedford, Fowler, etc.) at START of text after colon
+         * If first word looks like author name (capitalized, common last name) → everything before last comma = author, after = title
+         * Otherwise → First part before first comma = title, rest = author
+       - If period-separated → Before first/second period = title, after = author
+       - If spread across lines → Look for author patterns (names, "by", "Author:") and title patterns (colons in titles like "Engineering Mechanics: Statics")
+    6. Return separate textbook_title and textbook_author fields
+    7. Also look for syllabus links (may be relative URLs like "../documents/syllabus.pdf")
 
     **SYLLABUS:** If you find a syllabus link, convert relative URLs to absolute URLs using the course page domain.
     You may fetch the syllabus ONCE using "Webpage Content Fetcher" if it's an HTML page (skip PDFs).
@@ -136,9 +146,14 @@ resource_validation_task:
 
     **CHECKS (EFFICIENT - MINIMIZE API CALLS):**
     1. URL format check: Verify URL structure (PDFs end in .pdf, YouTube URLs contain youtube.com, etc.)
-    2. NotebookLM compatibility: Check format from URL extension and resource_type (PDF/web/YouTube)
-    3. Source credibility: Verify from URL domain and source_credibility field (MIT OCW, OpenStax, etc.)
-    4. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area
+    2. **URL ACCESSIBILITY (CRITICAL):** For web resources, verify the URL is likely valid:
+       - Check for common 404 patterns (e.g., OpenStax URLs like "/details/books/[topic]" may not exist)
+       - If URL looks suspicious or uses an uncommon format, perform a quick web search to verify the correct URL
+       - For OpenStax: Use URLs like "openstax.org/books/[book-name]" NOT "openstax.org/details/books/[book-name]"
+       - Reject resources with clearly broken or non-existent URLs
+    3. NotebookLM compatibility: Check format from URL extension and resource_type (PDF/web/YouTube)
+    4. Source credibility: Verify from URL domain and source_credibility field (MIT OCW, OpenStax, etc.)
+    5. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area
        - PRIMARY: Use resource_title, coverage_topics, and source_credibility from previous task to verify relevance
        - ONLY use WebsiteSearchTool if absolutely necessary (e.g., title is ambiguous) - LIMIT to 1-2 calls maximum
        - For PDFs: Verify from URL, title, and source - DO NOT use WebsiteSearchTool on PDFs
