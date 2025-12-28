@@ -126,21 +126,25 @@ def _generate_search_title(inputs: dict) -> str:
     """
     Generate a user-friendly search title from inputs.
 
+    This should represent the COURSE name, not the textbook.
+    Textbook info is handled separately via textbook_info.
+
     Args:
         inputs: Dictionary of course inputs
 
     Returns:
-        str: User-friendly search title
+        str: User-friendly search title (course name)
     """
-    # Priority order for title generation
-    if inputs.get("book_title"):
-        return inputs["book_title"]
-    elif inputs.get("course_name") and inputs.get("university_name"):
+    # Priority: Course information first (this is what appears under "Discovered Resources")
+    if inputs.get("course_name") and inputs.get("university_name"):
         return f"{inputs['university_name']} - {inputs['course_name']}"
     elif inputs.get("course_name"):
         return inputs["course_name"]
     elif inputs.get("university_name"):
         return f"{inputs['university_name']} Course"
+    # Fallback to book/textbook info if no course info provided
+    elif inputs.get("book_title"):
+        return inputs["book_title"]
     elif inputs.get("textbook"):
         return inputs["textbook"]
     else:
