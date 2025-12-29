@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { submitJob } from '../api/client';
 import Hero from '../components/Hero';
 import InlineSearchStatus from '../components/InlineSearchStatus';
-import ResultCard from '../components/ResultCard';
+import ResultsTable from '../components/ResultsTable';
 import { TextLabel, HelperText, OptionalBadge, TextInput, Button } from '../components/ui';
 
 export default function HomePage() {
@@ -22,7 +22,6 @@ export default function HomePage() {
   const [searchTitle, setSearchTitle] = useState(null);
   const [textbookInfo, setTextbookInfo] = useState(null);
   const [error, setError] = useState(null);
-  const [copiedAll, setCopiedAll] = useState(false);
 
   // Form state
   const [searchParamType, setSearchParamType] = useState('');
@@ -40,10 +39,6 @@ export default function HomePage() {
   const [isResourceTypesExpanded, setIsResourceTypesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
 
-  // --- Helpers for the "flow" ---
-  const openNotebookLM = () => {
-    window.open('https://notebooklm.google.com', '_blank', 'noopener,noreferrer');
-  };
 
   // Form handlers
   const handleChange = (e) => {
@@ -181,18 +176,6 @@ export default function HomePage() {
     setSearchTitle(null);
     setTextbookInfo(null);
     setJobId(null);
-  };
-
-  const copyAllUrls = async () => {
-    if (!results) return;
-    try {
-      const urls = results.map(r => r.url).join('\n');
-      await navigator.clipboard.writeText(urls);
-      setCopiedAll(true);
-      setTimeout(() => setCopiedAll(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
   };
 
 
@@ -541,122 +524,12 @@ export default function HomePage() {
 
             {/* Results State */}
             {results && !isLoading && (
-              <div className="space-y-6">
-                {/* Results Header - Unified with Textbook Info */}
-                <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white/90 backdrop-blur sticky top-20 z-10">
-                  {/* Top row: Title + Actions */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                    <div>
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h2 className="m-0 text-xl sm:text-2xl font-semibold text-slate-900">
-                          Discovered Resources
-                        </h2>
-                        <span className="inline-flex items-center justify-center min-w-[32px] h-8 px-3 bg-blue-600 text-white rounded-full text-sm font-bold shadow-sm">
-                          {results.length}
-                        </span>
-                      </div>
-                      {searchTitle && (
-                        <p className="m-0 mt-1 text-sm text-gray-600 font-medium">{searchTitle}</p>
-                      )}
-                    </div>
-
-                    {/* Desktop Action Buttons */}
-                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
-                      <Button
-                        variant="primary"
-                        onClick={copyAllUrls}
-                      >
-                        {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
-                      </Button>
-
-                      <Button
-                        variant="secondary"
-                        onClick={openNotebookLM}
-                      >
-                        Open NotebookLM
-                      </Button>
-
-                      <Button
-                        variant="secondary"
-                        onClick={handleClearResults}
-                      >
-                        <span className="hidden sm:inline">Clear</span>
-                        <span className="sm:hidden text-xl">⟲</span>
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Next step text below buttons */}
-                  <div className="mt-4 mb-4">
-                    <p className="m-0 text-sm text-slate-700">
-                      <span className="font-semibold">Next step:</span> Click <span className="font-semibold">Copy All URLs</span> and paste into NotebookLM to create summaries, flashcards, and quizzes.
-                    </p>
-                  </div>
-
-                  {/* Textbook Info - Prominently displayed */}
-                  <div className="pt-4 border-t border-slate-200">
-                    {(textbookInfo?.title || textbookInfo?.author) && (
-                      <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
-                          <div className="min-w-0 flex-1">
-                            <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                              Course Textbook
-                            </p>
-                            {textbookInfo?.title && (
-                              <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                                {textbookInfo.title}
-                              </p>
-                            )}
-                            {textbookInfo?.author && (
-                              <p className="m-0 text-sm text-slate-700 font-medium">
-                                by {textbookInfo.author}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Results Grid - Full Width */}
-                <div className="grid grid-cols-1 gap-3">
-                  {results.map((resource, index) => (
-                    <ResultCard
-                      key={index}
-                      resource={resource}
-                      index={index}
-                    />
-                  ))}
-                </div>
-
-                {/* Mobile Sticky Bottom Actions */}
-                <div className="sm:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-lg z-20">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={copyAllUrls}
-                      className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow-sm transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      {copiedAll ? '✓ Copied All!' : '📋 Copy All'}
-                    </button>
-
-                    <button
-                      onClick={openNotebookLM}
-                      className="px-4 py-3 bg-white text-blue-700 border-2 border-blue-600 rounded-lg font-semibold transition-all hover:bg-blue-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      NotebookLM
-                    </button>
-
-                    <button
-                      onClick={handleClearResults}
-                      className="px-4 py-3 bg-transparent text-blue-600 border-2 border-blue-600 rounded-lg font-semibold transition-all hover:bg-blue-50 hover:border-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-xl"
-                    >
-                      ⟲
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ResultsTable
+                resources={results}
+                searchTitle={searchTitle}
+                textbookInfo={textbookInfo}
+                onClear={handleClearResults}
+              />
             )}
           </section>
         )}

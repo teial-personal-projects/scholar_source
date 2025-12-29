@@ -64,9 +64,9 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
   }
 
   return (
-    <div className="relative rounded-2xl bg-white/80 backdrop-blur p-6 sm:p-8 border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)] border border-indigo-200/70 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] before:pointer-events-none hover:border-indigo-300 hover:shadow-xl">
-      {/* Unified Header with Textbook Context */}
-      <div className="mb-6">
+    <div className="relative rounded-2xl bg-white/80 backdrop-blur border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)] border-indigo-200/70 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] before:pointer-events-none hover:border-indigo-300 hover:shadow-xl">
+      {/* Header Section - owns the content */}
+      <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 bg-gradient-to-b from-slate-50/50 to-white/50 border-b border-slate-200">
         {/* Top row: Title + Actions */}
         <div className="flex justify-between items-start gap-4 flex-wrap mb-4">
           <div>
@@ -121,32 +121,38 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
         )}
       </div>
 
-      <div
-        ref={listRef}
-        className={`relative flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2 after:content-['↓_Scroll_for_more'] after:sticky after:bottom-0 after:left-0 after:right-0 after:flex after:items-center after:justify-center after:p-4 after:bg-gradient-to-t after:from-white/95 after:via-white/80 after:to-transparent after:text-primary after:text-xs after:font-bold after:text-center after:pointer-events-none after:opacity-0 after:transition-opacity after:backdrop-blur-sm ${isScrolledToBottom ? '' : 'after:opacity-100'} [&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-primary [&::-webkit-scrollbar-thumb]:to-primary-dark [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-all hover:[&::-webkit-scrollbar-thumb]:from-primary-dark hover:[&::-webkit-scrollbar-thumb]:to-indigo-800`}
-      >
-        {resources.map((resource, index) => (
-          <ResultCard
-            key={index}
-            resource={resource}
-            index={index}
-            onCopy={copyToClipboard}
-          />
-        ))}
+      {/* Content Section - nested result cards */}
+      <div className="px-6 sm:px-8 py-6">
+        <div
+          ref={listRef}
+          className={`relative flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2 after:content-['↓_Scroll_for_more'] after:sticky after:bottom-0 after:left-0 after:right-0 after:flex after:items-center after:justify-center after:p-4 after:bg-gradient-to-t after:from-white/95 after:via-white/80 after:to-transparent after:text-primary after:text-xs after:font-bold after:text-center after:pointer-events-none after:opacity-0 after:transition-opacity after:backdrop-blur-sm ${isScrolledToBottom ? '' : 'after:opacity-100'} [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gradient-to-b [&::-webkit-scrollbar-thumb]:from-primary [&::-webkit-scrollbar-thumb]:to-primary-dark [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:transition-all hover:[&::-webkit-scrollbar-thumb]:from-primary-dark hover:[&::-webkit-scrollbar-thumb]:to-indigo-800`}
+        >
+          {resources.map((resource, index) => (
+            <ResultCard
+              key={index}
+              resource={resource}
+              index={index}
+              onCopy={copyToClipboard}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-8 pt-6 border-t border-slate-200/60">
-        <div className="py-4 px-6 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-primary rounded-lg text-sm text-blue-900 leading-relaxed shadow-sm">
-          💡 <strong className="font-bold">Tip:</strong> Click "Copy All URLs" above, then paste them into{' '}
-          <a
-            href="https://notebooklm.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-950 font-bold underline transition-colors hover:text-primary-dark"
-          >
-            Google NotebookLM
-          </a>{' '}
-          to create flashcards, study guides, and quizzes from these resources.
+      {/* Footer Section */}
+      <div className="px-6 sm:px-8 pb-6 sm:pb-8">
+        <div className="pt-6 border-t border-slate-200/60">
+          <div className="py-4 px-6 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-primary rounded-lg text-sm text-blue-900 leading-relaxed shadow-sm">
+            💡 <strong className="font-bold">Tip:</strong> Click "Copy All URLs" above, then paste them into{' '}
+            <a
+              href="https://notebooklm.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-950 font-bold underline transition-colors hover:text-primary-dark"
+            >
+              Google NotebookLM
+            </a>{' '}
+            to create flashcards, study guides, and quizzes from these resources.
+          </div>
         </div>
       </div>
     </div>

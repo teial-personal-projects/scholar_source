@@ -53,7 +53,7 @@ export default function ResultCard({ resource, index, onCopy }) {
   };
 
   return (
-    <article className="rounded-xl bg-white border border-slate-200 p-3 shadow-sm hover:shadow-md hover:border-slate-300 transition">
+    <article className="rounded-lg bg-white border border-slate-200/60 p-4 shadow-sm hover:shadow hover:border-slate-300 transition-all hover:translate-y-[-1px]">
       {/* Header row */}
       <div className="flex items-center gap-2 mb-1.5">
         <span
