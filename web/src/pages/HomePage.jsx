@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { submitJob } from '../api/client';
+import Hero from '../components/Hero';
 import InlineSearchStatus from '../components/InlineSearchStatus';
 import ResultCard from '../components/ResultCard';
 import { TextLabel, HelperText, OptionalBadge, TextInput, Button } from '../components/ui';
@@ -38,6 +39,11 @@ export default function HomePage() {
   const [validationError, setValidationError] = useState('');
   const [isResourceTypesExpanded, setIsResourceTypesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
+
+  // --- Helpers for the "flow" ---
+  const openNotebookLM = () => {
+    window.open('https://notebooklm.google.com', '_blank', 'noopener,noreferrer');
+  };
 
   // Form handlers
   const handleChange = (e) => {
@@ -189,6 +195,7 @@ export default function HomePage() {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-blue-50">
       {/* Header - Professional blue gradient */}
@@ -196,18 +203,20 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-center justify-center gap-3">
             <span className="text-4xl sm:text-5xl flex-shrink-0" aria-hidden="true">📚</span>
-            <h1 className="m-0 text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight">
+            <div className="m-0 text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight">
               Student Study Resource Finder
-            </h1>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
+        {/* Hero Section */}
+        <Hero />
 
         {/* Search Toolbar Panel */}
-        <section className="rounded-xl bg-white shadow-lg border border-slate-200 p-4 sm:p-5">
+        <section id="search-parameters" className="rounded-xl bg-white shadow-lg border border-slate-200 p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-3">
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 m-0">
@@ -234,262 +243,262 @@ export default function HomePage() {
               >
                 Clear Search Fields
               </Button>
+              </div>
             </div>
-          </div>
 
           <form id="search-form" onSubmit={handleSubmit}>
-            {/* Primary Controls Row */}
-            <div className="grid grid-cols-1 gap-4 mb-4">
-              {/* Search Type Dropdown */}
-              <div>
-                <TextLabel htmlFor="search_param_type" required>
-                  Search Type
-                </TextLabel>
-                <div className="mt-2">
-                  <TextInput
-                    as="select"
-                    id="search_param_type"
-                    name="search_param_type"
-                    value={searchParamType}
-                    onChange={handleSearchParamChange}
-                    disabled={isLoading}
-                    aria-describedby="search-type-helper"
-                  >
-                    <option value="">Select type...</option>
-                    <option value="course_url">Course URL</option>
-                    <option value="book_url">Book URL</option>
-                    <option value="book_title_author">Book Title + Author</option>
-                    <option value="isbn">Book ISBN</option>
-                  </TextInput>
+              {/* Primary Controls Row */}
+              <div className="grid grid-cols-1 gap-4 mb-4">
+                {/* Search Type Dropdown */}
+                <div>
+                  <TextLabel htmlFor="search_param_type" required>
+                    Search Type
+                  </TextLabel>
+                  <div className="mt-2">
+                    <TextInput
+                      as="select"
+                      id="search_param_type"
+                      name="search_param_type"
+                      value={searchParamType}
+                      onChange={handleSearchParamChange}
+                      disabled={isLoading}
+                      aria-describedby="search-type-helper"
+                    >
+                      <option value="">Select type...</option>
+                      <option value="course_url">Course URL</option>
+                      <option value="book_url">Book URL</option>
+                      <option value="book_title_author">Book Title + Author</option>
+                      <option value="isbn">Book ISBN</option>
+                    </TextInput>
+                  </div>
+                  <p id="search-type-helper" className="mt-2 text-sm leading-5 text-slate-700">
+                    {!searchParamType && "Selecting a search type will show required fields below."}
+                    {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
+                    {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
+                    {searchParamType === 'book_title_author' && (
+                      <>Enter both the <span className="font-medium">book title</span> and at least one <span className="font-medium">author</span>.</>
+                    )}
+                    {searchParamType === 'isbn' && "Enter the ISBN of the book you want to search."}
+                  </p>
                 </div>
-                <p id="search-type-helper" className="mt-2 text-sm leading-5 text-slate-700">
-                  {!searchParamType && "Selecting a search type will show required fields below."}
-                  {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
-                  {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
-                  {searchParamType === 'book_title_author' && (
-                    <>Enter both the <span className="font-medium">book title</span> and at least one <span className="font-medium">author</span>.</>
-                  )}
-                  {searchParamType === 'isbn' && "Enter the ISBN of the book you want to search."}
+
+                {/* Dynamic Input Field */}
+                {searchParamType === 'course_url' && (
+                  <div>
+                    <TextLabel htmlFor="course_url" required>
+                      Course URL
+                    </TextLabel>
+                    <div className="mt-2">
+                      <TextInput
+                        type="url"
+                        id="course_url"
+                        name="course_url"
+                        value={formData.course_url}
+                        onChange={handleChange}
+                        placeholder="https://ocw.mit.edu/courses/..."
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {searchParamType === 'book_url' && (
+                  <div>
+                    <TextLabel htmlFor="book_url" required>
+                      Book URL
+                    </TextLabel>
+                    <div className="mt-2">
+                      <TextInput
+                        type="url"
+                        id="book_url"
+                        name="book_url"
+                        value={formData.book_url}
+                        onChange={handleChange}
+                        placeholder="https://..."
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {searchParamType === 'book_title_author' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <TextLabel htmlFor="book_title" required>
+                        Book Title
+                      </TextLabel>
+                      <div className="mt-2">
+                        <TextInput
+                          type="text"
+                          id="book_title"
+                          name="book_title"
+                          value={formData.book_title}
+                          onChange={handleChange}
+                          placeholder="e.g., Intro to Algorithms"
+                          disabled={isLoading}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <TextLabel htmlFor="book_author" required>
+                        Author(s)
+                      </TextLabel>
+                      <div className="mt-2">
+                        <TextInput
+                          type="text"
+                          id="book_author"
+                          name="book_author"
+                          value={formData.book_author}
+                          onChange={handleChange}
+                          placeholder="e.g., Cormen"
+                          disabled={isLoading}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {searchParamType === 'isbn' && (
+                  <div>
+                    <TextLabel htmlFor="isbn" required>
+                      ISBN
+                    </TextLabel>
+                    <div className="mt-2">
+                      <TextInput
+                        type="text"
+                        id="isbn"
+                        name="isbn"
+                        value={formData.isbn}
+                        onChange={handleChange}
+                        placeholder="978-0262046305"
+                        disabled={isLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Force Refresh Toggle - Mobile */}
+              <div className="mb-4 lg:hidden">
+                <label htmlFor="bypass_cache_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="bypass_cache_mobile"
+                    name="bypass_cache"
+                    checked={formData.bypass_cache}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  <span className="text-sm sm:text-base text-slate-800 select-none">
+                    Bypass cache
+                  </span>
+                </label>
+                <p className="m-0 ml-6 text-xs text-slate-600">
+                  Don't use cached results from previous searches
                 </p>
               </div>
 
-              {/* Dynamic Input Field */}
-              {searchParamType === 'course_url' && (
-                <div>
-                  <TextLabel htmlFor="course_url" required>
-                    Course URL
-                  </TextLabel>
-                  <div className="mt-2">
-                    <TextInput
-                      type="url"
-                      id="course_url"
-                      name="course_url"
-                      value={formData.course_url}
-                      onChange={handleChange}
-                      placeholder="https://ocw.mit.edu/courses/..."
-                      disabled={isLoading}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
+              {/* Force Refresh Toggle - Desktop */}
+              <div className="hidden lg:block mb-4">
+                <label htmlFor="bypass_cache" className="flex items-center gap-2 py-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="bypass_cache"
+                    name="bypass_cache"
+                    checked={formData.bypass_cache}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  <span className="text-sm sm:text-base text-slate-800 select-none">
+                    Bypass cache
+                  </span>
+                </label>
+                <p className="m-0 ml-6 text-xs text-slate-600">
+                  Don't use cached results from previous searches
+                </p>
+              </div>
 
-              {searchParamType === 'book_url' && (
-                <div>
-                  <TextLabel htmlFor="book_url" required>
-                    Book URL
-                  </TextLabel>
-                  <div className="mt-2">
-                    <TextInput
-                      type="url"
-                      id="book_url"
-                      name="book_url"
-                      value={formData.book_url}
-                      onChange={handleChange}
-                      placeholder="https://..."
-                      disabled={isLoading}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              {searchParamType === 'book_title_author' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <TextLabel htmlFor="book_title" required>
-                      Book Title
-                    </TextLabel>
-                    <div className="mt-2">
-                      <TextInput
-                        type="text"
-                        id="book_title"
-                        name="book_title"
-                        value={formData.book_title}
-                        onChange={handleChange}
-                        placeholder="e.g., Intro to Algorithms"
-                        disabled={isLoading}
-                        required
-                      />
+              {/* Optional Sections */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {/* Resource Types Accordion */}
+                <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
+                  <button
+                    type="button"
+                    onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                  >
+                    <div className="flex items-baseline gap-2">
+                      <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Resource Types</span>
+                      <OptionalBadge />
                     </div>
-                  </div>
-                  <div>
-                    <TextLabel htmlFor="book_author" required>
-                      Author(s)
-                    </TextLabel>
-                    <div className="mt-2">
-                      <TextInput
-                        type="text"
-                        id="book_author"
-                        name="book_author"
-                        value={formData.book_author}
-                        onChange={handleChange}
-                        placeholder="e.g., Cormen"
-                        disabled={isLoading}
-                        required
-                      />
+                    <svg className={`w-4 h-4 text-gray-600 transition-transform ${isResourceTypesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isResourceTypesExpanded && (
+                    <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
+                      {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
+                        <label key={type} className="flex items-start gap-2 py-1 cursor-pointer min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={formData.desired_resource_types?.includes(type) || false}
+                            onChange={() => handleResourceTypeChange(type)}
+                            disabled={isLoading}
+                            className="w-4 h-4 mt-0.5 flex-shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                          />
+                          <span className="text-sm sm:text-base text-slate-800 capitalize leading-snug break-words">{type.replace(/_/g, ' ')}</span>
+                        </label>
+                      ))}
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
 
-              {searchParamType === 'isbn' && (
-                <div>
-                  <TextLabel htmlFor="isbn" required>
-                    ISBN
-                  </TextLabel>
-                  <div className="mt-2">
-                    <TextInput
-                      type="text"
-                      id="isbn"
-                      name="isbn"
-                      value={formData.isbn}
-                      onChange={handleChange}
-                      placeholder="978-0262046305"
-                      disabled={isLoading}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Force Refresh Toggle - Mobile: separate row, Desktop: inline with buttons */}
-            <div className="mb-4 lg:hidden">
-              <label htmlFor="bypass_cache_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="bypass_cache_mobile"
-                  name="bypass_cache"
-                  checked={formData.bypass_cache}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <span className="text-sm sm:text-base text-slate-800 select-none">
-                  Bypass cache
-                </span>
-              </label>
-              <p className="m-0 ml-6 text-xs text-slate-600">
-                Don't use cached results from previous searches
-              </p>
-            </div>
-
-            {/* Force Refresh Toggle - Desktop only: inline */}
-            <div className="hidden lg:block mb-4">
-              <label htmlFor="bypass_cache" className="flex items-center gap-2 py-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="bypass_cache"
-                  name="bypass_cache"
-                  checked={formData.bypass_cache}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <span className="text-sm sm:text-base text-slate-800 select-none">
-                  Bypass cache
-                </span>
-              </label>
-              <p className="m-0 ml-6 text-xs text-slate-600">
-                Don't use cached results from previous searches
-              </p>
-            </div>
-
-            {/* Optional Sections - Side-by-side on desktop, stacked on mobile */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              {/* Resource Types Accordion */}
-              <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
-                <button
-                  type="button"
-                  onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Resource Types</span>
-                    <OptionalBadge />
-                  </div>
-                  <svg className={`w-4 h-4 text-gray-600 transition-transform ${isResourceTypesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isResourceTypesExpanded && (
-                  <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
-                    {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
-                      <label key={type} className="flex items-start gap-2 py-1 cursor-pointer min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={formData.desired_resource_types?.includes(type) || false}
-                          onChange={() => handleResourceTypeChange(type)}
+                {/* Focus Topics Accordion */}
+                <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
+                  <button
+                    type="button"
+                    onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                  >
+                    <div className="flex items-baseline gap-2">
+                      <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Focus Topics</span>
+                      <OptionalBadge />
+                    </div>
+                    <svg className={`w-4 h-4 text-gray-600 transition-transform ${isFocusTopicsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isFocusTopicsExpanded && (
+                    <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200">
+                      <TextLabel htmlFor="topics_list">
+                        Topics List
+                      </TextLabel>
+                      <div className="mt-2">
+                        <TextInput
+                          as="textarea"
+                          id="topics_list"
+                          name="topics_list"
+                          value={formData.topics_list}
+                          onChange={handleChange}
+                          placeholder="e.g., Midterm review, Chapter 4, Dynamic programming"
+                          rows="2"
                           disabled={isLoading}
-                          className="w-4 h-4 mt-0.5 flex-shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                         />
-                        <span className="text-sm sm:text-base text-slate-800 capitalize leading-snug break-words">{type.replace(/_/g, ' ')}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Focus Topics Accordion */}
-              <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
-                <button
-                  type="button"
-                  onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Focus Topics</span>
-                    <OptionalBadge />
-                  </div>
-                  <svg className={`w-4 h-4 text-gray-600 transition-transform ${isFocusTopicsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isFocusTopicsExpanded && (
-                  <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200">
-                    <TextLabel htmlFor="topics_list">
-                      Topics List
-                    </TextLabel>
-                    <div className="mt-2">
-                      <TextInput
-                        as="textarea"
-                        id="topics_list"
-                        name="topics_list"
-                        value={formData.topics_list}
-                        onChange={handleChange}
-                        placeholder="e.g., Midterm review, Chapter 4, Dynamic programming"
-                        rows="2"
-                        disabled={isLoading}
-                      />
+                      </div>
+                      <HelperText>
+                        💡 Add 3–6 topics for better matches
+                      </HelperText>
                     </div>
-                    <HelperText>
-                      💡 Add 3–6 topics for better matches
-                    </HelperText>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
 
             {/* Validation Error */}
             {validationError && (
@@ -512,134 +521,141 @@ export default function HomePage() {
         {/* Results Section - Only show after search is initiated */}
         {(jobId !== null || results !== null || error !== null) && (
           <section>
-          {/* Error State */}
-          {error && (
-            <div className="bg-white rounded-xl p-8 shadow-lg border-l-4 border-red-500 text-center">
-              <div className="text-5xl mb-4" aria-hidden="true">⚠️</div>
-              <h2 className="m-0 mb-3 text-xl font-semibold text-red-600">Something went wrong</h2>
-              <p className="m-0 mb-6 text-sm text-gray-700">{error}</p>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setError(null);
-                  setJobId(null);
-                }}
-              >
-                Try Again
-              </Button>
-            </div>
-          )}
+            {/* Error State */}
+            {error && (
+              <div className="bg-white rounded-xl p-8 shadow-lg border-l-4 border-red-500 text-center">
+                <div className="text-5xl mb-4" aria-hidden="true">⚠️</div>
+                <h2 className="m-0 mb-3 text-xl font-semibold text-red-600">Something went wrong</h2>
+                <p className="m-0 mb-6 text-sm text-gray-700">{error}</p>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setError(null);
+                    setJobId(null);
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
 
-          {/* Results State */}
-          {results && !isLoading && (
-            <div className="space-y-6">
-              {/* Results Header - Unified with Textbook Info */}
-              <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white/90 backdrop-blur sticky top-20 z-10">
-                {/* Top row: Title + Actions */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h2 className="m-0 text-xl sm:text-2xl font-semibold text-slate-900">
-                        Discovered Resources
-                      </h2>
-                      <span className="inline-flex items-center justify-center min-w-[32px] h-8 px-3 bg-blue-600 text-white rounded-full text-sm font-bold shadow-sm">
-                        {results.length}
-                      </span>
+            {/* Results State */}
+            {results && !isLoading && (
+              <div className="space-y-6">
+                {/* Results Header - Unified with Textbook Info */}
+                <div className="rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 bg-white/90 backdrop-blur sticky top-20 z-10">
+                  {/* Top row: Title + Actions */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h2 className="m-0 text-xl sm:text-2xl font-semibold text-slate-900">
+                          Discovered Resources
+                        </h2>
+                        <span className="inline-flex items-center justify-center min-w-[32px] h-8 px-3 bg-blue-600 text-white rounded-full text-sm font-bold shadow-sm">
+                          {results.length}
+                        </span>
+                      </div>
+                      {searchTitle && (
+                        <p className="m-0 mt-1 text-sm text-gray-600 font-medium">{searchTitle}</p>
+                      )}
                     </div>
-                    {searchTitle && (
-                      <p className="m-0 mt-1 text-sm text-gray-600 font-medium">{searchTitle}</p>
-                    )}
+
+                    {/* Desktop Action Buttons */}
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                      <Button
+                        variant="primary"
+                        onClick={copyAllUrls}
+                      >
+                        {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
+                      </Button>
+
+                      <Button
+                        variant="secondary"
+                        onClick={openNotebookLM}
+                      >
+                        Open NotebookLM
+                      </Button>
+
+                      <Button
+                        variant="secondary"
+                        onClick={handleClearResults}
+                      >
+                        <span className="hidden sm:inline">Clear</span>
+                        <span className="sm:hidden text-xl">⟲</span>
+                      </Button>
+                    </div>
                   </div>
 
-                  {/* Desktop Action Buttons */}
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button
-                      variant="primary"
-                      onClick={copyAllUrls}
-                    >
-                      {copiedAll ? '✓ Copied!' : '📋 Copy All URLs'}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleClearResults}
-                    >
-                      <span className="hidden sm:inline">Clear</span>
-                      <span className="sm:hidden text-xl">⟲</span>
-                    </Button>
+                  {/* Next step text below buttons */}
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <p className="m-0 text-sm text-slate-700">
+                      <span className="font-semibold">Next step:</span> Click <span className="font-semibold">Copy All URLs</span> and paste into NotebookLM to create summaries, flashcards, and quizzes.
+                    </p>
                   </div>
-                </div>
 
-                {/* Textbook Info - Prominently displayed */}
-                {(textbookInfo?.book_title || textbookInfo?.book_author || textbookInfo?.title || textbookInfo?.author) && (
-                  <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                          Course Textbook
-                        </p>
-                        {(textbookInfo?.book_title || textbookInfo?.title) && (
-                          <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                            {textbookInfo.book_title || textbookInfo.title}
+                  {/* Textbook Info - Prominently displayed */}
+                  {(textbookInfo?.book_title || textbookInfo?.book_author || textbookInfo?.title || textbookInfo?.author) && (
+                    <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
+                        <div className="min-w-0 flex-1">
+                          <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                            Course Textbook
                           </p>
-                        )}
-                        {(textbookInfo?.book_author || textbookInfo?.author) && (
-                          <p className="m-0 text-sm text-slate-700 font-medium">
-                            by {textbookInfo.book_author || textbookInfo.author}
-                          </p>
-                        )}
+                          {(textbookInfo?.book_title || textbookInfo?.title) && (
+                            <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                              {textbookInfo.book_title || textbookInfo.title}
+                            </p>
+                          )}
+                          {(textbookInfo?.book_author || textbookInfo?.author) && (
+                            <p className="m-0 text-sm text-slate-700 font-medium">
+                              by {textbookInfo.book_author || textbookInfo.author}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  )}
+                </div>
+
+                {/* Results Grid - Full Width */}
+                <div className="grid grid-cols-1 gap-3">
+                  {results.map((resource, index) => (
+                    <ResultCard
+                      key={index}
+                      resource={resource}
+                      index={index}
+                    />
+                  ))}
+                </div>
+
+                {/* Mobile Sticky Bottom Actions */}
+                <div className="sm:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-lg z-20">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={copyAllUrls}
+                      className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow-sm transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      {copiedAll ? '✓ Copied All!' : '📋 Copy All'}
+                    </button>
+
+                    <button
+                      onClick={openNotebookLM}
+                      className="px-4 py-3 bg-white text-blue-700 border-2 border-blue-600 rounded-lg font-semibold transition-all hover:bg-blue-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      NotebookLM
+                    </button>
+
+                    <button
+                      onClick={handleClearResults}
+                      className="px-4 py-3 bg-transparent text-blue-600 border-2 border-blue-600 rounded-lg font-semibold transition-all hover:bg-blue-50 hover:border-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-xl"
+                    >
+                      ⟲
+                    </button>
                   </div>
-                )}
-              </div>
-
-              {/* Results Grid - Full Width */}
-              <div className="grid grid-cols-1 gap-3">
-                {results.map((resource, index) => (
-                  <ResultCard
-                    key={index}
-                    resource={resource}
-                    index={index}
-                  />
-                ))}
-              </div>
-
-              {/* NotebookLM Tip */}
-              <div className="bg-blue-50 rounded-xl p-4 sm:p-6 border-l-4 border-blue-600 shadow-sm">
-                <p className="m-0 text-sm leading-relaxed text-gray-800">
-                  <span className="font-bold">💡 Tip:</span> Click "Copy All URLs" to paste into{' '}
-                  <a
-                    href="https://notebooklm.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold underline text-slate-900 transition-colors hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:rounded"
-                  >
-                    Google NotebookLM
-                  </a>
-                  {' '}for AI-powered study guides and flashcards.
-                </p>
-              </div>
-
-              {/* Mobile Sticky Bottom Actions */}
-              <div className="sm:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-lg z-20">
-                <div className="flex gap-2">
-                  <button
-                    onClick={copyAllUrls}
-                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow-sm transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    {copiedAll ? '✓ Copied All!' : '📋 Copy All'}
-                  </button>
-                  <button
-                    onClick={handleClearResults}
-                    className="px-4 py-3 bg-transparent text-blue-600 border-2 border-blue-600 rounded-lg font-semibold transition-all hover:bg-blue-50 hover:border-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-xl"
-                  >
-                    ⟲
-                  </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           </section>
         )}
       </main>

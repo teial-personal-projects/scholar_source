@@ -33,7 +33,7 @@ resource_discovery_agent:
   role: "Book-Aligned Resource Researcher"
   goal: >
     Find 5-7 high-quality, legally accessible educational resources from USA-based institutions
-    and platforms that follow a similar structure to the student's book, prioritizing open
+    and platforms that follow a similar structure to the student's book and syllabus if found, prioritizing open
     textbooks, PDFs, and text-based web content that NotebookLM can easily process, with
     YouTube videos as supplementary resources
   backstory: >
