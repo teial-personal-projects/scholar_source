@@ -216,13 +216,13 @@ export default function HomePage() {
         <Hero />
 
         {/* Search Toolbar Panel */}
-        <section id="search-parameters" className="rounded-xl bg-white shadow-lg border border-slate-200 p-4 sm:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-3">
+        <section id="search-parameters" className="rounded-xl bg-white shadow-lg border border-slate-200 p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 m-0">
                 Search Parameters
               </h2>
-              <div className="mt-2 border-t border-slate-200" />
+              <div className="mt-1 border-t border-slate-200" />
             </div>
 
             {/* Action Buttons */}
@@ -248,13 +248,13 @@ export default function HomePage() {
 
           <form id="search-form" onSubmit={handleSubmit}>
               {/* Primary Controls Row */}
-              <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-3 mb-3">
                 {/* Search Type Dropdown */}
                 <div>
                   <TextLabel htmlFor="search_param_type" required>
                     Search Type
                   </TextLabel>
-                  <div className="mt-2">
+                  <div className="mt-1.5">
                     <TextInput
                       as="select"
                       id="search_param_type"
@@ -271,7 +271,7 @@ export default function HomePage() {
                       <option value="isbn">Book ISBN</option>
                     </TextInput>
                   </div>
-                  <p id="search-type-helper" className="mt-2 text-sm leading-5 text-slate-700">
+                  <p id="search-type-helper" className="mt-1 text-sm leading-5 text-slate-700">
                     {!searchParamType && "Selecting a search type will show required fields below."}
                     {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
                     {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
@@ -288,7 +288,7 @@ export default function HomePage() {
                     <TextLabel htmlFor="course_url" required>
                       Course URL
                     </TextLabel>
-                    <div className="mt-2">
+                    <div className="mt-1.5">
                       <TextInput
                         type="url"
                         id="course_url"
@@ -308,7 +308,7 @@ export default function HomePage() {
                     <TextLabel htmlFor="book_url" required>
                       Book URL
                     </TextLabel>
-                    <div className="mt-2">
+                    <div className="mt-1.5">
                       <TextInput
                         type="url"
                         id="book_url"
@@ -324,12 +324,12 @@ export default function HomePage() {
                 )}
 
                 {searchParamType === 'book_title_author' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <TextLabel htmlFor="book_title" required>
                         Book Title
                       </TextLabel>
-                      <div className="mt-2">
+                      <div className="mt-1.5">
                         <TextInput
                           type="text"
                           id="book_title"
@@ -346,7 +346,7 @@ export default function HomePage() {
                       <TextLabel htmlFor="book_author" required>
                         Author(s)
                       </TextLabel>
-                      <div className="mt-2">
+                      <div className="mt-1.5">
                         <TextInput
                           type="text"
                           id="book_author"
@@ -367,7 +367,7 @@ export default function HomePage() {
                     <TextLabel htmlFor="isbn" required>
                       ISBN
                     </TextLabel>
-                    <div className="mt-2">
+                    <div className="mt-1.5">
                       <TextInput
                         type="text"
                         id="isbn"
@@ -384,7 +384,7 @@ export default function HomePage() {
               </div>
 
               {/* Force Refresh Toggle - Mobile */}
-              <div className="mb-4 lg:hidden">
+              <div className="mb-3 lg:hidden">
                 <label htmlFor="bypass_cache_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
                   <input
                     type="checkbox"
@@ -405,7 +405,7 @@ export default function HomePage() {
               </div>
 
               {/* Force Refresh Toggle - Desktop */}
-              <div className="hidden lg:block mb-4">
+              <div className="hidden lg:block mb-3">
                 <label htmlFor="bypass_cache" className="flex items-center gap-2 py-1 cursor-pointer">
                   <input
                     type="checkbox"
@@ -426,13 +426,13 @@ export default function HomePage() {
               </div>
 
               {/* Optional Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
                 {/* Resource Types Accordion */}
                 <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
                   <button
                     type="button"
                     onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
                   >
                     <div className="flex items-baseline gap-2">
                       <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Resource Types</span>
@@ -443,7 +443,7 @@ export default function HomePage() {
                     </svg>
                   </button>
                   {isResourceTypesExpanded && (
-                    <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
+                    <div className="px-4 py-2 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
                       {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
                         <label key={type} className="flex items-start gap-2 py-1 cursor-pointer min-w-0">
                           <input
@@ -465,7 +465,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
                   >
                     <div className="flex items-baseline gap-2">
                       <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Focus Topics</span>
@@ -476,11 +476,11 @@ export default function HomePage() {
                     </svg>
                   </button>
                   {isFocusTopicsExpanded && (
-                    <div className="px-4 py-3 bg-blue-50/20 border-t border-blue-200">
+                    <div className="px-4 py-2 bg-blue-50/20 border-t border-blue-200">
                       <TextLabel htmlFor="topics_list">
                         Topics List
                       </TextLabel>
-                      <div className="mt-2">
+                      <div className="mt-1.5">
                         <TextInput
                           as="textarea"
                           id="topics_list"
