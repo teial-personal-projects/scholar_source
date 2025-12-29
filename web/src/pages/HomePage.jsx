@@ -594,7 +594,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Textbook Info - Prominently displayed */}
-                  {(textbookInfo?.book_title || textbookInfo?.book_author || textbookInfo?.title || textbookInfo?.author) && (
+                  {(textbookInfo?.title || textbookInfo?.author) && (
                     <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
                       <div className="flex items-start gap-3">
                         <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
@@ -602,14 +602,14 @@ export default function HomePage() {
                           <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
                             Course Textbook
                           </p>
-                          {(textbookInfo?.book_title || textbookInfo?.title) && (
+                          {textbookInfo?.title && (
                             <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                              {textbookInfo.book_title || textbookInfo.title}
+                              {textbookInfo.title}
                             </p>
                           )}
-                          {(textbookInfo?.book_author || textbookInfo?.author) && (
+                          {textbookInfo?.author && (
                             <p className="m-0 text-sm text-slate-700 font-medium">
-                              by {textbookInfo.book_author || textbookInfo.author}
+                              by {textbookInfo.author}
                             </p>
                           )}
                         </div>
