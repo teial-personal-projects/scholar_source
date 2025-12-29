@@ -89,7 +89,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
   };
 
   return (
-    <div className="mt-4 w-full rounded-xl border border-slate-200 border-l-4 border-l-blue-500 bg-white px-4 py-3 shadow-sm">
+    <div className="mt-4 w-full rounded-xl border border-slate-200 border-l-4 border-l-blue-500 bg-blue-50 px-4 py-3 shadow-sm">
       {/* Header row: spinner + title + cancel */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
