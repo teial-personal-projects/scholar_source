@@ -51,6 +51,31 @@ def parse_markdown_to_resources(markdown_content: str) -> Dict[str, Any]:
     }
 
 
+def _contains_error(url: str, title: str, description: str) -> bool:
+    """
+    Check if any of the resource fields contain error messages.
+
+    Args:
+        url: Resource URL
+        title: Resource title
+        description: Resource description
+
+    Returns:
+        bool: True if any field contains an error indicator
+    """
+    error_indicators = ['ERROR:', 'Could not fetch', 'failed to', 'HTTP error', 'timed out']
+
+    fields_to_check = [url, title, description or '']
+
+    for field in fields_to_check:
+        field_lower = field.lower()
+        for indicator in error_indicators:
+            if indicator.lower() in field_lower:
+                return True
+
+    return False
+
+
 def _parse_numbered_resources(content: str) -> List[Dict[str, Any]]:
     """
     Parse numbered resource format (most common in crew output).
@@ -88,8 +113,9 @@ def _parse_numbered_resources(content: str) -> List[Dict[str, Any]]:
         # Extract description
         description = _extract_description(resource_block)
 
-        # Only add if we have at least a URL
-        if url:
+        # Only add if we have at least a URL and it's not an error
+        # Skip resources that contain ERROR in the URL, title, or description
+        if url and not _contains_error(url, title, description):
             resources.append({
                 "type": _normalize_type(resource_type),
                 "title": title,
@@ -135,13 +161,15 @@ def _parse_link_sections(content: str) -> List[Dict[str, Any]]:
         # Infer type from URL or context
         resource_type = _infer_type_from_url(url) or _extract_type_from_context(context)
 
-        resources.append({
-            "type": resource_type,
-            "title": title,
-            "source": source or "Unknown",
-            "url": url,
-            "description": description
-        })
+        # Skip resources that contain error messages
+        if not _contains_error(url, title, description):
+            resources.append({
+                "type": resource_type,
+                "title": title,
+                "source": source or "Unknown",
+                "url": url,
+                "description": description
+            })
 
     return resources
 
@@ -175,13 +203,15 @@ def _parse_all_links(content: str) -> List[Dict[str, Any]]:
         source = _extract_source(context)
         resource_type = _infer_type_from_url(url)
 
-        resources.append({
-            "type": resource_type,
-            "title": title or url,
-            "source": source or _extract_domain(url),
-            "url": url,
-            "description": None
-        })
+        # Skip resources that contain error messages
+        if not _contains_error(url, title or '', ''):
+            resources.append({
+                "type": resource_type,
+                "title": title or url,
+                "source": source or _extract_domain(url),
+                "url": url,
+                "description": None
+            })
 
     return resources
 
