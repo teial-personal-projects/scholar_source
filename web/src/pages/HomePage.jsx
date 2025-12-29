@@ -398,10 +398,10 @@ export default function HomePage() {
                   <span className="text-sm sm:text-base text-slate-800 select-none">
                     Bypass cache
                   </span>
+                  <span className="text-xs text-slate-500">
+                    Don't use cached results from previous searches
+                  </span>
                 </label>
-                <p className="m-0 ml-6 text-xs text-slate-600">
-                  Don't use cached results from previous searches
-                </p>
               </div>
 
               {/* Force Refresh Toggle - Desktop */}
@@ -419,10 +419,10 @@ export default function HomePage() {
                   <span className="text-sm sm:text-base text-slate-800 select-none">
                     Bypass cache
                   </span>
+                  <span className="text-xs text-slate-500">
+                    Don't use cached results from previous searches
+                  </span>
                 </label>
-                <p className="m-0 ml-6 text-xs text-slate-600">
-                  Don't use cached results from previous searches
-                </p>
               </div>
 
               {/* Optional Sections */}
