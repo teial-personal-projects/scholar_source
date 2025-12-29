@@ -587,35 +587,37 @@ export default function HomePage() {
                   </div>
 
                   {/* Next step text below buttons */}
-                  <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="mt-4 mb-4">
                     <p className="m-0 text-sm text-slate-700">
                       <span className="font-semibold">Next step:</span> Click <span className="font-semibold">Copy All URLs</span> and paste into NotebookLM to create summaries, flashcards, and quizzes.
                     </p>
                   </div>
 
                   {/* Textbook Info - Prominently displayed */}
-                  {(textbookInfo?.title || textbookInfo?.author) && (
-                    <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
-                      <div className="flex items-start gap-3">
-                        <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
-                        <div className="min-w-0 flex-1">
-                          <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                            Course Textbook
-                          </p>
-                          {textbookInfo?.title && (
-                            <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                              {textbookInfo.title}
+                  <div className="pt-4 border-t border-slate-200">
+                    {(textbookInfo?.title || textbookInfo?.author) && (
+                      <div className="py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border-l-4 border-amber-600 rounded-lg shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl flex-shrink-0 mt-0.5">📚</div>
+                          <div className="min-w-0 flex-1">
+                            <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                              Course Textbook
                             </p>
-                          )}
-                          {textbookInfo?.author && (
-                            <p className="m-0 text-sm text-slate-700 font-medium">
-                              by {textbookInfo.author}
-                            </p>
-                          )}
+                            {textbookInfo?.title && (
+                              <p className="m-0 mb-1 text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                                {textbookInfo.title}
+                              </p>
+                            )}
+                            {textbookInfo?.author && (
+                              <p className="m-0 text-sm text-slate-700 font-medium">
+                                by {textbookInfo.author}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Results Grid - Full Width */}
