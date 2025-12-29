@@ -131,9 +131,6 @@ export default function Hero() {
             <strong className="font-semibold text-slate-700">Tip:</strong> After your search, click{" "}
             <span className="font-semibold">“Copy All URLs”</span> and paste them into NotebookLM.
           </p>
-          <p className="mt-1 mb-0 text-xs text-slate-500">
-            Curated from open textbooks and academic sources — no random blogs.
-          </p>
 
           {/* Collapse control */}
           <div className="flex justify-end pt-3 border-t border-slate-200 mt-3">
