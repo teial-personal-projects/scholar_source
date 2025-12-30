@@ -176,6 +176,10 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
           {/* Sticky selection controls */}
           <div className="sticky top-0 z-20 -mx-1 px-1 pb-3 pt-1 bg-white/80 backdrop-blur border-b border-slate-200">
             <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold border border-blue-200">
+                {selectedCount} of {totalCount} selected
+              </span>
+
               <button
                 onClick={copySelectedAndOpenNotebookLM}
                 disabled={nothingSelected}

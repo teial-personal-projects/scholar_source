@@ -69,40 +69,31 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
       className={`result-card ${isSelected ? 'selected' : ''}`}
       title={isSelected ? 'Selected for copy to NotebookLM' : 'Click to select for copy to NotebookLM'}
     >
-      {/* Corner selected indicator */}
-      <div className="absolute left-3 top-3">
-        <div
-          className={`result-card-checkbox ${isSelected ? 'selected' : ''}`}
-          aria-hidden="true"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fillRule="evenodd"
-              d="M16.704 5.29a1 1 0 010 1.415l-7.5 7.5a1 1 0 01-1.415 0l-3.5-3.5A1 1 0 015.704 9.29l2.793 2.793 6.793-6.793a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
+      {/* Left side checkbox */}
+      <div className="absolute left-2 top-2">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleSelect?.();
+          }}
+          className="w-4 h-4 cursor-pointer accent-blue-600 rounded"
+          aria-label={isSelected ? 'Deselect resource' : 'Select resource'}
+        />
       </div>
 
       {/* Header row */}
-      <div className="flex items-center gap-2 mb-1.5 pl-10">
+      <div className="flex items-center gap-2 mb-1.5 pl-7">
         <span className={getBadgeClass(resource.type)}>
           {resource.type}
         </span>
-
-        {/* Subtle "Selected" chip */}
-        {isSelected && (
-          <span className="badge badge-selected">
-            Selected
-          </span>
-        )}
 
         <span className="ml-auto text-xs text-slate-500">{getHostname(resource.url)}</span>
       </div>
 
       {/* Title */}
-      <h3 className="m-0 mb-1.5 pl-10">
+      <h3 className="m-0 mb-1.5 pl-7">
         <a
           href={resource.url}
           target="_blank"
@@ -115,11 +106,11 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
 
       {/* Description */}
       {resource.description && (
-        <p className="m-0 mb-2 text-sm text-slate-700 line-clamp-2 pl-10">{resource.description}</p>
+        <p className="m-0 mb-2 text-sm text-slate-700 line-clamp-2 pl-7">{resource.description}</p>
       )}
 
       {/* Actions row */}
-      <div className="flex items-center gap-2 pl-10">
+      <div className="flex items-center gap-2 pl-7">
         <a
           href={resource.url}
           target="_blank"
