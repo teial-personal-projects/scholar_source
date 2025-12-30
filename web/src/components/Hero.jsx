@@ -88,7 +88,7 @@ export default function Hero() {
               onClick={handleStartSearch}
               className="min-h-[32px] bg-blue-600 text-white rounded px-3 py-1.5 text-xs font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-1 transition-colors"
             >
-              Supply your course URL
+              Supply Search Parameters
             </button>
 
             <a
