@@ -149,9 +149,6 @@ npm install -D vitest @vitest/ui @testing-library/react \
   jsdom msw
 ```
 
-**Note:** The frontend test dependencies are listed in `web/package.json.additions`. 
-Make sure to merge these into your `web/package.json` if they're not already there.
-
 ### 2. Add Scripts to package.json
 
 Add these scripts to `web/package.json`:
@@ -352,99 +349,12 @@ xdg-open coverage/index.html  # Linux
 start coverage/index.html  # Windows
 ```
 
-### Coverage Goals
-
-| Component | Target | Priority |
-|-----------|--------|----------|
-| Markdown Parser | 90%+ | High |
-| API Endpoints | 85%+ | High |
-| Models | 80%+ | Medium |
-| UI Components | 70%+ | Medium |
-| Cache Logic | 75%+ | Medium |
-| Rate Limiting | 80%+ | High |
-
----
-
-## 🎯 Best Practices
-
-### 1. Test Naming
-
-✅ **Good:**
-```python
-def test_parse_numbered_resources_with_valid_markdown():
-    """Should extract resources from numbered format"""
-```
-
-❌ **Bad:**
-```python
-def test1():
-    """Test"""
-```
-
-### 2. Arrange-Act-Assert (AAA)
-
-```python
-def test_filter_excluded_domains():
-    # Arrange
-    markdown = "**1. MIT Resource**\n- **Link:** https://mit.edu"
-    excluded = "mit.edu"
-
-    # Act
-    result = parse_markdown_to_resources(markdown, excluded_sites=excluded)
-
-    # Assert
-    assert len(result['resources']) == 0
-```
-
-### 3. Test Behavior, Not Implementation
-
-✅ **Good (test what the user sees):**
-```javascript
-it('displays error when submission fails', async () => {
-  // Trigger error and check user-visible error message
-});
-```
-
-❌ **Bad (test internal state):**
-```javascript
-it('sets error state to true', () => {
-  // Testing internal implementation details
-});
-```
-
-### 4. Use Descriptive Test Data
-
-```python
-# Good
-SAMPLE_MARKDOWN_WITH_TWO_RESOURCES = """
-**1. OpenStax Calculus**
-- **Link:** https://openstax.org/calc
-**2. Khan Academy**
-- **Link:** https://khanacademy.org/math
-"""
-
-# Bad
-test_data = "**1. A** https://a.com **2. B** https://b.com"
-```
-
-### 5. Mock External Dependencies
-
-Always mock external services (CrewAI, Supabase, OpenAI):
-
-```python
-@pytest.fixture
-def mock_openai(mocker):
-    """Mock OpenAI API calls"""
-    return mocker.patch('crewai.Agent.openai_client')
-```
-
----
 
 ## 🚦 Continuous Integration
 
 ### GitHub Actions Workflows
 
-Tests run automatically on every push and pull request.
+Tests run automatically on every push and pull request. DISABLED FOR NOW
 
 **`.github/workflows/test.yml`:**
 - Backend tests (Python 3.12)
