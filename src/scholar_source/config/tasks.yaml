@@ -157,20 +157,45 @@ resource_validation_task:
   description: >
     Validate resources from resource_discovery_agent for quality, legal, and technical requirements.
 
+    **CRITICAL - URL VALIDATION USING WEB SEARCH:**
+    Before validating any resource, you MUST verify each URL actually exists and is accessible:
+    1. For EVERY resource URL, perform a web search query: "[exact URL]" OR "site:[domain] [page title]"
+    2. Check if the search results show the page exists and is accessible
+    3. REJECT immediately if:
+       - Search results show 404 errors or "page not found"
+       - No search results found for the exact URL
+       - Search results indicate the page was removed or moved
+       - Domain doesn't exist or returns errors
+    4. This prevents returning dead/broken links to users
+
     **CHECKS (EFFICIENT - MINIMIZE API CALLS):**
     1. URL format check: Verify URL structure (PDFs end in .pdf, YouTube URLs contain youtube.com, etc.)
-    2. **URL ACCESSIBILITY (CRITICAL):** For web resources, verify the URL is likely valid:
+    2. **URL ACCESSIBILITY (CRITICAL):** For web resources, verify the URL is actually valid:
        - Check for common 404 patterns and incomplete URLs
        - REJECT any URL that appears truncated or incomplete (e.g., ends abruptly without proper path)
        - LibreTexts URLs: Must be complete paths like "math.libretexts.org/Bookshelves/Calculus/Calculus_(OpenStax)/[chapter]/[section]"
          * REJECT if URL ends with incomplete path like "/Calculus_(OpenStax" or "/Bookshelves/Calculus/Calculus_(OpenStax"
          * Must have full chapter and section path to be valid
        - OpenStax: Use URLs like "openstax.org/books/[book-name]" NOT "openstax.org/details/books/[book-name]"
+       - MIT OCW: Verify URLs follow pattern "ocw.mit.edu/courses/[department]/[course-number]-[course-name]-[semester]-[year]/"
+         * REJECT incomplete MIT OCW URLs that don't include full course path
+       - Personal/Faculty PDFs: Be extra cautious - many faculty members remove old course materials
+         * For URLs like "utsa.edu/kalra/..." or similar personal faculty pages, perform web search to verify still exists
+         * REJECT if web search shows 404 or page not found
+       - Udacity, Coursera, edX: REJECT ALL (require accounts)
        - If URL looks suspicious, incomplete, or uses an uncommon format, perform a quick web search to verify the correct URL
        - Reject resources with clearly broken, incomplete, or non-existent URLs
-    3. NotebookLM compatibility: Check format from URL extension and resource_type (PDF/web/YouTube)
-    4. Source credibility: Verify from URL domain and source_credibility field (MIT OCW, OpenStax, etc.)
-    5. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area
+    3. **LOGIN REQUIREMENTS (CRITICAL - AUTO-REJECT):**
+       - Khan Academy: REJECT ALL (requires login)
+       - Coursera: REJECT ALL (requires account)
+       - Udemy: REJECT ALL (paid)
+       - edX: REJECT ALL (requires account)
+       - Udacity: REJECT ALL (requires account)
+       - Brilliant.org: REJECT ALL (paid subscription)
+       - Any site requiring authentication
+    4. NotebookLM compatibility: Check format from URL extension and resource_type (PDF/web/YouTube)
+    5. Source credibility: Verify from URL domain and source_credibility field (MIT OCW, OpenStax, etc.)
+    6. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area
        - PRIMARY: Use resource_title, coverage_topics, and source_credibility from previous task to verify relevance
        - ONLY use WebsiteSearchTool if absolutely necessary (e.g., title is ambiguous) - LIMIT to 1-2 calls maximum
        - For PDFs: Verify from URL, title, and source - DO NOT use WebsiteSearchTool on PDFs

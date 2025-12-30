@@ -58,6 +58,7 @@ class ScholarSource():
             llm=model,
             verbose=True,
             tools=[
+                SerperDevTool(),  # For verifying URLs exist via web search
                 WebsiteSearchTool(),  # For validating web pages
                 YoutubeVideoSearchTool()  # For validating YouTube videos
             ]
