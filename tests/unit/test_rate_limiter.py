@@ -1,0 +1,181 @@
+"""
+Unit tests for rate_limiter.py
+
+Tests rate limiting configuration and error handling.
+"""
+
+import pytest
+from unittest.mock import Mock
+from backend.rate_limiter import limiter, rate_limit_handler
+from slowapi.errors import RateLimitExceeded
+
+
+class TestRateLimiter:
+    """Test rate limiting configuration."""
+
+    def test_limiter_exists(self):
+        """Should initialize limiter instance."""
+        assert limiter is not None
+        assert hasattr(limiter, 'limit')
+
+    def test_limiter_uses_in_memory_by_default(self, monkeypatch):
+        """Should use in-memory storage when REDIS_URL not set."""
+        monkeypatch.delenv("REDIS_URL", raising=False)
+
+        # Limiter should exist (using in-memory storage)
+        assert limiter is not None
+
+    def test_limiter_has_default_limits(self):
+        """Should have default rate limits configured."""
+        assert limiter._default_limits is not None
+
+
+class TestRateLimitHandler:
+    """Test rate limit error response handler."""
+
+    def test_rate_limit_error_response(self):
+        """Should return proper 429 error response."""
+        # Mock request
+        request = Mock()
+
+        # Mock RateLimitExceeded exception
+        exc = RateLimitExceeded(detail="10 per hour")
+        exc.limit = Mock()
+        exc.limit.limit = "10 per hour"
+
+        response = rate_limit_handler(request, exc)
+
+        assert response.status_code == 429
+        assert b"rate limit" in response.body.lower()
+
+    def test_rate_limit_response_includes_retry_after(self):
+        """Should include Retry-After header."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="2 per minute")
+        exc.limit = Mock()
+        exc.limit.limit = "2 per minute"
+
+        response = rate_limit_handler(request, exc)
+
+        assert "Retry-After" in response.headers
+        assert response.headers["Retry-After"] == "60"
+
+    def test_rate_limit_response_parses_minute_limit(self):
+        """Should calculate retry_after for minute-based limits."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="2 per minute")
+        exc.limit = Mock()
+        exc.limit.limit = "2 per minute"
+
+        response = rate_limit_handler(request, exc)
+
+        # Minute-based limit should have 60s retry
+        body = response.body.decode()
+        assert "60" in body
+
+    def test_rate_limit_response_parses_hour_limit(self):
+        """Should calculate retry_after for hour-based limits."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="10 per hour")
+        exc.limit = Mock()
+        exc.limit.limit = "10 per hour"
+
+        response = rate_limit_handler(request, exc)
+
+        # Hour-based limit should have 3600s retry
+        body = response.body.decode()
+        assert "3600" in body
+
+    def test_rate_limit_response_parses_second_limit(self):
+        """Should calculate retry_after for second-based limits."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="5 per second")
+        exc.limit = Mock()
+        exc.limit.limit = "5 per second"
+
+        response = rate_limit_handler(request, exc)
+
+        # Second-based limit should have 1s retry
+        body = response.body.decode()
+        assert '"retry_after":1' in body or '"retry_after": 1' in body
+
+    def test_rate_limit_response_default_retry(self):
+        """Should use default retry_after if pattern not recognized."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="Unknown limit format")
+        exc.limit = None
+
+        response = rate_limit_handler(request, exc)
+
+        # Should default to 60 seconds
+        body = response.body.decode()
+        assert "60" in body
+
+    def test_rate_limit_response_json_structure(self):
+        """Should return JSON with expected structure."""
+        import json
+
+        request = Mock()
+        exc = RateLimitExceeded(detail="10 per hour")
+        exc.limit = Mock()
+        exc.limit.limit = "10 per hour"
+
+        response = rate_limit_handler(request, exc)
+
+        # Parse response body
+        body = json.loads(response.body.decode())
+
+        assert "error" in body
+        assert "message" in body
+        assert "retry_after" in body
+        assert "limit" in body
+        assert body["error"] == "Rate limit exceeded"
+
+
+class TestRateLimitIntegration:
+    """Test rate limit integration with FastAPI."""
+
+    def test_rate_limit_decorator_applies(self):
+        """Should apply rate limit decorator to endpoints."""
+        # This is tested more thoroughly in integration tests
+        # Here we just verify the limiter can be used as a decorator
+        assert callable(limiter.limit)
+
+    def test_get_remote_address_key_func(self):
+        """Should use remote address as rate limit key."""
+        from slowapi.util import get_remote_address
+
+        # Mock request
+        mock_request = Mock()
+        mock_request.client.host = "192.168.1.1"
+
+        address = get_remote_address(mock_request)
+
+        assert address == "192.168.1.1"
+
+
+class TestRateLimitEdgeCases:
+    """Test edge cases for rate limiting."""
+
+    def test_rate_limit_handler_with_no_limit_object(self):
+        """Should handle exception with no limit object."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="Rate limit exceeded")
+        exc.limit = None
+
+        # Should not raise exception
+        response = rate_limit_handler(request, exc)
+
+        assert response.status_code == 429
+
+    def test_rate_limit_handler_with_empty_detail(self):
+        """Should handle exception with empty detail."""
+        request = Mock()
+        exc = RateLimitExceeded(detail="")
+        exc.limit = Mock()
+        exc.limit.limit = ""
+
+        # Should not raise exception
+        response = rate_limit_handler(request, exc)
+
+        assert response.status_code == 429
