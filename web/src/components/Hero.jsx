@@ -25,9 +25,9 @@ export default function Hero() {
       icon: '🔍',
       title: 'AI Discovers Resources',
       description: 'We find textbooks, practice problems, video tutorials, and more',
-      gradient: 'bg-gradient-to-br from-blue-100 to-blue-50',
-      borderColor: 'border-blue-300',
-      iconBg: 'bg-blue-200'
+      gradient: 'bg-gradient-to-br from-emerald-100 to-emerald-50',
+      borderColor: 'border-emerald-300',
+      iconBg: 'bg-emerald-200'
     },
     {
       number: 3,

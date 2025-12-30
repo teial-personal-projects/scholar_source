@@ -28,6 +28,13 @@
     font-weight: 600; /* semibold as recommended */
   }
 
+  /* Display titles use Poppins for visual impact */
+  .display-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
   p {
     @apply m-0;
   }
@@ -277,7 +284,7 @@
 /* Hero component styles */
 @layer components {
   .hero-container {
-    @apply relative rounded-2xl bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-600 shadow-xl overflow-hidden;
+    @apply bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700;
   }
 
   .hero-collapsed {
@@ -302,7 +309,9 @@
   }
 
   .hero-title {
-    @apply m-0 text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight leading-tight;
+    @apply m-0 text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight leading-tight;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: -0.02em;
   }
 
   .hero-subtitle {

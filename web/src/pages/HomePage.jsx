@@ -186,14 +186,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-blue-50">
-      {/* Header - Professional blue gradient */}
-      <header className="sticky top-0 z-20 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 shadow-lg">
+      {/* Header - Purple gradient */}
+      <header className="sticky top-0 z-20 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 shadow-lg">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-center gap-2">
             <span className="text-2xl sm:text-3xl flex-shrink-0" aria-hidden="true">📚</span>
-            <div className="m-0 text-lg sm:text-xl lg:text-2xl font-semibold text-white leading-tight">
+            <h1 className="m-0 text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight tracking-tight">
               Student Study Resource Finder
-            </div>
+            </h1>
           </div>
         </div>
       </header>
