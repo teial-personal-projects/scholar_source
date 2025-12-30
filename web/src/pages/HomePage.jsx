@@ -230,7 +230,7 @@ export default function HomePage() {
         <section id="search-parameters" className="search-panel">
           <div className="search-panel-header">
             <h2 className="search-panel-title">
-              Search Parameters
+              Course Information
             </h2>
 
             {/* Action Buttons */}

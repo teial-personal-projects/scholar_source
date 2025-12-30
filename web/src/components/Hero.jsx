@@ -14,8 +14,8 @@ export default function Hero() {
     {
       number: 1,
       icon: '📚',
-      title: 'Drop Any Course Link',
-      description: 'Paste your course page, textbook URL, or syllabus link to get started',
+      title: 'Enter Course Details Below',
+      description: 'Use Course Information below to provide your course URL, textbook info, or ISBN',
       gradient: 'bg-gradient-to-br from-orange-100 to-orange-50',
       borderColor: 'border-orange-300',
       iconBg: 'bg-orange-200'
@@ -56,7 +56,7 @@ export default function Hero() {
         <div className="hero-collapsed">
           <div className="min-w-0">
             <p className="hero-collapsed-text">
-              📚 Drop link → 🔍 Discover → 📋 Export → ✨ Generate study kit
+              📚 Enter details → 🔍 Discover → 📋 Export → ✨ Generate study kit
             </p>
           </div>
 
