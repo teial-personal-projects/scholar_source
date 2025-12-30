@@ -26,7 +26,13 @@ Using NotebookLM gives students a sanitized way to ensure their study materials 
 - Provides AI-powered summarization and question generation
 - Ensures students work with legitimate, high-quality educational content rather than potentially unreliable sources
 
-By combining ScholarSource's resource discovery with NotebookLM's study material generation, students can efficiently create comprehensive, validated study materials aligned with their course textbooks.
+**Manual Import Requirement:**
+ScholarSource does not programmatically create NotebookLM notebooks. Students must manually import the discovered resources into NotebookLM. This design decision is based on NotebookLM's API limitations:
+- **Programmatic notebook creation is only available in NotebookLM Enterprise** (paid/enterprise tier)
+- The free/public NotebookLM version does not provide API access for automated notebook creation
+- ScholarSource targets the free NotebookLM tier, making manual import the only viable option
+
+By combining ScholarSource's resource discovery with NotebookLM's study material generation, students can efficiently create comprehensive, validated study materials aligned with their course textbooks. The one-click copy feature in ScholarSource simplifies the manual import process by providing all resource URLs in a format ready for NotebookLM.
 
 ### 1.2 System Goals
 - **Resource Discovery**: Automatically find educational resources aligned with textbook content
@@ -453,6 +459,32 @@ See `docs/TESTING_GUIDE.md` and `docs/TECHNICAL_DESIGN.md` for detailed test str
 
 **Alternative Considered:**
 - Next.js: SSR not needed, adds complexity
+
+### 8.6 NotebookLM Integration Approach
+
+**Decision:** Manual import workflow (no programmatic notebook creation)
+
+**Rationale:**
+- Programmatic notebook creation via API is only available in NotebookLM Enterprise (paid/enterprise tier)
+- ScholarSource targets the free/public NotebookLM tier used by students
+- Manual import is the only viable option for the target user base
+- One-click copy feature provides resource URLs in NotebookLM-ready format
+
+**Implementation:**
+- Frontend provides "Copy + NotebookLM" button that opens NotebookLM with resource URLs
+- Users manually paste URLs into NotebookLM to create notebooks
+- No backend integration with NotebookLM API
+
+**Alternative Considered:**
+- NotebookLM Enterprise API: Requires enterprise subscription, not accessible to free-tier users
+- Automated notebook creation: Not possible without Enterprise API access
+
+**Trade-offs:**
+- ✅ Works with free NotebookLM tier (accessible to all students)
+- ✅ No additional API integration complexity
+- ✅ No dependency on NotebookLM API availability
+- ❌ Requires manual user action (one additional step)
+- ❌ Cannot automate the full workflow end-to-end
 
 ---
 

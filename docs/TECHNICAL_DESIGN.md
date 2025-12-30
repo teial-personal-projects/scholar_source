@@ -570,6 +570,13 @@ useEffect(() => {
 - Copy URL to clipboard (navigator.clipboard.writeText)
 - Open NotebookLM link (window.open with NotebookLM URL + resource URL)
 
+**NotebookLM Integration Limitation:**
+The application does not programmatically create NotebookLM notebooks. The "Copy + NotebookLM" button opens NotebookLM in a new tab, but users must manually import the resource URLs. This is because:
+- Programmatic notebook creation via API is only available in NotebookLM Enterprise (paid/enterprise tier)
+- ScholarSource targets the free/public NotebookLM tier used by students
+- No NotebookLM API integration exists in the codebase
+- Manual import is the only viable workflow for the target user base
+
 #### 4.3.2 State Management
 
 ```javascript
@@ -802,6 +809,33 @@ def output_formatter_agent(self) -> Agent:
 - 404: Not Found (job doesn't exist)
 - 429: Too Many Requests (rate limit exceeded)
 - 500: Internal Server Error (server errors)
+
+### 6.3 NotebookLM Integration Constraints
+
+**No Programmatic Notebook Creation:**
+ScholarSource does not integrate with NotebookLM's API to automatically create notebooks. This is a deliberate design constraint based on NotebookLM's API availability:
+
+**Constraint:**
+- **NotebookLM Enterprise API Required:** Programmatic notebook creation is only available through NotebookLM Enterprise API (paid/enterprise subscription)
+- **Free Tier Limitation:** The free/public NotebookLM version does not provide API access for automated operations
+- **Target User Base:** ScholarSource is designed for students using the free NotebookLM tier
+
+**Current Implementation:**
+- Frontend provides "Copy + NotebookLM" button that:
+  1. Opens NotebookLM in a new browser tab (`window.open('https://notebooklm.google.com', '_blank')`)
+  2. Users manually paste resource URLs into NotebookLM
+  3. NotebookLM processes the URLs and creates study materials
+
+**Why Not Enterprise API:**
+- Enterprise API requires paid subscription (not accessible to free-tier users)
+- Would add complexity (authentication, API key management)
+- Would limit user base to Enterprise subscribers only
+- Manual import is sufficient for the use case (one additional user step)
+
+**Future Considerations:**
+- If NotebookLM adds free-tier API access, automated notebook creation could be implemented
+- Would require new backend endpoint to create notebooks via API
+- Would need NotebookLM API authentication and integration
 
 ---
 
