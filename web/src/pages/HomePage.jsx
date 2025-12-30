@@ -33,11 +33,13 @@ export default function HomePage() {
     isbn: '',
     topics_list: '',
     desired_resource_types: [],
+    excluded_sites: '',
     bypass_cache: false
   });
   const [validationError, setValidationError] = useState('');
   const [isResourceTypesExpanded, setIsResourceTypesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
+  const [isExcludeSitesExpanded, setIsExcludeSitesExpanded] = useState(false);
 
 
   // Form handlers
@@ -73,6 +75,7 @@ export default function HomePage() {
       isbn: '',
       topics_list: formData.topics_list,
       desired_resource_types: formData.desired_resource_types,
+      excluded_sites: formData.excluded_sites,
       bypass_cache: formData.bypass_cache
     });
   };
@@ -98,11 +101,13 @@ export default function HomePage() {
       isbn: '',
       topics_list: '',
       desired_resource_types: [],
+      excluded_sites: '',
       bypass_cache: false
     });
     setValidationError('');
     setIsResourceTypesExpanded(false);
     setIsFocusTopicsExpanded(false);
+    setIsExcludeSitesExpanded(false);
   };
 
   const handleSubmit = async (e) => {
@@ -478,6 +483,45 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Exclude Sites Accordion */}
+              <div className="border border-red-200 rounded overflow-hidden bg-red-50/30 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setIsExcludeSitesExpanded(!isExcludeSitesExpanded)}
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 bg-red-50 hover:bg-red-100 transition-colors text-left"
+                >
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="block text-sm font-semibold text-slate-900">🚫 Exclude Sites</span>
+                    <OptionalBadge />
+                  </div>
+                  <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${isExcludeSitesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isExcludeSitesExpanded && (
+                  <div className="px-2.5 py-1.5 bg-red-50/20 border-t border-red-200">
+                    <TextLabel htmlFor="excluded_sites">
+                      Exclude Domains
+                    </TextLabel>
+                    <div className="mt-1">
+                      <TextInput
+                        as="textarea"
+                        id="excluded_sites"
+                        name="excluded_sites"
+                        value={formData.excluded_sites}
+                        onChange={handleChange}
+                        placeholder="e.g., khanacademy.org, coursera.org, udemy.com"
+                        rows="2"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <HelperText>
+                      💡 Enter domain names separated by commas to exclude them from results
+                    </HelperText>
+                  </div>
+                )}
               </div>
 
             {/* Validation Error */}

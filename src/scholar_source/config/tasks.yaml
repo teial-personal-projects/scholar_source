@@ -2,6 +2,15 @@ course_analysis_task:
   description: >
     Analyze course/book info to identify academic discipline and topics. CRITICAL: correctly identify field to prevent off-topic resources.
 
+    **ABSOLUTE REQUIREMENT - TEXTBOOK EXTRACTION:**
+    Your PRIMARY task is to extract the textbook title and author from the course page. This is MANDATORY.
+    - Use "Webpage Content Fetcher" tool FIRST to get the course page content
+    - Search the content for "Textbook:", "Text:", "Required", "Book:", etc.
+    - You MUST output textbook_title and textbook_author fields if ANY textbook info is found
+    - Example: "Engineering Mechanics: Statics, Bedford, Fowler" → textbook_title="Engineering Mechanics: Statics", textbook_author="Bedford, Fowler"
+    - If you cannot find textbook info after fetching the page, set textbook_source="not_found"
+    - The downstream agents and frontend display depend on these fields - they are CRITICAL
+
     **DEPTH RESTRICTION - VERY IMPORTANT:**
     - ONLY navigate to the main course page URL provided by the user
     - If a syllabus link is found on the main page, you MAY navigate to that ONE additional link (syllabi often contain textbook and topic info)
@@ -106,6 +115,13 @@ resource_search_task:
   description: >
     Search for 5-7 high-quality resources from USA-based institutions matching the course topics.
 
+    **USER-EXCLUDED SITES (CRITICAL):**
+    Check the {excluded_sites} input parameter. If provided, REJECT any resource from domains in this list.
+    - Parse excluded_sites as comma-separated domain names (e.g., "mit, khanacademy.org, coursera.org")
+    - REJECT any URL containing ANY of these domain strings (substring match - e.g., "mit" will match "ocw.mit.edu", "mit.edu", etc.)
+    - Examples: "mit" excludes "ocw.mit.edu", "khanacademy.org" excludes "www.khanacademy.org", "coursera" excludes "coursera.org"
+    - This takes precedence over all other filtering - if user excluded a site, never include it
+
     **TOPIC MATCHING - CRITICAL:** Check search_priority from course_analysis_task output:
     - **IF search_priority = "user_topics":** Focus EXCLUSIVELY on user_specified_topics. Search for resources specifically covering those topics.
       Example: User specified "line integrals, surface integrals" → search "line integrals practice problems" and "surface integrals tutorial", NOT general "vector calculus"
@@ -157,6 +173,14 @@ resource_validation_task:
   description: >
     Validate resources from resource_discovery_agent for quality, legal, and technical requirements.
 
+    **USER-EXCLUDED SITES (CRITICAL - FIRST CHECK):**
+    Check the {excluded_sites} input parameter. If provided, REJECT any resource from domains in this list.
+    - Parse excluded_sites as comma-separated domain names (e.g., "mit, khanacademy.org, coursera.org")
+    - REJECT any URL containing ANY of these domain strings (substring match - e.g., "mit" will match "ocw.mit.edu", "mit.edu", etc.)
+    - Examples: "mit" excludes "ocw.mit.edu", "khanacademy.org" excludes "www.khanacademy.org", "coursera" excludes "coursera.org"
+    - Set rejection_reason to "User excluded domain: [domain]"
+    - This is the FIRST validation check - do this before any other validation
+
     **CRITICAL - URL VALIDATION USING WEB SEARCH:**
     Before validating any resource, you MUST verify each URL actually exists and is accessible:
     1. For EVERY resource URL, perform a web search query: "[exact URL]" OR "site:[domain] [page title]"
@@ -185,14 +209,25 @@ resource_validation_task:
        - Udacity, Coursera, edX: REJECT ALL (require accounts)
        - If URL looks suspicious, incomplete, or uses an uncommon format, perform a quick web search to verify the correct URL
        - Reject resources with clearly broken, incomplete, or non-existent URLs
-    3. **LOGIN REQUIREMENTS (CRITICAL - AUTO-REJECT):**
-       - Khan Academy: REJECT ALL (requires login)
-       - Coursera: REJECT ALL (requires account)
-       - Udemy: REJECT ALL (paid)
-       - edX: REJECT ALL (requires account)
-       - Udacity: REJECT ALL (requires account)
-       - Brilliant.org: REJECT ALL (paid subscription)
-       - Any site requiring authentication
+    3. **LOGIN/PAYMENT REQUIREMENTS (CRITICAL - AUTO-REJECT):**
+       **Always reject these known platforms:**
+       - Khan Academy (khanacademy.org): REJECT - requires login
+       - Coursera (coursera.org): REJECT - requires account
+       - Udemy (udemy.com): REJECT - paid
+       - edX (edx.org): REJECT - requires account
+       - Udacity (udacity.com): REJECT - requires account
+       - Brilliant.org: REJECT - paid subscription
+       - Course platforms (*.thinkific.com, *.teachable.com, *.podia.com): REJECT
+
+       **URL pattern checks - reject if URL contains:**
+       - "/premium/", "/pro/", "/subscription/", "/members-only/"
+       - Any indication of paid/restricted content
+
+       **General check for unknown platforms:**
+       For resources from domains you're unsure about, perform a quick web search:
+       - Search: "site:[domain] requires login" OR "site:[domain] free access"
+       - If results indicate login/payment required → REJECT
+       - If results show it's free and publicly accessible → APPROVE
     4. NotebookLM compatibility: Check format from URL extension and resource_type (PDF/web/YouTube)
     5. Source credibility: Verify from URL domain and source_credibility field (MIT OCW, OpenStax, etc.)
     6. **TOPIC RELEVANCE (CRITICAL):** Resource MUST match the course subject area
@@ -237,6 +272,16 @@ resource_validation_task:
 final_output_task:
   description: >
     Create student-friendly resource guide for NotebookLM use.
+
+    **FINAL SAFETY CHECK - REMOVE INVALID RESOURCES:**
+    Before formatting output, perform a FINAL check to remove any resources with these domains:
+    - khanacademy.org (or any URL containing "khanacademy")
+    - coursera.org (or any URL containing "coursera")
+    - udemy.com (or any URL containing "udemy")
+    - edx.org (or any URL containing "edx")
+    - udacity.com (or any URL containing "udacity")
+    - brilliant.org (or any URL containing "brilliant")
+    REMOVE these resources entirely from the final output. DO NOT include them.
 
     **STRUCTURE:**
     1. Textbook info - Extract from course_analysis_task output:

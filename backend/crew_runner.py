@@ -120,7 +120,7 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bo
         required_keys = [
             'university_name', 'course_name', 'course_url', 'textbook',
             'topics_list', 'book_title', 'book_author', 'isbn',
-            'book_pdf_path', 'book_url', 'desired_resource_types'
+            'book_pdf_path', 'book_url', 'desired_resource_types', 'excluded_sites'
         ]
 
         for key in required_keys:
@@ -220,7 +220,8 @@ async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bo
             return
 
         # Parse markdown into structured resources and metadata
-        parsed_data = parse_markdown_to_resources(markdown_content)
+        excluded_sites = normalized_inputs.get('excluded_sites', '')
+        parsed_data = parse_markdown_to_resources(markdown_content, excluded_sites=excluded_sites)
         resources = parsed_data.get("resources", [])
         textbook_info = parsed_data.get("textbook_info")
 

@@ -233,4 +233,29 @@
     @apply hover:border-primary-light hover:shadow-md;
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
+
+  /* Form collapsible section */
+  .form-section {
+    @apply flex flex-col gap-0 p-0 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden;
+    @apply transition-all hover:border-primary-light;
+  }
+
+  .form-section-header {
+    @apply flex items-center justify-between px-3 py-2.5 cursor-pointer select-none;
+    @apply bg-gradient-to-r from-slate-100 to-slate-50;
+  }
+
+  .form-section-title {
+    @apply m-0 text-sm font-bold text-slate-900 flex items-center gap-1.5;
+  }
+
+  .form-section-toggle {
+    @apply w-6 h-6 flex items-center justify-center bg-white border border-gray-300 rounded;
+    @apply text-primary text-sm font-bold cursor-pointer transition-all p-0 leading-none;
+    @apply hover:bg-primary hover:text-white hover:border-primary hover:scale-110;
+  }
+
+  .form-section-content {
+    @apply px-3 pb-3 flex flex-col gap-3 animate-[slideDown_0.2s_ease-out];
+  }
 }

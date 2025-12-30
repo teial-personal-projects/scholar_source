@@ -17,12 +17,14 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
     topics_list: '',
     email: '',
     desired_resource_types: [],
+    excluded_sites: '',
     bypass_cache: false
   });
 
   const [validationError, setValidationError] = useState('');
   const [isDesiredResourcesExpanded, setIsDesiredResourcesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
+  const [isExcludeSitesExpanded, setIsExcludeSitesExpanded] = useState(false);
   // Email section - COMMENTED OUT
   // const [isEmailExpanded, setIsEmailExpanded] = useState(false);
 
@@ -71,7 +73,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       isbn: '',
       topics_list: formData.topics_list, // Keep topics_list
       email: formData.email, // Keep email
-      desired_resource_types: formData.desired_resource_types // Keep desired_resource_types
+      desired_resource_types: formData.desired_resource_types, // Keep desired_resource_types
+      excluded_sites: formData.excluded_sites // Keep excluded_sites
     });
   };
 
@@ -146,11 +149,13 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
       topics_list: '',
       email: '',
       desired_resource_types: [],
+      excluded_sites: '',
       bypass_cache: false
     });
     setValidationError('');
     setIsDesiredResourcesExpanded(false);
     setIsFocusTopicsExpanded(false);
+    setIsExcludeSitesExpanded(false);
     // Email section - COMMENTED OUT
     // setIsEmailExpanded(false);
   };
@@ -328,16 +333,16 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
         </div>
 
         {/* Desired Resources Section */}
-        <div className="flex flex-col gap-0 p-0 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden transition-all hover:border-primary-light">
-          <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none bg-gradient-to-r from-slate-100 to-slate-50" onClick={() => setIsDesiredResourcesExpanded(!isDesiredResourcesExpanded)}>
-            <h3 className="m-0 text-sm font-bold text-slate-900 flex items-center gap-1.5">🎯 Resource Types <span className="font-normal text-gray-500 text-sm ml-1">(Optional)</span></h3>
-            <button type="button" className="w-6 h-6 flex items-center justify-center bg-white border border-gray-300 rounded text-primary text-sm font-bold cursor-pointer transition-all p-0 leading-none hover:bg-primary hover:text-white hover:border-primary hover:scale-110" aria-label="Toggle section">
+        <div className="form-section">
+          <div className="form-section-header" onClick={() => setIsDesiredResourcesExpanded(!isDesiredResourcesExpanded)}>
+            <h3 className="form-section-title">🎯 Resource Types <span className="font-normal text-gray-500 text-sm ml-1">(Optional)</span></h3>
+            <button type="button" className="form-section-toggle" aria-label="Toggle section">
               {isDesiredResourcesExpanded ? '▼' : '▶'}
             </button>
           </div>
 
           {isDesiredResourcesExpanded && (
-            <div className="px-3 pb-3 flex flex-col gap-3 animate-[slideDown_0.2s_ease-out]">
+            <div className="form-section-content">
               <div className="flex flex-col gap-1 mb-0">
                 <label className="text-xs font-semibold text-slate-700 mb-1">Filter by resource type (leave empty to find all types):</label>
                 <div className="flex flex-col gap-1 mt-1 mb-0">
@@ -388,16 +393,16 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
         </div>
 
         {/* Focus Topics Section */}
-        <div className="flex flex-col gap-0 p-0 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden transition-all hover:border-primary-light">
-          <div className="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none bg-gradient-to-r from-slate-100 to-slate-50" onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}>
-            <h3 className="m-0 text-sm font-bold text-slate-900 flex items-center gap-1.5">🎯 Focus Topics <span className="font-normal text-gray-500 text-sm ml-1">(Optional)</span></h3>
-            <button type="button" className="w-6 h-6 flex items-center justify-center bg-white border border-gray-300 rounded text-primary text-sm font-bold cursor-pointer transition-all p-0 leading-none hover:bg-primary hover:text-white hover:border-primary hover:scale-110" aria-label="Toggle section">
+        <div className="form-section">
+          <div className="form-section-header" onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}>
+            <h3 className="form-section-title">🎯 Focus Topics <span className="font-normal text-gray-500 text-sm ml-1">(Optional)</span></h3>
+            <button type="button" className="form-section-toggle" aria-label="Toggle section">
               {isFocusTopicsExpanded ? '▼' : '▶'}
             </button>
           </div>
 
           {isFocusTopicsExpanded && (
-            <div className="px-3 pb-3 flex flex-col gap-3 animate-[slideDown_0.2s_ease-out]">
+            <div className="form-section-content">
               {/* Topics List */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="topics_list" className="text-xs font-semibold text-slate-700">Topics List</label>
@@ -414,6 +419,40 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                 <div className="px-2 py-2 bg-gradient-to-r from-amber-100 to-amber-200 border-l-4 border-amber-500 rounded-lg mt-1">
                   <p className="m-0 text-xs text-amber-900 leading-relaxed">
                     <strong className="text-amber-950 font-semibold">💡 Tip:</strong> Add 3–6 topics like 'Midterm review', 'Chapter 4', or 'Dynamic programming' for better matches.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Exclude Sites Section */}
+        <div className="form-section">
+          <div className="form-section-header" onClick={() => setIsExcludeSitesExpanded(!isExcludeSitesExpanded)}>
+            <h3 className="form-section-title">🚫 Exclude Sites <span className="font-normal text-gray-500 text-sm ml-1">(Optional)</span></h3>
+            <button type="button" className="form-section-toggle" aria-label="Toggle section">
+              {isExcludeSitesExpanded ? '▼' : '▶'}
+            </button>
+          </div>
+
+          {isExcludeSitesExpanded && (
+            <div className="form-section-content">
+              {/* Excluded Sites */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="excluded_sites" className="text-xs font-semibold text-slate-700">Exclude Domains</label>
+                <textarea
+                  id="excluded_sites"
+                  name="excluded_sites"
+                  value={formData.excluded_sites}
+                  onChange={handleChange}
+                  placeholder="e.g., khanacademy.org, coursera.org, udemy.com"
+                  rows="2"
+                  disabled={isLoading}
+                  className="resize-y min-h-[55px] px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                />
+                <div className="px-2 py-2 bg-gradient-to-r from-red-100 to-red-200 border-l-4 border-red-500 rounded-lg mt-1">
+                  <p className="m-0 text-xs text-red-900 leading-relaxed">
+                    <strong className="text-red-950 font-semibold">💡 Tip:</strong> Enter domain names (e.g., 'khanacademy.org') separated by commas to exclude them from results. Useful if your institution blocks certain sites or they require login.
                   </p>
                 </div>
               </div>

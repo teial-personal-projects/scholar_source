@@ -5,11 +5,11 @@ Parses the crew's markdown output into structured JSON resources.
 """
 
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from backend.models import Resource
 
 
-def parse_markdown_to_resources(markdown_content: str) -> Dict[str, Any]:
+def parse_markdown_to_resources(markdown_content: str, excluded_sites: Optional[str] = None) -> Dict[str, Any]:
     """
     Parse markdown report into structured resources and metadata.
 
@@ -19,6 +19,7 @@ def parse_markdown_to_resources(markdown_content: str) -> Dict[str, Any]:
 
     Args:
         markdown_content: Raw markdown content from crew output
+        excluded_sites: Comma-separated list of domains to exclude (e.g., "mit.edu, khanacademy.org")
 
     Returns:
         Dict with 'resources' (list) and 'textbook_info' (dict or None)
@@ -42,6 +43,10 @@ def parse_markdown_to_resources(markdown_content: str) -> Dict[str, Any]:
     if not resources:
         resources = _parse_all_links(markdown_content)
 
+    # Filter out excluded domains if provided
+    if excluded_sites and excluded_sites.strip():
+        resources = _filter_excluded_domains(resources, excluded_sites)
+
     # Extract textbook information
     textbook_info = _extract_textbook_info(markdown_content)
 
@@ -49,6 +54,42 @@ def parse_markdown_to_resources(markdown_content: str) -> Dict[str, Any]:
         "resources": resources,
         "textbook_info": textbook_info
     }
+
+
+def _filter_excluded_domains(resources: List[Dict[str, Any]], excluded_sites: str) -> List[Dict[str, Any]]:
+    """
+    Filter out resources whose URLs contain any of the excluded domains.
+
+    Args:
+        resources: List of resource dictionaries
+        excluded_sites: Comma-separated string of domains to exclude (e.g., "mit.edu, khanacademy.org")
+
+    Returns:
+        Filtered list of resources with excluded domains removed
+    """
+    # Parse excluded domains - split by comma and clean up whitespace
+    excluded_domains = [domain.strip().lower() for domain in excluded_sites.split(',') if domain.strip()]
+    
+    if not excluded_domains:
+        return resources
+
+    filtered = []
+    for resource in resources:
+        url = resource.get('url', '').lower()
+        
+        # Check if URL contains any excluded domain
+        should_exclude = False
+        for excluded_domain in excluded_domains:
+            # Check if the excluded domain appears in the URL
+            # This handles cases like "mit" matching "ocw.mit.edu"
+            if excluded_domain in url:
+                should_exclude = True
+                break
+        
+        if not should_exclude:
+            filtered.append(resource)
+    
+    return filtered
 
 
 def _contains_error(url: str, title: str, description: str) -> bool:

@@ -26,6 +26,7 @@ class CourseInputRequest(BaseModel):
     # Email field - COMMENTED OUT but kept for API compatibility
     email: Optional[str] = Field(None, description="Email address to receive results (optional, currently disabled)")
     desired_resource_types: Optional[List[str]] = Field(None, description="List of desired resource types (textbooks, practice_problem_sets, practice_exams_tests, lecture_videos)")
+    excluded_sites: Optional[str] = Field(None, description="Comma-separated list of domains to exclude from results (e.g., 'khanacademy.org, coursera.org')")
     bypass_cache: Optional[bool] = Field(False, description="Bypass cache - skip cached results and get fresh results")
 
     @model_validator(mode='before')
