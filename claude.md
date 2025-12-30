@@ -126,31 +126,6 @@ Provide instructions such as:
 - "In RSC frameworks, default to Server Components for data fetching and keep Client Components minimal and interactive."[10][8]
 - "Use TypeScript with strict, explicit types and keep JSX, effects, and state management clean, predictable, and well-tested."[14][2]
 
-You can copy any subset of the sections above as a policy doc for Claude to follow while generating React code.
-
-### References
-
-[1](https://dev.to/manukumar07/10-react-best-practices-you-cant-ignore-in-2025-25ai)
-[2](https://technostacks.com/blog/react-best-practices/)
-[3](https://stackoverflow.com/questions/79830882/what-do-you-think-is-the-best-practices-when-working-with-react-projects)
-[4](https://strapi.io/blog/react-and-nextjs-in-2025-modern-best-practices)
-[5](https://react.dev)
-[6](https://www.techrepublic.com/forums/discussions/react-js-best-practices-pitfalls-performance-tweaks-for-2025/)
-[7](https://www.growin.com/blog/react-performance-optimization-2025/)
-[8](https://multiqos.com/blogs/react-server-components-best-practices/)
-[9](https://www.alm.com/press_release/alm-intelligence-updates-verdictsearch/?s-news-22884164-2025-12-18-react-version-18-enhances-developer-experience-and-optimization)
-[10](https://blog.logrocket.com/react-server-components-comprehensive-guide/)
-[11](https://www.developerway.com/posts/react-server-components-performance)
-[12](https://shopify.engineering/react-server-components-best-practices-hydrogen)
-[13](https://www.joshwcomeau.com/react/server-components/)
-[14](https://dev.to/alex_bobes/react-performance-optimization-15-best-practices-for-2025-17l9)
-[15](https://www.zignuts.com/blog/react-app-performance-optimization-guide)
-[16](https://www.reddit.com/r/reactjs/comments/1k8axao/make_great_react_components_in_2025_with_these/)
-[17](https://www.reddit.com/r/reactjs/comments/1kir0pi/is_the_future_of_react_still_as_bright_in_2025_as/)
-[18](https://www.reddit.com/r/reactnative/comments/1jfl3sg/the_ultimate_guide_to_react_native_optimization/)
-[19](https://www.reddit.com/r/nextjs/comments/1aezfrs/explain_me_react_server_components_like_i_am_10/)
-[20](https://www.youtube.com/watch?v=LuQ8VWh6eYE)
-
 ---
 
 ## Tailwind and CSS Best Practices
@@ -360,26 +335,5 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 - No obvious duplication of long class chains across the codebase.
 - No unnecessary custom CSS where utilities would suffice.
 
-### Tailwind CSS References
 
-[1](https://infinum.com/handbook/frontend/react/tailwind/best-practices)
-[2](https://www.uxpin.com/studio/blog/tailwind-best-practices/)
-[3](https://www.bootstrapdash.com/blog/tailwind-css-best-practices)
-[4](https://evilmartians.com/chronicles/5-best-practices-for-preventing-chaos-in-tailwind-css)
-[5](https://dev.to/hexa-home/best-practices-for-writing-code-in-tailwind-css-19lg)
-[6](https://tailwindcss.com/docs/styling-with-utility-classes)
-[7](https://dev.to/code_2/integrating-tailwind-css-with-react-a-comprehensive-technical-guide-284f)
-[8](https://www.reddit.com/r/reactjs/comments/16dv1um/just_started_using_tailwind_css_in_my_react/)
-[9](https://tailwindcss.com/docs/installation/framework-guides)
-[10](https://blog.logrocket.com/building-reusable-react-components-using-tailwind-css/)
-[11](https://javascript.plainenglish.io/tailwind-css-with-react-exploring-a-generative-workflow-aa8da09df2ca)
-[12](https://tryhoverify.com/blog/component-abstraction-writing-reusable-ui-with-tailwind-react/)
-[13](https://tailwindcss.com)
-[14](https://github.com/tailwindlabs/tailwindcss/discussions/18545)
-[15](https://www.reddit.com/r/webdev/comments/1f6yxwk/how_do_you_know_youre_using_best_practices_with/)
-[16](https://makersden.io/blog/patterns-for-tailwindcss-usage-in-reactjs)
-[17](https://dev.to/gabrielmlinassi/tailwindcss-react-best-practices-the-clean-way-3dka)
-[18](https://tailwindcss.com/plus)
-[19](https://www.reddit.com/r/reactjs/comments/1hkknah/patterns_for_composable_tailwindcss_styles/)
-[20](https://tailwindcss.com/plus/ui-blocks)
 

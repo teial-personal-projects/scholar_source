@@ -3,7 +3,7 @@
  *
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ResultCard from './ResultCard';
 
 export default function ResultsTable({ resources, searchTitle, textbookInfo, onClear }) {
@@ -37,43 +37,61 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
   const selectedCount = selectedUrls.size;
 
-  const copyToClipboard = async (text) => {
+  const copyToClipboard = useCallback(async (text) => {
     try {
       await navigator.clipboard.writeText(text);
     } catch (error) {
       console.error('Failed to copy:', error);
     }
-  };
+  }, []);
 
-  const getSelectedUrlsInOrder = () => urlList.filter((u) => selectedUrls.has(u));
+  const getSelectedUrlsInOrder = useCallback(() => {
+    return urlList.filter((u) => selectedUrls.has(u));
+  }, [urlList, selectedUrls]);
 
-  const copySelected = async () => {
+  const copySelected = useCallback(async () => {
     const selected = getSelectedUrlsInOrder();
     await copyToClipboard(selected.join('\n'));
     setCopiedSelected(true);
     setTimeout(() => setCopiedSelected(false), 2000);
-  };
+  }, [getSelectedUrlsInOrder, copyToClipboard]);
 
-  const copySelectedAndOpenNotebookLM = async () => {
+  const copySelectedAndOpenNotebookLM = useCallback(async () => {
     const selected = getSelectedUrlsInOrder();
     await copyToClipboard(selected.join('\n'));
     setCopiedSelectedAndOpened(true);
     setTimeout(() => setCopiedSelectedAndOpened(false), 2000);
 
     window.open('https://notebooklm.google.com', '_blank', 'noopener,noreferrer');
-  };
+  }, [getSelectedUrlsInOrder, copyToClipboard]);
 
-  const handleSelectAll = () => setSelectedUrls(new Set(urlList));
-  const handleClearSelection = () => setSelectedUrls(new Set());
+  const handleSelectAll = useCallback(() => {
+    setSelectedUrls(new Set(urlList));
+  }, [urlList]);
 
-  const toggleSelected = (url) => {
+  const handleClearSelection = useCallback(() => {
+    setSelectedUrls(new Set());
+  }, []);
+
+  const toggleSelected = useCallback((url) => {
     setSelectedUrls((prev) => {
       const next = new Set(prev);
       if (next.has(url)) next.delete(url);
       else next.add(url);
       return next;
     });
-  };
+  }, []);
+
+  // Create memoized toggle handlers for each resource to avoid inline functions in map
+  const toggleHandlers = useMemo(() => {
+    const handlers = new Map();
+    resources.forEach((resource) => {
+      if (resource.url) {
+        handlers.set(resource.url, () => toggleSelected(resource.url));
+      }
+    });
+    return handlers;
+  }, [resources, toggleSelected]);
 
   // Handle scroll to hide/show scroll indicator
   useEffect(() => {
@@ -235,16 +253,21 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
           {/* Grid of cards */}
           <div className="results-table-grid">
-            {resources.map((resource, index) => (
-              <ResultCard
-                key={resource.url || index}
-                resource={resource}
-                index={index}
-                onCopy={copyToClipboard}
-                isSelected={selectedUrls.has(resource.url)}
-                onToggleSelect={() => toggleSelected(resource.url)}
-              />
-            ))}
+            {resources.map((resource, index) => {
+              // Use URL as key if available, otherwise create a stable unique key
+              // Never use index alone as it can cause issues when list is reordered/filtered
+              const uniqueKey = resource.url || `resource-${resource.title || resource.type || 'unknown'}-${index}`;
+              return (
+                <ResultCard
+                  key={uniqueKey}
+                  resource={resource}
+                  index={index}
+                  onCopy={copyToClipboard}
+                  isSelected={selectedUrls.has(resource.url)}
+                  onToggleSelect={resource.url ? toggleHandlers.get(resource.url) : undefined}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

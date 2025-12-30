@@ -8,7 +8,7 @@
  * - Mobile-first, responsive design
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { submitJob } from '../api/client';
 import Hero from '../components/Hero';
 import InlineSearchStatus from '../components/InlineSearchStatus';
@@ -52,7 +52,7 @@ export default function HomePage() {
     if (validationError) setValidationError('');
   };
 
-  const handleResourceTypeChange = (resourceType) => {
+  const handleResourceTypeChange = useCallback((resourceType) => {
     setFormData(prev => {
       const currentTypes = prev.desired_resource_types || [];
       const newTypes = currentTypes.includes(resourceType)
@@ -60,8 +60,9 @@ export default function HomePage() {
         : [...currentTypes, resourceType];
       return { ...prev, desired_resource_types: newTypes };
     });
-    if (validationError) setValidationError('');
-  };
+    // Clear validation error (idempotent - safe to clear even if already empty)
+    setValidationError('');
+  }, []);
 
   const handleSearchParamChange = (e) => {
     const value = e.target.value;
@@ -91,7 +92,7 @@ export default function HomePage() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSearchParamType('');
     setFormData({
       course_url: '',
@@ -108,7 +109,7 @@ export default function HomePage() {
     setIsResourceTypesExpanded(false);
     setIsFocusTopicsExpanded(false);
     setIsExcludeSitesExpanded(false);
-  };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -164,24 +165,24 @@ export default function HomePage() {
     }
   };
 
-  const handleComplete = (resources, rawOutput, title, textbook) => {
+  const handleComplete = useCallback((resources, rawOutput, title, textbook) => {
     setResults(resources);
     setSearchTitle(title);
     setTextbookInfo(textbook);
     setIsLoading(false);
-  };
+  }, []);
 
-  const handleError = (errorMessage) => {
+  const handleError = useCallback((errorMessage) => {
     setError(errorMessage);
     setIsLoading(false);
-  };
+  }, []);
 
-  const handleClearResults = () => {
+  const handleClearResults = useCallback(() => {
     setResults(null);
     setSearchTitle(null);
     setTextbookInfo(null);
     setJobId(null);
-  };
+  }, []);
 
 
   return (
