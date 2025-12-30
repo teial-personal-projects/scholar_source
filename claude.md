@@ -1,0 +1,385 @@
+# Claude Development Guidelines
+
+## React Best practices
+
+Use this as a checklist / rubric that Claude should adhere to when generating or refactoring React code.
+
+---
+
+## Core React patterns
+
+- Prefer **functional** components and Hooks; treat class components as legacy unless integrating with old code.[1][2]
+- Keep components small, focused, and single‑responsibility; if a component grows beyond ~150–200 lines or handles several concerns, split it.[3][1]
+- Co-locate logic with the component that owns it (state, derived data, effects, queries) instead of scattering utilities and hooks across the app.[4][2]
+- Use composition over inheritance: accept children/slots instead of deeply nested prop options or config objects.[5][3]
+- Use controlled components for form elements whenever you need validation, instant feedback, or complex interactions; otherwise consider uncontrolled refs for simple cases.[2][5]
+
+***
+
+## State and data fetching
+
+- Keep state as **local** as possible; lift state only when multiple components truly share it.[4][2]
+- Avoid prop drilling across many levels; use Context for cross-cutting concerns and consider a lightweight state library (Zustand, Jotai, Redux Toolkit) for complex global state.[6][2]
+- Store the minimal state needed; derive everything else from props or existing state instead of duplicating values.[7][5]
+- Treat server as the source of truth for server data and client state as a cache or view model.[8][4]
+- Use a dedicated data-fetching library (TanStack Query / React Query or SWR) instead of ad‑hoc useEffect + fetch for anything beyond trivial requests.[1][4]
+- Normalize async flows: handle loading, error, empty, and success states explicitly and consistently.[2][1]
+
+***
+
+## React 18 features and concurrency
+
+- Use Suspense for data fetching and code-splitting boundaries to improve perceived loading and structure async flows.[7][1]
+- Use concurrent APIs like useTransition and useDeferredValue to keep the UI responsive during expensive updates or filtering.[9][7]
+- Design UI so that non‑critical parts can be deferred or streamed rather than blocking the initial render.[1][7]
+
+***
+
+## React Server Components (RSC) and server/client split
+
+(For Next.js App Router or other RSC-enabled setups.)
+
+- Default to Server Components for data fetching, heavy computation, and non‑interactive UI to reduce client bundle size.[10][8]
+- Keep Server Components stateless and side‑effect free; do not use client-only hooks (useState, useEffect, browser APIs) in them.[11][8]
+- Use Client Components only when interactivity or browser APIs are required, and keep them as small and focused as possible.[12][8]
+- Pay attention to boundaries: pass data from Server to Client via props, avoid leaking client concerns into server code.[13][8]
+- Be cautious with third‑party libraries in Server Components; only use libraries that are safe on the server (no window/document/localStorage).[8][12]
+
+***
+
+## Performance and rendering
+
+- Minimize unnecessary re-renders:
+  - Use React.memo for pure presentational components with stable props.[2][1]
+  - Use useCallback and useMemo for expensive computations or when prop identity matters (e.g., passed to memoized children).[7][1]
+- Avoid inline anonymous functions and object/array literals in hot rendering paths when they cause prop identity churn.[14][7]
+- Use stable, unique keys for list items; never use array index as key when list can be reordered or filtered.[15][7]
+- Virtualize large lists and tables to avoid rendering hundreds/thousands of DOM nodes.[14][7]
+- Avoid overusing Context; large or frequently changing contexts can trigger expensive tree-wide re-renders—consider splitting context or using selectors/state libraries.[6][7]
+- Split bundles using dynamic import and React.lazy for heavy, rarely used routes or components.[15][2]
+- Regularly profile the app (React DevTools Profiler, Web Vitals, browser performance tools) and optimize based on real bottlenecks, not guesses.[2][7]
+
+***
+
+## Structure, organization, and reuse
+
+- Organize files by feature/module instead of strictly by type; keep components, hooks, and tests for a feature together.[1][2]
+- Extract reusable UI patterns as shared components and shared hooks (e.g., useForm, useModal, useFetch) to avoid duplication.[1][2]
+- Keep hooks pure: avoid doing non‑React side effects directly in custom hooks unless the hook is specifically about that effect, and document clearly when they occur.[5][2]
+- Prefer simple, predictable naming: useFoo for hooks, PascalCase for components, clear prop names instead of abbreviations.[3][5]
+- Co-locate tests, styles, and stories with their components to improve discoverability and refactoring.[14][2]
+
+***
+
+## TypeScript and safety
+
+- Use TypeScript (or at least JSDoc types) for components, hooks, and utilities to catch errors at compile time and improve IDE help.[2][1]
+- Prefer typed props and state over any/unknown; model domain concepts with discriminated unions instead of booleans when multiple states are possible.[14][2]
+- Type external data at the boundary (e.g., API responses), and consider runtime validation for untrusted inputs.[10][2]
+
+***
+
+## JSX, styling, and DOM
+
+- Keep JSX clean and readable; avoid deeply nested markup by extracting subcomponents.[3][1]
+- Avoid putting complex logic directly in JSX; move it into variables or helper functions above the return.[6][3]
+- Use semantic HTML tags and ARIA attributes; avoid div‑soup, especially for interactive elements.[5][2]
+- Prefer CSS modules, utility CSS (like Tailwind), or well‑structured CSS‑in‑JS with attention to performance; avoid global styles that leak across features.[14][2]
+- Use modern image optimizations (lazy loading, responsive images, modern formats, or framework-level image components) for performance.[4][14]
+
+***
+
+## Side effects and lifecycle
+
+- Use useEffect only for real side effects (subscriptions, event listeners, imperative APIs, syncing with non‑React systems), not for synchronous derivations that can be computed during render.[5][7]
+- Carefully manage effect dependencies; prefer making effects idempotent and narrowing their scope instead of disabling lint rules.[7][6]
+- Clean up subscriptions, timers, event listeners, and observers in the effect cleanup function to prevent leaks.[15][5]
+- Avoid "fetch in every effect" anti‑pattern; centralize data fetching via libraries or well-designed hooks.[1][2]
+
+***
+
+## Error handling, boundaries, and UX
+
+- Use Error Boundaries around major app sections (routes, dashboards, complex widgets) to avoid full app crashes.[2][1]
+- Provide meaningful fallbacks for loading and error states (skeletons/spinners + retry, not just blank or generic messages).[4][1]
+- Design for progressive enhancement: render useful content early and progressively hydrate/upgrade with client interactivity.[8][4]
+
+***
+
+## Testing and maintainability
+
+- Write tests for critical flows (auth, payments, core workflows) using Jest/Vitest for unit tests and React Testing Library for behavior-focused component tests.[1][2]
+- Use Cypress/Playwright (or similar) for end‑to‑end tests on key user journeys.[2][1]
+- Favor testing behavior and user-visible outcomes rather than implementation details or specific hook calls.[6][2]
+- Keep strict ESLint + Prettier (or equivalent) configs and ensure code always passes lint/format checks.[14][2]
+
+***
+
+## When instructing Claude (or another generator)
+
+Provide instructions such as:
+
+- "Use functional components and Hooks only; no class components."[1][2]
+- "Keep components small and focused, and extract reusable pieces into separate components or hooks."[2][1]
+- "Use React Query (or SWR) for data fetching, with clear handling of loading and error states."[4][1]
+- "Optimize for performance: avoid unnecessary re-renders, use memoization wisely, use stable keys, and consider list virtualization."[7][1]
+- "In RSC frameworks, default to Server Components for data fetching and keep Client Components minimal and interactive."[10][8]
+- "Use TypeScript with strict, explicit types and keep JSX, effects, and state management clean, predictable, and well-tested."[14][2]
+
+You can copy any subset of the sections above as a policy doc for Claude to follow while generating React code.
+
+### References
+
+[1](https://dev.to/manukumar07/10-react-best-practices-you-cant-ignore-in-2025-25ai)
+[2](https://technostacks.com/blog/react-best-practices/)
+[3](https://stackoverflow.com/questions/79830882/what-do-you-think-is-the-best-practices-when-working-with-react-projects)
+[4](https://strapi.io/blog/react-and-nextjs-in-2025-modern-best-practices)
+[5](https://react.dev)
+[6](https://www.techrepublic.com/forums/discussions/react-js-best-practices-pitfalls-performance-tweaks-for-2025/)
+[7](https://www.growin.com/blog/react-performance-optimization-2025/)
+[8](https://multiqos.com/blogs/react-server-components-best-practices/)
+[9](https://www.alm.com/press_release/alm-intelligence-updates-verdictsearch/?s-news-22884164-2025-12-18-react-version-18-enhances-developer-experience-and-optimization)
+[10](https://blog.logrocket.com/react-server-components-comprehensive-guide/)
+[11](https://www.developerway.com/posts/react-server-components-performance)
+[12](https://shopify.engineering/react-server-components-best-practices-hydrogen)
+[13](https://www.joshwcomeau.com/react/server-components/)
+[14](https://dev.to/alex_bobes/react-performance-optimization-15-best-practices-for-2025-17l9)
+[15](https://www.zignuts.com/blog/react-app-performance-optimization-guide)
+[16](https://www.reddit.com/r/reactjs/comments/1k8axao/make_great_react_components_in_2025_with_these/)
+[17](https://www.reddit.com/r/reactjs/comments/1kir0pi/is_the_future_of_react_still_as_bright_in_2025_as/)
+[18](https://www.reddit.com/r/reactnative/comments/1jfl3sg/the_ultimate_guide_to_react_native_optimization/)
+[19](https://www.reddit.com/r/nextjs/comments/1aezfrs/explain_me_react_server_components_like_i_am_10/)
+[20](https://www.youtube.com/watch?v=LuQ8VWh6eYE)
+
+---
+
+## Tailwind and CSS Best Practices
+
+Use this as a checklist / rubric that Claude should adhere to when generating or refactoring Tailwind CSS and React code.
+
+### 1. Project & Tailwind config
+
+- Keep all Tailwind setup in `tailwind.config.(js|ts)` and a single main CSS entry (e.g. `src/index.css` or `src/global.css`). [1][2]
+- Use the `content` option correctly so unused classes get purged. [3][4]
+- Extend Tailwind instead of replacing it:
+  - Add design tokens (colors, spacing, fonts, radii, breakpoints) under `theme.extend` to encode your design system. [3][4]
+  - Prefer semantic tokens: e.g. `brand`, `accent`, `danger`, not raw hex names. [5][3]
+- Enable/keep JIT (default in modern Tailwind) for on-demand class generation. [2]
+- Use official plugins where useful (forms, typography, line-clamp, etc.). [4]
+
+**Example:**
+```js
+module.exports = {
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          DEFAULT: "#0f766e",
+          soft: "#ccfbf1",
+        },
+      },
+      spacing: {
+        128: "32rem",
+      },
+    },
+  },
+  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
+};
+```
+
+### 2. Utility-first mindset
+
+- Prefer Tailwind utility classes co-located in JSX instead of separate CSS. [6][4]
+- Start by styling at the component/page level, then extract into smaller components when patterns repeat. Avoid premature abstraction. [7][8]
+- Let Tailwind's scales drive design (spacing, font sizes, colors) rather than arbitrary values; this keeps the UI consistent. [6][9]
+- Use Tailwind's mobile-first responsive prefixes: `sm: md: lg: xl: 2xl:`. [1][10]
+  - Example: `p-3 md:p-4 lg:p-6` for progressively larger padding. [1]
+
+### 3. ClassName organization in React
+
+- Keep className strings readable:
+  - Group related utilities: layout → spacing → typography → decoration → state.
+  - Put variants (hover:, focus:, sm:, dark:) next to the base class they modify. [1][10]
+- For complex components, compose class names instead of giant literals:
+  - Use helpers like `clsx` or `classnames`.
+  - Use `tailwind-merge` (or `twMerge`) to resolve conflicting utilities. [11][12]
+- Avoid passing raw Tailwind className fragments as many small props; prefer higher-level props like `variant`, `size`, `intent`, then map them to className internally. [7][8][4]
+
+**Example:**
+```tsx
+const base =
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+
+const variants: Record<"primary" | "secondary", string> = {
+  primary: "bg-brand text-white hover:bg-emerald-700",
+  secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
+};
+
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary";
+};
+
+export function Button({ variant = "primary", className, ...props }: ButtonProps) {
+  return (
+    <button
+      className={twMerge(base, variants[variant], className)}
+      {...props}
+    />
+  );
+}
+```
+
+### 4. When (not) to use @apply or extra CSS
+
+- Prefer pure utilities first; only introduce custom CSS when:
+  - You repeat long utility chains across many components.
+  - You need true pseudo-elements or complex selectors. [2][3]
+- Use `@layer components` and `@apply` for shared component styles, but don't rebuild a BEM-style system—keep things minimal. [2][3]
+- Avoid heavy use of `@apply` for variants like `hover:`/`focus:` if it hides what the component actually does. [5]
+
+**Example (moderate use of @apply in a components layer):**
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-brand text-white
+      px-4 py-2 text-sm font-medium shadow-sm hover:bg-emerald-700
+      focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2;
+  }
+}
+```
+
+### 5. Component patterns with React + Tailwind
+
+- Use composition + variants:
+  - Simple primitive components (Button, Card, Input, Tag).
+  - Map `variant`, `size`, and `state` props to Tailwind class maps. [7][8][4]
+- Keep components small and focused; if JSX becomes too noisy, split into subcomponents instead of introducing global CSS. [7][13]
+- For reusable layout primitives (Stack, Container, Grid), bake in sensible defaults (padding, max-width, gap) with Tailwind classes. [8][4]
+- Treat Tailwind config + primitives as a lightweight design system. [5][4]
+
+### 6. Responsive & state variants
+
+- Follow a consistent order in className:
+  - Base → responsive → state (hover, focus, active) → dark mode. [1][10]
+- Use Tailwind's responsive modifiers instead of custom media queries in CSS whenever possible. [1][10]
+- Use dark mode and prefers-reduced-motion via Tailwind's built-in variants if your app supports them. [10][2]
+
+**Example:**
+```tsx
+<div className="
+  flex flex-col gap-3
+  sm:flex-row sm:items-center
+  p-4 sm:p-6
+  bg-white dark:bg-gray-900
+  hover:bg-gray-50 dark:hover:bg-gray-800
+">
+  ...
+</div>
+```
+
+### 7. Accessibility & semantics
+
+- Tailwind doesn't replace semantic HTML:
+  - Use proper elements: `<button>`, `<a>`, `<label>`, `<nav>`, `<main>`, etc. [2]
+- Use focus styles, not `outline:none` without replacement.
+  - Tailwind provides `focus:*` utilities, `focus-visible:*`, and ring utilities. [2]
+- Ensure color contrast meets WCAG; rely on your design tokens across the app, not ad hoc colors. [2][5]
+- Use ARIA attributes and semantic roles where needed, same as with normal CSS. [2]
+
+**Example:**
+```tsx
+<button
+  type="button"
+  aria-label="Close dialog"
+  className="
+    inline-flex items-center justify-center rounded-full
+    bg-gray-100 hover:bg-gray-200
+    text-gray-700
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand
+  "
+>
+  ×
+</button>
+```
+
+### 8. Performance & bundle size
+
+- Ensure purge/content configuration covers all JSX/TSX files so unused classes are removed in production. [2][3][4]
+- Avoid constructing class names dynamically with string concatenation that PurgeCSS cannot detect; use explicit class literals or known variant maps instead. [3][4]
+- Prefer Tailwind utilities over huge custom CSS blocks; this keeps your final CSS small and tree-shake-friendly. [2][6]
+- Keep global CSS minimal (resets, typography, a few component-level @apply rules) so Tailwind can do most of the heavy lifting. [2][3]
+
+### 9. Folder structure & organization
+
+- Example structure for React + Tailwind:
+  ```
+  src/
+    components/
+      ui/
+        Button.tsx
+        Input.tsx
+        Card.tsx
+      layout/
+        Container.tsx
+        Stack.tsx
+    pages/ or routes/
+    hooks/
+    lib/
+    styles/
+      index.css   // Tailwind directives + small custom layers
+  ```
+- Keep design tokens in `tailwind.config` and reusable primitives in `components/ui`. [2][4][13]
+
+### 10. Team conventions & code review
+
+- Agree on conventions for:
+  - Class order and formatting in JSX.
+  - When to create a new component vs. reuse an existing one.
+  - When `@apply` is allowed.
+- In reviews, look for:
+  - Repeated long class strings that should be components.
+  - Usage of off-scale values (inline styles, arbitrary values) that break design consistency. [5][14]
+  - Hard-coded colors instead of theme tokens. [5][3]
+
+### 11. CSS fundamentals still matter
+
+- Tailwind is just a utility API over normal CSS; understanding layout (flex, grid, position, overflow), typography, and cascade is still critical for debugging. [6][9]
+- Use devtools to inspect final computed styles and ensure that Tailwind classes resolve the way you expect. [15][2]
+
+### 12. Quick checklist for a new component
+
+- Uses semantic HTML and accessible behaviors.
+- Uses Tailwind scales (spacing, color, fontSize) instead of ad hoc values.
+- Responsive behavior is handled via Tailwind breakpoints.
+- Visual variants and sizes are mapped from props to Tailwind class maps.
+- No obvious duplication of long class chains across the codebase.
+- No unnecessary custom CSS where utilities would suffice.
+
+### Tailwind CSS References
+
+[1](https://infinum.com/handbook/frontend/react/tailwind/best-practices)
+[2](https://www.uxpin.com/studio/blog/tailwind-best-practices/)
+[3](https://www.bootstrapdash.com/blog/tailwind-css-best-practices)
+[4](https://evilmartians.com/chronicles/5-best-practices-for-preventing-chaos-in-tailwind-css)
+[5](https://dev.to/hexa-home/best-practices-for-writing-code-in-tailwind-css-19lg)
+[6](https://tailwindcss.com/docs/styling-with-utility-classes)
+[7](https://dev.to/code_2/integrating-tailwind-css-with-react-a-comprehensive-technical-guide-284f)
+[8](https://www.reddit.com/r/reactjs/comments/16dv1um/just_started_using_tailwind_css_in_my_react/)
+[9](https://tailwindcss.com/docs/installation/framework-guides)
+[10](https://blog.logrocket.com/building-reusable-react-components-using-tailwind-css/)
+[11](https://javascript.plainenglish.io/tailwind-css-with-react-exploring-a-generative-workflow-aa8da09df2ca)
+[12](https://tryhoverify.com/blog/component-abstraction-writing-reusable-ui-with-tailwind-react/)
+[13](https://tailwindcss.com)
+[14](https://github.com/tailwindlabs/tailwindcss/discussions/18545)
+[15](https://www.reddit.com/r/webdev/comments/1f6yxwk/how_do_you_know_youre_using_best_practices_with/)
+[16](https://makersden.io/blog/patterns-for-tailwindcss-usage-in-reactjs)
+[17](https://dev.to/gabrielmlinassi/tailwindcss-react-best-practices-the-clean-way-3dka)
+[18](https://tailwindcss.com/plus)
+[19](https://www.reddit.com/r/reactjs/comments/1hkknah/patterns_for_composable_tailwindcss_styles/)
+[20](https://tailwindcss.com/plus/ui-blocks)
+
