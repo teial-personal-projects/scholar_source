@@ -308,11 +308,19 @@
     @apply text-center mb-4;
   }
 
-  .hero-title {
+  /* .hero-title {
     @apply m-0 text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight leading-tight;
     font-family: 'Poppins', sans-serif;
     letter-spacing: -0.02em;
+  } */
+
+  .hero-title {
+    @apply m-0 text-xl sm:text-2xl md:text-3xl text-white tracking-tight leading-tight;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
+  
 
   .hero-subtitle {
     @apply mt-1 text-sm sm:text-base text-blue-100 font-medium;
@@ -689,6 +697,9 @@
 
   .home-page-header-title {
     @apply m-0 text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight tracking-tight;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 
   .home-page-main {
