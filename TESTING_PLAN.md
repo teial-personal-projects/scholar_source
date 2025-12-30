@@ -1080,27 +1080,27 @@ jobs:
 ### Phase 1: Foundation (Week 1)
 **Goal:** Set up testing infrastructure
 
-- [ ] Install testing dependencies (pytest, vitest)
-- [ ] Create test directory structure
-- [ ] Set up `conftest.py` with basic fixtures
-- [ ] Configure `vitest.config.js`
-- [ ] Write first unit test (markdown parser)
-- [ ] Get tests running in CI/CD
+- [x] Install testing dependencies (pytest, vitest)
+- [x] Create test directory structure
+- [x] Set up `conftest.py` with basic fixtures
+- [x] Configure `vitest.config.js`
+- [x] Write first unit test (markdown parser)
+- [x] Get tests running in CI/CD (workflows created but disabled as requested)
 
 **Deliverables:**
 - ✅ Testing dependencies installed
 - ✅ Basic test structure in place
 - ✅ At least 1 passing test in backend and frontend
-- ✅ CI/CD pipeline running tests
+- ✅ CI/CD pipeline created (disabled for manual trigger only)
 
 ### Phase 2: Core Unit Tests (Week 2)
 **Goal:** Test critical business logic
 
-- [ ] Complete `test_markdown_parser.py` (10+ tests)
-- [ ] Complete `test_models.py` (5+ tests)
-- [ ] Complete `test_cache.py` (5+ tests)
-- [ ] Add frontend component tests (ResultCard, Hero)
-- [ ] Aim for 50% coverage on core modules
+- [x] Complete `test_markdown_parser.py` (10+ tests)
+- [x] Complete `test_models.py` (5+ tests)
+- [x] Complete `test_cache.py` (5+ tests)
+- [x] Add frontend component tests (ResultCard, Hero, ConfirmDialog, StatusMessage)
+- [x] Aim for 50% coverage on core modules
 
 **Deliverables:**
 - ✅ 20+ backend unit tests
@@ -1110,11 +1110,11 @@ jobs:
 ### Phase 3: Integration Tests (Week 3)
 **Goal:** Test API contracts and workflows
 
-- [ ] Complete `test_api_endpoints.py` (all endpoints)
-- [ ] Complete `test_job_lifecycle.py` (full workflow)
-- [ ] Add API client tests (frontend)
+- [x] Complete `test_api_endpoints.py` (all endpoints)
+- [x] Complete `test_job_lifecycle.py` (full workflow)
+- [x] Add API client tests (frontend)
 - [ ] Add HomePage integration test
-- [ ] Aim for 70% coverage
+- [x] Aim for 70% coverage
 
 **Deliverables:**
 - ✅ 15+ integration tests
@@ -1125,15 +1125,15 @@ jobs:
 **Goal:** Comprehensive coverage and edge cases
 
 - [ ] Add E2E test (full workflow: submit → poll → results)
-- [ ] Test error scenarios (rate limits, failures)
-- [ ] Add parameterized tests for edge cases
-- [ ] Improve coverage to 80%+
-- [ ] Document testing patterns
+- [x] Test error scenarios (rate limits, failures) - covered in integration tests
+- [x] Add parameterized tests for edge cases - covered in unit tests
+- [ ] Improve coverage to 80%+ (needs verification)
+- [x] Document testing patterns (TESTING_GUIDE.md exists)
 
 **Deliverables:**
-- ✅ 1+ E2E test
+- ❌ 1+ E2E test
 - ✅ Edge case coverage
-- ✅ 80%+ code coverage
+- ⚠️ 80%+ code coverage (needs verification)
 - ✅ Testing documentation
 
 ---
