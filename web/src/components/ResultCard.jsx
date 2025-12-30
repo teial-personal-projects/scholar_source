@@ -1,13 +1,12 @@
 /**
  * ResultCard Component
  *
- * Compact search result card with title-first design.
- * Updated to support NotebookLM workflow actions.
+ * Compact search result card with title-first design
  */
 
 import { useState } from 'react';
 
-export default function ResultCard({ resource, index, onCopy }) {
+export default function ResultCard({ resource, index, onCopy, isSelected, onToggleSelect }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -21,22 +20,14 @@ export default function ResultCard({ resource, index, onCopy }) {
     }
   };
 
-  const handleCopyAndOpenNotebookLM = async () => {
-    await handleCopy();
-    // Open in a new tab to avoid disrupting the user’s current flow
-    window.open('https://notebooklm.google.com', '_blank', 'noopener,noreferrer');
-  };
-
-  // Determine badge color based on resource type
-  const getBadgeClasses = (type) => {
+  const getBadgeClass = (type) => {
     const upperType = type?.toUpperCase() || '';
-
-    if (upperType.includes('PDF') || upperType.includes('TEXTBOOK')) return 'bg-blue-100 text-blue-900';
-    if (upperType.includes('VIDEO') || upperType.includes('YOUTUBE')) return 'bg-red-100 text-red-900';
-    if (upperType.includes('COURSE')) return 'bg-green-100 text-green-900';
-    if (upperType.includes('WEBSITE') || upperType.includes('WEB')) return 'bg-amber-100 text-amber-900';
-    if (upperType.includes('PRACTICE') || upperType.includes('PROBLEM')) return 'bg-purple-100 text-purple-900';
-    return 'bg-gray-100 text-gray-900';
+    if (upperType.includes('PDF') || upperType.includes('TEXTBOOK')) return 'badge badge-pdf';
+    if (upperType.includes('VIDEO') || upperType.includes('YOUTUBE')) return 'badge badge-video';
+    if (upperType.includes('COURSE')) return 'badge badge-course';
+    if (upperType.includes('WEBSITE') || upperType.includes('WEB')) return 'badge badge-website';
+    if (upperType.includes('PRACTICE') || upperType.includes('PROBLEM')) return 'badge badge-practice';
+    return 'badge badge-default';
   };
 
   const getHostname = (url) => {
@@ -52,23 +43,66 @@ export default function ResultCard({ resource, index, onCopy }) {
     return `${getHostname(resource.url)} resource`;
   };
 
+  const handleCardClick = (e) => {
+    // Do NOT toggle when clicking interactive elements inside the card.
+    // (Visit link, Copy URL button, etc.)
+    const interactive = e.target.closest('a,button,input,textarea,select,label');
+    if (interactive) return;
+    onToggleSelect?.();
+  };
+
+  const handleCardKeyDown = (e) => {
+    // Keyboard accessibility: Space/Enter toggles selection when the card has focus.
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggleSelect?.();
+    }
+  };
+
   return (
-    <article className="rounded-lg bg-white border border-slate-200/60 p-4 shadow-sm hover:shadow hover:border-slate-300 transition-all hover:translate-y-[-1px]">
-      {/* Header row */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span
-          className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${getBadgeClasses(
-            resource.type
-          )} flex-shrink-0`}
+    <article
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      className={`result-card ${isSelected ? 'selected' : ''}`}
+      title={isSelected ? 'Selected for copy to NotebookLM' : 'Click to select for copy to NotebookLM'}
+    >
+      {/* Corner selected indicator */}
+      <div className="absolute left-3 top-3">
+        <div
+          className={`result-card-checkbox ${isSelected ? 'selected' : ''}`}
+          aria-hidden="true"
         >
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M16.704 5.29a1 1 0 010 1.415l-7.5 7.5a1 1 0 01-1.415 0l-3.5-3.5A1 1 0 015.704 9.29l2.793 2.793 6.793-6.793a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {/* Header row */}
+      <div className="flex items-center gap-2 mb-1.5 pl-10">
+        <span className={getBadgeClass(resource.type)}>
           {resource.type}
         </span>
+
+        {/* Subtle "Selected" chip */}
+        {isSelected && (
+          <span className="badge badge-selected">
+            Selected
+          </span>
+        )}
 
         <span className="ml-auto text-xs text-slate-500">{getHostname(resource.url)}</span>
       </div>
 
-      {/* Title as clickable link */}
-      <h3 className="m-0 mb-1.5">
+      {/* Title */}
+      <h3 className="m-0 mb-1.5 pl-10">
         <a
           href={resource.url}
           target="_blank"
@@ -79,13 +113,13 @@ export default function ResultCard({ resource, index, onCopy }) {
         </a>
       </h3>
 
-      {/* Description (clamped to 2 lines) */}
+      {/* Description */}
       {resource.description && (
-        <p className="m-0 mb-2 text-sm text-slate-700 line-clamp-2">{resource.description}</p>
+        <p className="m-0 mb-2 text-sm text-slate-700 line-clamp-2 pl-10">{resource.description}</p>
       )}
 
       {/* Actions row */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pl-10">
         <a
           href={resource.url}
           target="_blank"
@@ -99,16 +133,9 @@ export default function ResultCard({ resource, index, onCopy }) {
           onClick={handleCopy}
           className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 min-h-[40px]"
           title="Copy URL"
+          type="button"
         >
           {copied ? '✓ Copied' : 'Copy URL'}
-        </button>
-
-        <button
-          onClick={handleCopyAndOpenNotebookLM}
-          className="rounded-lg bg-blue-600 text-white px-3 py-2 text-sm font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 min-h-[40px]"
-          title="Copy URL and open NotebookLM"
-        >
-          Copy + NotebookLM
         </button>
       </div>
     </article>

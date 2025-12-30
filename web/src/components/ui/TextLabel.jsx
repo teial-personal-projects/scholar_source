@@ -7,9 +7,9 @@
 
 export default function TextLabel({ htmlFor, required, children, ...props }) {
   return (
-    <label 
+    <label
       htmlFor={htmlFor}
-      className="block text-[17px] leading-6 font-semibold text-slate-900"
+      className="block text-sm font-semibold text-slate-900"
       {...props}
     >
       {children}

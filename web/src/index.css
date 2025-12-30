@@ -56,3 +56,181 @@
     @apply w-full min-h-screen;
   }
 }
+
+/* Custom scroll container with indicator */
+@layer components {
+  .scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(79 70 229) rgb(241 245 249);
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scroll-container::-webkit-scrollbar-track {
+    @apply bg-slate-100 rounded-full;
+  }
+
+  .scroll-container::-webkit-scrollbar-thumb {
+    @apply bg-gradient-to-b from-primary to-primary-dark rounded-full transition-all;
+  }
+
+  .scroll-container::-webkit-scrollbar-thumb:hover {
+    @apply from-primary-dark to-indigo-800;
+  }
+
+  .scroll-container::after {
+    content: '↓ Scroll for more';
+    @apply sticky bottom-0 left-0 right-0 flex items-center justify-center;
+    @apply p-4 bg-gradient-to-t from-white/95 via-white/80 to-transparent;
+    @apply text-primary text-xs font-bold text-center pointer-events-none;
+    @apply opacity-0 transition-opacity backdrop-blur-sm;
+  }
+
+  .scroll-container.show-scroll-indicator::after {
+    @apply opacity-100;
+  }
+
+  /* Result card styles */
+  .result-card {
+    @apply relative rounded-lg p-4 transition-all outline-none cursor-pointer;
+    @apply focus:ring-2 focus:ring-blue-600 focus:ring-offset-2;
+    @apply bg-white border border-slate-200/60 shadow-sm;
+    @apply hover:shadow hover:border-slate-300 hover:translate-y-[-1px];
+  }
+
+  .result-card.selected {
+    @apply bg-blue-50/50 border-blue-200 shadow-sm;
+  }
+
+  .result-card-checkbox {
+    @apply h-7 w-7 rounded-full flex items-center justify-center border transition-all;
+    @apply bg-white/80 border-slate-200 text-transparent;
+  }
+
+  .result-card-checkbox.selected {
+    @apply bg-blue-600 border-blue-600 text-white shadow-sm;
+  }
+
+  /* Type badges */
+  .badge {
+    @apply px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide flex-shrink-0;
+  }
+
+  .badge-pdf { @apply bg-blue-100 text-blue-900; }
+  .badge-video { @apply bg-red-100 text-red-900; }
+  .badge-course { @apply bg-green-100 text-green-900; }
+  .badge-website { @apply bg-amber-100 text-amber-900; }
+  .badge-practice { @apply bg-purple-100 text-purple-900; }
+  .badge-default { @apply bg-gray-100 text-gray-900; }
+  .badge-selected { @apply bg-blue-100 text-blue-900 border border-blue-200; }
+
+  /* Results table container */
+  .results-table-container {
+    @apply relative rounded-2xl bg-white/80 backdrop-blur;
+    @apply border border-indigo-200/70 transition-all overflow-hidden;
+    box-shadow: 0 10px 30px -20px rgba(2, 6, 23, 0.35);
+  }
+
+  .results-table-container::before {
+    content: '';
+    @apply absolute -top-1/2 -left-1/2 w-[200%] h-[200%] pointer-events-none;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.06) 0%, transparent 70%);
+  }
+
+  .results-table-container:hover {
+    @apply border-indigo-300 shadow-xl;
+  }
+
+  /* Textbook info banner */
+  .textbook-info {
+    @apply py-3 px-4 bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50;
+    @apply border-l-4 border-amber-600 rounded-lg shadow-sm;
+  }
+
+  /* Count badge */
+  .count-badge {
+    @apply inline-flex items-center justify-center min-w-[32px] h-8 px-2.5;
+    @apply bg-gradient-to-r from-primary to-primary-dark text-white;
+    @apply rounded-full text-sm font-bold shadow-sm;
+  }
+
+  /* Hero step pill */
+  .step-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-2 py-1;
+    @apply border-slate-200 bg-slate-50;
+  }
+
+  .step-pill.highlighted {
+    @apply border-blue-200 bg-blue-50;
+  }
+
+  .step-number {
+    @apply inline-flex h-5 w-5 items-center justify-center rounded-full;
+    @apply bg-white border text-slate-800 font-semibold text-xs;
+  }
+
+  .step-pill .step-number {
+    @apply border-slate-200;
+  }
+
+  .step-pill.highlighted .step-number {
+    @apply border-blue-200;
+  }
+
+  /* Optional badge */
+  .optional-badge {
+    @apply text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full;
+  }
+
+  /* Status container */
+  .status-container {
+    @apply w-full rounded-xl border border-slate-200 border-l-4 px-4 py-3 shadow-sm;
+  }
+
+  .status-container.info {
+    @apply border-l-blue-500 bg-blue-50;
+  }
+
+  .status-container.success {
+    @apply border-l-green-500 bg-green-50;
+  }
+
+  .status-container.error {
+    @apply border-l-red-500 bg-red-50;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply h-5 w-5 flex-shrink-0 rounded-full border-2 border-slate-200 border-t-blue-600;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation: none;
+    }
+  }
+
+  /* Cancel button */
+  .btn-cancel {
+    @apply min-h-[44px] flex-shrink-0 rounded-lg border-2 border-red-500 bg-white;
+    @apply px-4 py-2 text-sm font-bold text-red-600;
+    @apply hover:bg-red-50 hover:border-red-600;
+    @apply focus:outline-none focus:ring-2 focus:ring-red-500;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Mobile filter toggle */
+  .mobile-filter-toggle {
+    @apply w-full flex items-center justify-between p-4 bg-white rounded-lg;
+    @apply border-2 border-gray-200 shadow-sm transition-all;
+    @apply hover:border-primary-light hover:shadow-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+}

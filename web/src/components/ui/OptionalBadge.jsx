@@ -7,10 +7,7 @@
 
 export default function OptionalBadge({ ...props }) {
   return (
-    <span 
-      className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full"
-      {...props}
-    >
+    <span className="optional-badge" {...props}>
       Optional
     </span>
   );

@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 
-export default function MobileFilterToggle({ children, isLoading }) {
+export default function MobileFilterToggle({ children }) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
@@ -15,7 +15,7 @@ export default function MobileFilterToggle({ children, isLoading }) {
       {/* Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-white rounded-lg border-2 border-gray-200 shadow-sm transition-all hover:border-primary-light hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        className="mobile-filter-toggle"
         aria-expanded={isExpanded}
         aria-controls="mobile-filter-section"
       >

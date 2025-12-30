@@ -89,22 +89,16 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
   };
 
   return (
-    <div className="mt-4 w-full rounded-xl border border-slate-200 border-l-4 border-l-blue-500 bg-blue-50 px-4 py-3 shadow-sm">
+    <div className="mt-4 status-container info">
       {/* Header row: spinner + title + cancel */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0 flex-1">
-          <div
-            className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin motion-reduce:animate-none"
-            aria-hidden="true"
-          />
+          <div className="mt-0.5 spinner" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <h4 className="m-0 text-sm sm:text-base font-semibold text-slate-900">
               Finding resources
             </h4>
-            <p
-              className="mt-1 mb-0 text-sm text-slate-700"
-              aria-live="polite"
-            >
+            <p className="mt-1 mb-0 text-sm text-slate-700" aria-live="polite">
               {statusMessage}
             </p>
           </div>
@@ -115,7 +109,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
             onClick={handleCancel}
             disabled={isCancelling}
             type="button"
-            className="min-h-[44px] flex-shrink-0 rounded-lg border-2 border-red-500 bg-white px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-cancel"
             title="Cancel this search"
           >
             {isCancelling ? 'Cancelling…' : 'Cancel'}

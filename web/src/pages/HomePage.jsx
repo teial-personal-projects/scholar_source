@@ -183,10 +183,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-blue-50">
       {/* Header - Professional blue gradient */}
       <header className="sticky top-0 z-20 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-4xl sm:text-5xl flex-shrink-0" aria-hidden="true">📚</span>
-            <div className="m-0 text-2xl sm:text-3xl lg:text-4xl font-semibold text-white leading-tight">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl sm:text-3xl flex-shrink-0" aria-hidden="true">📚</span>
+            <div className="m-0 text-lg sm:text-xl lg:text-2xl font-semibold text-white leading-tight">
               Student Study Resource Finder
             </div>
           </div>
@@ -194,22 +194,19 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3">
         {/* Hero Section */}
         <Hero />
 
         {/* Search Toolbar Panel */}
-        <section id="search-parameters" className="rounded-xl bg-white shadow-lg border border-slate-200 p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 m-0">
-                Search Parameters
-              </h2>
-              <div className="mt-1 border-t border-slate-200" />
-            </div>
+        <section id="search-parameters" className="rounded-lg bg-white shadow-lg border border-slate-200 p-2.5 sm:p-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 gap-1.5">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 m-0">
+              Search Parameters
+            </h2>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button
                 type="submit"
                 form="search-form"
@@ -231,13 +228,13 @@ export default function HomePage() {
 
           <form id="search-form" onSubmit={handleSubmit}>
               {/* Primary Controls Row */}
-              <div className="grid grid-cols-1 gap-3 mb-3">
+              <div className="grid grid-cols-1 gap-2 mb-2">
                 {/* Search Type Dropdown */}
                 <div>
                   <TextLabel htmlFor="search_param_type" required>
                     Search Type
                   </TextLabel>
-                  <div className="mt-1.5">
+                  <div className="mt-1">
                     <TextInput
                       as="select"
                       id="search_param_type"
@@ -254,7 +251,7 @@ export default function HomePage() {
                       <option value="isbn">Book ISBN</option>
                     </TextInput>
                   </div>
-                  <p id="search-type-helper" className="mt-1 text-sm leading-5 text-slate-700">
+                  <p id="search-type-helper" className="mt-0.5 text-xs leading-4 text-slate-700">
                     {!searchParamType && "Selecting a search type will show required fields below."}
                     {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
                     {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
@@ -271,7 +268,7 @@ export default function HomePage() {
                     <TextLabel htmlFor="course_url" required>
                       Course URL
                     </TextLabel>
-                    <div className="mt-1.5">
+                    <div className="mt-1">
                       <TextInput
                         type="url"
                         id="course_url"
@@ -291,7 +288,7 @@ export default function HomePage() {
                     <TextLabel htmlFor="book_url" required>
                       Book URL
                     </TextLabel>
-                    <div className="mt-1.5">
+                    <div className="mt-1">
                       <TextInput
                         type="url"
                         id="book_url"
@@ -307,12 +304,12 @@ export default function HomePage() {
                 )}
 
                 {searchParamType === 'book_title_author' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <TextLabel htmlFor="book_title" required>
                         Book Title
                       </TextLabel>
-                      <div className="mt-1.5">
+                      <div className="mt-1">
                         <TextInput
                           type="text"
                           id="book_title"
@@ -329,7 +326,7 @@ export default function HomePage() {
                       <TextLabel htmlFor="book_author" required>
                         Author(s)
                       </TextLabel>
-                      <div className="mt-1.5">
+                      <div className="mt-1">
                         <TextInput
                           type="text"
                           id="book_author"
@@ -350,7 +347,7 @@ export default function HomePage() {
                     <TextLabel htmlFor="isbn" required>
                       ISBN
                     </TextLabel>
-                    <div className="mt-1.5">
+                    <div className="mt-1">
                       <TextInput
                         type="text"
                         id="isbn"
@@ -367,8 +364,8 @@ export default function HomePage() {
               </div>
 
               {/* Force Refresh Toggle - Mobile */}
-              <div className="mb-3 lg:hidden">
-                <label htmlFor="bypass_cache_mobile" className="flex items-center gap-2 py-1 cursor-pointer">
+              <div className="mb-1.5 lg:hidden">
+                <label htmlFor="bypass_cache_mobile" className="flex items-center gap-1.5 py-0.5 cursor-pointer">
                   <input
                     type="checkbox"
                     id="bypass_cache_mobile"
@@ -376,9 +373,9 @@ export default function HomePage() {
                     checked={formData.bypass_cache}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-3.5 h-3.5 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <span className="text-sm sm:text-base text-slate-800 select-none">
+                  <span className="text-xs text-slate-800 select-none">
                     Bypass cache
                   </span>
                   <span className="text-xs text-slate-500">
@@ -388,8 +385,8 @@ export default function HomePage() {
               </div>
 
               {/* Force Refresh Toggle - Desktop */}
-              <div className="hidden lg:block mb-3">
-                <label htmlFor="bypass_cache" className="flex items-center gap-2 py-1 cursor-pointer">
+              <div className="hidden lg:block mb-1.5">
+                <label htmlFor="bypass_cache" className="flex items-center gap-1.5 py-0.5 cursor-pointer">
                   <input
                     type="checkbox"
                     id="bypass_cache"
@@ -397,9 +394,9 @@ export default function HomePage() {
                     checked={formData.bypass_cache}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-4 h-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-3.5 h-3.5 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                  <span className="text-sm sm:text-base text-slate-800 select-none">
+                  <span className="text-xs text-slate-800 select-none">
                     Bypass cache
                   </span>
                   <span className="text-xs text-slate-500">
@@ -409,34 +406,34 @@ export default function HomePage() {
               </div>
 
               {/* Optional Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
                 {/* Resource Types Accordion */}
-                <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
+                <div className="border border-blue-200 rounded overflow-hidden bg-blue-50/30">
                   <button
                     type="button"
                     onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
-                    className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
                   >
-                    <div className="flex items-baseline gap-2">
-                      <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Resource Types</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="block text-sm font-semibold text-slate-900">🎯 Resource Types</span>
                       <OptionalBadge />
                     </div>
-                    <svg className={`w-4 h-4 text-gray-600 transition-transform ${isResourceTypesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${isResourceTypesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {isResourceTypesExpanded && (
-                    <div className="px-4 py-2 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-4 gap-y-2">
+                    <div className="px-2.5 py-1.5 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                       {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
-                        <label key={type} className="flex items-start gap-2 py-1 cursor-pointer min-w-0">
+                        <label key={type} className="flex items-start gap-1.5 py-0.5 cursor-pointer min-w-0">
                           <input
                             type="checkbox"
                             checked={formData.desired_resource_types?.includes(type) || false}
                             onChange={() => handleResourceTypeChange(type)}
                             disabled={isLoading}
-                            className="w-4 h-4 mt-0.5 flex-shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
                           />
-                          <span className="text-sm sm:text-base text-slate-800 capitalize leading-snug break-words">{type.replace(/_/g, ' ')}</span>
+                          <span className="text-xs text-slate-800 capitalize leading-tight break-words">{type.replace(/_/g, ' ')}</span>
                         </label>
                       ))}
                     </div>
@@ -444,26 +441,26 @@ export default function HomePage() {
                 </div>
 
                 {/* Focus Topics Accordion */}
-                <div className="border border-blue-200 rounded-lg overflow-hidden bg-blue-50/30">
+                <div className="border border-blue-200 rounded overflow-hidden bg-blue-50/30">
                   <button
                     type="button"
                     onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
-                    className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
                   >
-                    <div className="flex items-baseline gap-2">
-                      <span className="block text-[17px] leading-6 font-semibold text-slate-900">🎯 Focus Topics</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="block text-sm font-semibold text-slate-900">🎯 Focus Topics</span>
                       <OptionalBadge />
                     </div>
-                    <svg className={`w-4 h-4 text-gray-600 transition-transform ${isFocusTopicsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${isFocusTopicsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {isFocusTopicsExpanded && (
-                    <div className="px-4 py-2 bg-blue-50/20 border-t border-blue-200">
+                    <div className="px-2.5 py-1.5 bg-blue-50/20 border-t border-blue-200">
                       <TextLabel htmlFor="topics_list">
                         Topics List
                       </TextLabel>
-                      <div className="mt-1.5">
+                      <div className="mt-1">
                         <TextInput
                           as="textarea"
                           id="topics_list"
@@ -485,7 +482,7 @@ export default function HomePage() {
 
             {/* Validation Error */}
             {validationError && (
-              <div className="px-4 py-3 bg-red-50 border-l-4 border-red-500 rounded-r text-red-700 text-sm font-medium">
+              <div className="px-2.5 py-1.5 bg-red-50 border-l-4 border-red-500 rounded-r text-red-700 text-xs font-medium">
                 {validationError}
               </div>
             )}
