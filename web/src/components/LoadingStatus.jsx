@@ -31,9 +31,6 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
             course_name: data.course_name
           });
         }
-        
-        // Debug: log status to help troubleshoot cancel button visibility
-        console.log('Job status:', data.status, 'Should show cancel:', data.status === 'pending' || data.status === 'running');
 
         // Check if job is complete or failed
         if (data.status === 'completed') {
@@ -103,17 +100,17 @@ export default function LoadingStatus({ jobId, onComplete, onError }) {
   };
 
 return (
-  <div className="bg-transparent rounded-2xl p-0">
-    <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white px-6 py-6 sm:px-8 sm:py-7 shadow-sm">
+  <div className="loading-status-container">
+    <div className="loading-status-card">
       {/* Header row: inline spinner + title + subtle cancel */}
-      <div className="flex items-start gap-4">
+      <div className="loading-status-header">
         <div
-          className="mt-1 h-5 w-5 rounded-full border-2 border-slate-200 border-t-primary animate-spin motion-reduce:animate-none"
+          className="loading-status-spinner"
           aria-hidden="true"
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <h3 className="m-0 text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
+        <div className="loading-status-content">
+          <div className="loading-status-title-section">
+            <h3 className="loading-status-title">
               Finding resources
             </h3>
 
@@ -122,7 +119,7 @@ return (
                 onClick={handleCancel}
                 disabled={isCancelling}
                 type="button"
-                className="min-h-[44px] rounded-lg border-2 border-red-500 bg-white px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-cancel"
                 title="Cancel this search"
               >
                 {isCancelling ? 'Cancelling…' : 'Cancel'}
@@ -132,7 +129,7 @@ return (
 
           {/* aria-live status line */}
           <p
-            className="mt-2 mb-0 text-sm sm:text-base text-slate-700 font-medium"
+            className="loading-status-message"
             aria-live="polite"
           >
             {statusMessage}
@@ -142,11 +139,11 @@ return (
 
       {/* Optional context (book/course) */}
       {textbookInfo && (textbookInfo.book_title || textbookInfo.book_author) && (
-        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-slate-600">
+        <div className="loading-status-textbook-info">
+          <p className="loading-status-textbook-label">
             Searching for resources matching
           </p>
-          <p className="mt-1 mb-0 text-sm sm:text-base font-semibold text-slate-900 break-words">
+          <p className="loading-status-textbook-title">
             {textbookInfo.book_title}
             {textbookInfo.book_author && ` by ${textbookInfo.book_author}`}
           </p>
@@ -154,37 +151,37 @@ return (
       )}
 
       {/* Stepper row (compact) */}
-      <div className="mt-6 flex flex-wrap items-center gap-x-10 gap-y-3">
+      <div className="loading-status-stepper">
         {/* Step 1 - active when pending/running */}
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+        <div className="loading-status-step">
+          <div className="loading-status-step-circle-active">
             1
           </div>
-          <span className="text-sm font-semibold text-slate-900">Analyzing</span>
+          <span className="loading-status-step-label-active">Analyzing</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full border-2 border-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">
+        <div className="loading-status-step">
+          <div className="loading-status-step-circle-inactive">
             2
           </div>
-          <span className="text-sm font-medium text-slate-500">Discovering</span>
+          <span className="loading-status-step-label-inactive">Discovering</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full border-2 border-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">
+        <div className="loading-status-step">
+          <div className="loading-status-step-circle-inactive">
             3
           </div>
-          <span className="text-sm font-medium text-slate-500">Validating</span>
+          <span className="loading-status-step-label-inactive">Validating</span>
         </div>
       </div>
 
       {/* Divider + expectations (compact) */}
-      <div className="my-5 h-px w-full bg-slate-200" />
+      <div className="loading-status-divider" />
 
-      <p className="m-0 text-sm text-slate-700 font-medium">
-        Usually takes <span className="font-semibold text-slate-900">1–5 minutes</span>.
+      <p className="loading-status-footer-text">
+        Usually takes <span className="loading-status-footer-text-bold">1–5 minutes</span>.
       </p>
-      <p className="mt-2 mb-0 text-sm text-slate-600">
+      <p className="loading-status-footer-text-secondary">
         We prioritize high-quality, up-to-date materials.
       </p>
     </div>
