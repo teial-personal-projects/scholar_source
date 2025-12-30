@@ -149,6 +149,9 @@ npm install -D vitest @vitest/ui @testing-library/react \
   jsdom msw
 ```
 
+**Note:** The frontend test dependencies are listed in `web/package.json.additions`. 
+Make sure to merge these into your `web/package.json` if they're not already there.
+
 ### 2. Add Scripts to package.json
 
 Add these scripts to `web/package.json`:
@@ -176,25 +179,40 @@ chmod +x scripts/*.sh
 
 ### Backend (Python/FastAPI)
 
-| Tool | Purpose |
-|------|---------|
-| **pytest** | Test runner and framework |
-| **pytest-asyncio** | Async test support for FastAPI |
-| **pytest-cov** | Code coverage reporting |
-| **pytest-mock** | Mocking external dependencies |
-| **httpx** | HTTP client for testing FastAPI |
-| **fakeredis** | Mock Redis for rate limiting |
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **pytest** | ≥7.4.0 | Test runner and framework |
+| **pytest-asyncio** | ≥0.21.0 | Async test support for FastAPI |
+| **pytest-cov** | ≥4.1.0 | Code coverage reporting |
+| **pytest-mock** | ≥3.11.0 | Mocking external dependencies |
+| **httpx** | ≥0.24.0 | HTTP client for testing FastAPI |
+| **fakeredis** | ≥2.19.0 | Mock Redis for rate limiting |
+| **faker** | ≥20.0.0 | Generate fake test data |
+
+**Installation:**
+```bash
+pip install -r requirements-dev.txt
+```
 
 ### Frontend (React/Vitest)
 
-| Tool | Purpose |
-|------|---------|
-| **Vitest** | Fast, Vite-native test runner |
-| **@testing-library/react** | User-centric component testing |
-| **@testing-library/jest-dom** | Custom DOM matchers |
-| **@testing-library/user-event** | User interaction simulation |
-| **MSW** | Mock Service Worker for API mocking |
-| **jsdom** | DOM implementation for Node.js |
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Vitest** | ≥1.0.0 | Fast, Vite-native test runner |
+| **@vitest/ui** | ≥1.0.0 | Visual test runner UI |
+| **@testing-library/react** | ≥14.0.0 | User-centric component testing |
+| **@testing-library/jest-dom** | ≥6.1.0 | Custom DOM matchers |
+| **@testing-library/user-event** | ≥14.5.0 | User interaction simulation |
+| **MSW** | ≥2.0.0 | Mock Service Worker for API mocking |
+| **jsdom** | ≥23.0.0 | DOM implementation for Node.js |
+
+**Installation:**
+```bash
+cd web
+npm install -D vitest @vitest/ui @testing-library/react \
+  @testing-library/jest-dom @testing-library/user-event \
+  jsdom msw
+```
 
 ---
 
@@ -573,14 +591,38 @@ npm test -- --watch
 
 ---
 
+## 📋 Remaining Tasks
+
+The following tasks from the original testing plan are still pending:
+
+### High Priority
+- [ ] **Add HomePage integration test** - Test the full user flow from form submission to results display
+  - Location: `web/src/pages/HomePage.test.jsx`
+  - Should test: Form validation, job submission, status polling, results rendering, error handling
+
+### Medium Priority
+- [ ] **Add E2E test** - Full workflow test (submit → poll → results)
+  - Location: `tests/e2e/test_full_workflow.py`
+  - Should test: Complete end-to-end flow without mocks (or minimal mocks)
+  - Consider using Playwright or Cypress for browser-based E2E tests
+
+### Low Priority
+- [ ] **Improve coverage to 80%+** - Verify and improve overall test coverage
+  - Current: ~70% (needs verification)
+  - Target: 80%+ overall, 90%+ for critical paths
+  - Run: `pytest --cov=backend --cov-report=term` and `npm run test:coverage`
+
+---
+
 ## 🎓 Next Steps
 
 1. **Run Tests**: `./scripts/test-all.sh`
 2. **View Coverage**: Open `htmlcov/index.html` and `web/coverage/index.html`
-3. **Add More Tests**: Expand coverage for edge cases
-4. **E2E Tests**: Consider Playwright/Cypress for full workflows
-5. **Visual Tests**: Add visual regression testing
-6. **Performance**: Benchmark critical paths
+3. **Complete Remaining Tasks**: See [Remaining Tasks](#-remaining-tasks) section above
+4. **Add More Tests**: Expand coverage for edge cases
+5. **E2E Tests**: Implement full workflow E2E test
+6. **Visual Tests**: Consider adding visual regression testing
+7. **Performance**: Benchmark critical paths
 
 ---
 
@@ -604,6 +646,4 @@ This comprehensive testing suite provides:
 ✅ **Coverage tracking** with Codecov
 ✅ **Best practices** for maintainable, reliable tests
 
-**For issues or questions, open an issue on GitHub.**
 
-Happy testing! 🧪✨
