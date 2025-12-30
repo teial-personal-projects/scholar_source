@@ -440,7 +440,19 @@
   }
 
   .hero-title-section {
-    @apply text-center mb-4;
+    @apply mb-4;
+  }
+
+  .hero-title-row {
+    @apply flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3;
+  }
+
+  .hero-title-content {
+    @apply text-center sm:text-left flex-1 min-w-0;
+  }
+
+  .hero-title-actions {
+    @apply flex items-center gap-2 flex-shrink-0;
   }
 
   /* .hero-title {
@@ -500,6 +512,14 @@
     @apply focus:outline-none focus:ring-4 focus:ring-purple-300/50;
   }
 
+  .hero-cta-btn-inline {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5;
+    @apply bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600;
+    @apply text-white font-semibold text-xs rounded-lg shadow-md hover:shadow-lg;
+    @apply transform hover:scale-105 transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-purple-300/50;
+  }
+
   .hero-collapse-section {
     @apply flex justify-center pt-3;
   }
@@ -507,6 +527,11 @@
   .hero-collapse-btn {
     @apply flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white/80;
     @apply hover:text-white hover:bg-white/10 rounded-lg transition-all;
+    @apply focus:outline-none focus:ring-2 focus:ring-white/50;
+  }
+
+  .hero-collapse-btn-inline {
+    @apply p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all;
     @apply focus:outline-none focus:ring-2 focus:ring-white/50;
   }
 

@@ -72,14 +72,47 @@ export default function Hero() {
         </div>
       ) : (
         <div className="hero-content">
-          {/* Title */}
+          {/* Title with controls */}
           <div className="hero-title-section">
-            <h1 className="hero-title">
-              From Syllabus to Study Superpower
-            </h1>
-            <p className="hero-subtitle">
-              Transform any course into your complete learning arsenal
-            </p>
+            <div className="hero-title-row">
+              <div className="hero-title-content">
+                <h1 className="hero-title">
+                  From Syllabus to Study Superpower
+                </h1>
+                <p className="hero-subtitle">
+                  Transform any course into your complete learning arsenal
+                </p>
+              </div>
+              <div className="hero-title-actions">
+                <a
+                  href="https://notebooklm.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Open NotebookLM in a new tab"
+                  className="hero-cta-btn-inline"
+                >
+                  <span className="text-base">✨</span>
+                  Open NotebookLM
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </a>
+                <button
+                  onClick={() => setIsCollapsed(true)}
+                  className="hero-collapse-btn-inline"
+                  aria-label="Collapse hero section"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Steps Grid */}
@@ -111,42 +144,6 @@ export default function Hero() {
                 </p>
               </div>
             ))}
-          </div>
-
-          {/* CTA Section */}
-          <div className="hero-cta-section">
-            <a
-              href="https://notebooklm.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open NotebookLM in a new tab"
-              className="hero-cta-btn"
-            >
-              <span className="text-base">✨</span>
-              Open NotebookLM
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
-            </a>
-          </div>
-
-          {/* Collapse control */}
-          <div className="hero-collapse-section">
-            <button
-              onClick={() => setIsCollapsed(true)}
-              className="hero-collapse-btn"
-              aria-label="Collapse hero section"
-            >
-              <span>Collapse</span>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
           </div>
         </div>
       )}
