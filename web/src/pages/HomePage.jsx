@@ -185,13 +185,13 @@ export default function HomePage() {
 
 
   return (
-    <div className="min-h-screen bg-blue-50">
-      {/* Header - Purple gradient */}
-      <header className="sticky top-0 z-20 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-2xl sm:text-3xl flex-shrink-0" aria-hidden="true">📚</span>
-            <h1 className="m-0 text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight tracking-tight">
+    <div className="home-page-container">
+      {/* Header */}
+      <header className="home-page-header">
+        <div className="home-page-header-inner">
+          <div className="home-page-header-content">
+            <span className="home-page-header-icon" aria-hidden="true">📚</span>
+            <h1 className="home-page-header-title">
               Student Study Resource Finder
             </h1>
           </div>
@@ -199,19 +199,19 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3">
+      <main className="home-page-main">
         {/* Hero Section */}
         <Hero />
 
         {/* Search Toolbar Panel */}
-        <section id="search-parameters" className="rounded-lg bg-white shadow-lg border border-slate-200 p-2.5 sm:p-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 gap-1.5">
-            <h2 className="text-base sm:text-lg font-semibold text-slate-900 m-0">
+        <section id="search-parameters" className="search-panel">
+          <div className="search-panel-header">
+            <h2 className="search-panel-title">
               Search Parameters
             </h2>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="search-panel-actions">
               <Button
                 type="submit"
                 form="search-form"
@@ -233,7 +233,7 @@ export default function HomePage() {
 
           <form id="search-form" onSubmit={handleSubmit}>
               {/* Primary Controls Row */}
-              <div className="grid grid-cols-1 gap-2 mb-2">
+              <div className="search-grid">
                 {/* Search Type Dropdown */}
                 <div>
                   <TextLabel htmlFor="search_param_type" required>
@@ -256,7 +256,7 @@ export default function HomePage() {
                       <option value="isbn">Book ISBN</option>
                     </TextInput>
                   </div>
-                  <p id="search-type-helper" className="mt-0.5 text-xs leading-4 text-slate-700">
+                  <p id="search-type-helper" className="helper-text-inline">
                     {!searchParamType && "Selecting a search type will show required fields below."}
                     {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
                     {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
@@ -309,7 +309,7 @@ export default function HomePage() {
                 )}
 
                 {searchParamType === 'book_title_author' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="search-grid-two-col">
                     <div>
                       <TextLabel htmlFor="book_title" required>
                         Book Title
@@ -370,7 +370,7 @@ export default function HomePage() {
 
               {/* Force Refresh Toggle - Mobile */}
               <div className="mb-1.5 lg:hidden">
-                <label htmlFor="bypass_cache_mobile" className="flex items-center gap-1.5 py-0.5 cursor-pointer">
+                <label htmlFor="bypass_cache_mobile" className="checkbox-label">
                   <input
                     type="checkbox"
                     id="bypass_cache_mobile"
@@ -378,12 +378,12 @@ export default function HomePage() {
                     checked={formData.bypass_cache}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-3.5 h-3.5 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="checkbox-input"
                   />
-                  <span className="text-xs text-slate-800 select-none">
+                  <span className="checkbox-label-text">
                     Bypass cache
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="checkbox-label-helper">
                     Don't use cached results from previous searches
                   </span>
                 </label>
@@ -391,7 +391,7 @@ export default function HomePage() {
 
               {/* Force Refresh Toggle - Desktop */}
               <div className="hidden lg:block mb-1.5">
-                <label htmlFor="bypass_cache" className="flex items-center gap-1.5 py-0.5 cursor-pointer">
+                <label htmlFor="bypass_cache" className="checkbox-label">
                   <input
                     type="checkbox"
                     id="bypass_cache"
@@ -399,46 +399,46 @@ export default function HomePage() {
                     checked={formData.bypass_cache}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-3.5 h-3.5 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="checkbox-input"
                   />
-                  <span className="text-xs text-slate-800 select-none">
+                  <span className="checkbox-label-text">
                     Bypass cache
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="checkbox-label-helper">
                     Don't use cached results from previous searches
                   </span>
                 </label>
               </div>
 
               {/* Optional Sections */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+              <div className="search-grid-two-col mb-2">
                 {/* Resource Types Accordion */}
-                <div className="border border-blue-200 rounded overflow-hidden bg-blue-50/30">
+                <div className="accordion accordion-blue">
                   <button
                     type="button"
                     onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                    className="accordion-header accordion-header-blue"
                   >
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="block text-sm font-semibold text-slate-900">🎯 Resource Types</span>
+                    <div className="accordion-header-content">
+                      <span className="accordion-title">🎯 Resource Types</span>
                       <OptionalBadge />
                     </div>
-                    <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${isResourceTypesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`accordion-icon ${isResourceTypesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {isResourceTypesExpanded && (
-                    <div className="px-2.5 py-1.5 bg-blue-50/20 border-t border-blue-200 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    <div className="accordion-body accordion-body-blue accordion-grid">
                       {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
-                        <label key={type} className="flex items-start gap-1.5 py-0.5 cursor-pointer min-w-0">
+                        <label key={type} className="accordion-checkbox-label">
                           <input
                             type="checkbox"
                             checked={formData.desired_resource_types?.includes(type) || false}
                             onChange={() => handleResourceTypeChange(type)}
                             disabled={isLoading}
-                            className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="checkbox-input-with-margin"
                           />
-                          <span className="text-xs text-slate-800 capitalize leading-tight break-words">{type.replace(/_/g, ' ')}</span>
+                          <span className="accordion-checkbox-text">{type.replace(/_/g, ' ')}</span>
                         </label>
                       ))}
                     </div>
@@ -446,22 +446,22 @@ export default function HomePage() {
                 </div>
 
                 {/* Focus Topics Accordion */}
-                <div className="border border-blue-200 rounded overflow-hidden bg-blue-50/30">
+                <div className="accordion accordion-blue">
                   <button
                     type="button"
                     onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
-                    className="w-full flex items-center justify-between px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+                    className="accordion-header accordion-header-blue"
                   >
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="block text-sm font-semibold text-slate-900">🎯 Focus Topics</span>
+                    <div className="accordion-header-content">
+                      <span className="accordion-title">🎯 Focus Topics</span>
                       <OptionalBadge />
                     </div>
-                    <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${isFocusTopicsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`accordion-icon ${isFocusTopicsExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                   {isFocusTopicsExpanded && (
-                    <div className="px-2.5 py-1.5 bg-blue-50/20 border-t border-blue-200">
+                    <div className="accordion-body accordion-body-blue">
                       <TextLabel htmlFor="topics_list">
                         Topics List
                       </TextLabel>
@@ -486,22 +486,22 @@ export default function HomePage() {
               </div>
 
               {/* Exclude Sites Accordion */}
-              <div className="border border-red-200 rounded overflow-hidden bg-red-50/30 mb-2">
+              <div className="accordion accordion-red mb-2">
                 <button
                   type="button"
                   onClick={() => setIsExcludeSitesExpanded(!isExcludeSitesExpanded)}
-                  className="w-full flex items-center justify-between px-2.5 py-1.5 bg-red-50 hover:bg-red-100 transition-colors text-left"
+                  className="accordion-header accordion-header-red"
                 >
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="block text-sm font-semibold text-slate-900">🚫 Exclude Sites</span>
+                  <div className="accordion-header-content">
+                    <span className="accordion-title">🚫 Exclude Sites</span>
                     <OptionalBadge />
                   </div>
-                  <svg className={`w-3.5 h-3.5 text-gray-600 transition-transform ${isExcludeSitesExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`accordion-icon ${isExcludeSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 {isExcludeSitesExpanded && (
-                  <div className="px-2.5 py-1.5 bg-red-50/20 border-t border-red-200">
+                  <div className="accordion-body accordion-body-red">
                     <TextLabel htmlFor="excluded_sites">
                       Exclude Domains
                     </TextLabel>
@@ -526,7 +526,7 @@ export default function HomePage() {
 
             {/* Validation Error */}
             {validationError && (
-              <div className="px-2.5 py-1.5 bg-red-50 border-l-4 border-red-500 rounded-r text-red-700 text-xs font-medium">
+              <div className="validation-error">
                 {validationError}
               </div>
             )}
@@ -547,10 +547,10 @@ export default function HomePage() {
           <section>
             {/* Error State */}
             {error && (
-              <div className="bg-white rounded-xl p-8 shadow-lg border-l-4 border-red-500 text-center">
-                <div className="text-5xl mb-4" aria-hidden="true">⚠️</div>
-                <h2 className="m-0 mb-3 text-xl font-semibold text-red-600">Something went wrong</h2>
-                <p className="m-0 mb-6 text-sm text-gray-700">{error}</p>
+              <div className="error-state">
+                <div className="error-state-icon" aria-hidden="true">⚠️</div>
+                <h2 className="error-state-title">Something went wrong</h2>
+                <p className="error-state-message">{error}</p>
                 <Button
                   variant="primary"
                   onClick={() => {

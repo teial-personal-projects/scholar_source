@@ -665,4 +665,165 @@
   .results-table-empty-text {
     @apply m-0 text-base text-slate-600 leading-relaxed;
   }
+
+  /* HomePage component styles */
+  .home-page-container {
+    @apply min-h-screen bg-blue-50;
+  }
+
+  .home-page-header {
+    @apply sticky top-0 z-20 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 shadow-lg;
+  }
+
+  .home-page-header-inner {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4;
+  }
+
+  .home-page-header-content {
+    @apply flex items-center justify-center gap-2;
+  }
+
+  .home-page-header-icon {
+    @apply text-2xl sm:text-3xl flex-shrink-0;
+  }
+
+  .home-page-header-title {
+    @apply m-0 text-lg sm:text-xl lg:text-2xl font-bold text-white leading-tight tracking-tight;
+  }
+
+  .home-page-main {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3;
+  }
+
+  .search-panel {
+    @apply rounded-lg bg-white shadow-lg border border-slate-200 p-2.5 sm:p-3;
+  }
+
+  .search-panel-header {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1.5 gap-1.5;
+  }
+
+  .search-panel-title {
+    @apply text-base sm:text-lg font-semibold text-slate-900 m-0;
+  }
+
+  .search-panel-actions {
+    @apply flex gap-2;
+  }
+
+  .search-grid {
+    @apply grid grid-cols-1 gap-2 mb-2;
+  }
+
+  .search-grid-two-col {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-2;
+  }
+
+  .helper-text-inline {
+    @apply mt-0.5 text-xs leading-4 text-slate-700;
+  }
+
+  .checkbox-label {
+    @apply flex items-center gap-1.5 py-0.5 cursor-pointer;
+  }
+
+  .checkbox-input {
+    @apply w-3.5 h-3.5 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .checkbox-input-with-margin {
+    @apply w-3.5 h-3.5 mt-0.5 flex-shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .checkbox-label-text {
+    @apply text-xs text-slate-800 select-none;
+  }
+
+  .checkbox-label-helper {
+    @apply text-xs text-slate-500;
+  }
+
+  .accordion {
+    @apply border rounded overflow-hidden;
+  }
+
+  .accordion-blue {
+    @apply border-blue-200 bg-blue-50/30;
+  }
+
+  .accordion-red {
+    @apply border-red-200 bg-red-50/30;
+  }
+
+  .accordion-header {
+    @apply w-full flex items-center justify-between px-2.5 py-1.5 transition-colors text-left;
+  }
+
+  .accordion-header-blue {
+    @apply bg-blue-50 hover:bg-blue-100;
+  }
+
+  .accordion-header-red {
+    @apply bg-red-50 hover:bg-red-100;
+  }
+
+  .accordion-header-content {
+    @apply flex items-baseline gap-1.5;
+  }
+
+  .accordion-title {
+    @apply block text-sm font-semibold text-slate-900;
+  }
+
+  .accordion-icon {
+    @apply w-3.5 h-3.5 text-gray-600 transition-transform;
+  }
+
+  .accordion-icon-expanded {
+    @apply rotate-180;
+  }
+
+  .accordion-body {
+    @apply px-2.5 py-1.5 border-t;
+  }
+
+  .accordion-body-blue {
+    @apply bg-blue-50/20 border-blue-200;
+  }
+
+  .accordion-body-red {
+    @apply bg-red-50/20 border-red-200;
+  }
+
+  .accordion-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-1.5;
+  }
+
+  .accordion-checkbox-label {
+    @apply flex items-start gap-1.5 py-0.5 cursor-pointer min-w-0;
+  }
+
+  .accordion-checkbox-text {
+    @apply text-xs text-slate-800 capitalize leading-tight break-words;
+  }
+
+  .validation-error {
+    @apply px-2.5 py-1.5 bg-red-50 border-l-4 border-red-500 rounded-r text-red-700 text-xs font-medium;
+  }
+
+  .error-state {
+    @apply bg-white rounded-xl p-8 shadow-lg border-l-4 border-red-500 text-center;
+  }
+
+  .error-state-icon {
+    @apply text-5xl mb-4;
+  }
+
+  .error-state-title {
+    @apply m-0 mb-3 text-xl font-semibold text-red-600;
+  }
+
+  .error-state-message {
+    @apply m-0 mb-6 text-sm text-gray-700;
+  }
 }
