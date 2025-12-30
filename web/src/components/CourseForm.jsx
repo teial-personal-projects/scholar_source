@@ -460,36 +460,6 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           )}
         </div>
 
-        {/* Email Section - COMMENTED OUT */}
-        {/* <div className="form-section">
-          <div className="section-header" onClick={() => setIsEmailExpanded(!isEmailExpanded)}>
-            <h3>📧 Get Results by Email <span className="optional-label">(Optional)</span></h3>
-            <button type="button" className="collapse-toggle" aria-label="Toggle section">
-              {isEmailExpanded ? '▼' : '▶'}
-            </button>
-          </div>
-
-          {isEmailExpanded && (
-            <div className="section-content">
-              <div className="form-group">
-                <label htmlFor="email">Email Address</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="your.email@example.com"
-                  disabled={isLoading}
-                />
-                <p className="field-hint">
-                  We'll email you the results when your search completes (usually 1-5 minutes)
-                </p>
-              </div>
-            </div>
-          )}
-        </div> */}
-
         {/* Validation Error */}
         {validationError && (
           <div className="course-form-validation-error">
