@@ -600,6 +600,36 @@ See `docs/TESTING_GUIDE.md` and `docs/TECHNICAL_DESIGN.md` for detailed test str
 - Prevents unauthorized frontend access
 - Only Cloudflare Pages and localhost allowed
 
+### 10.5 CSRF Protection
+
+**Current Implementation:**
+- Origin header validation on state-changing POST requests
+- Validates that requests come from allowed origins
+- Applied to `/api/submit` and `/api/cancel/{job_id}` endpoints
+- GET requests are excluded (read-only, no state changes)
+
+**Protection Mechanism:**
+- Checks `Origin` header against allowed CORS origins
+- Falls back to `Referer` header if Origin is missing
+- Rejects requests with invalid or missing origin headers (403 Forbidden)
+- Logs validation failures for monitoring
+
+**Why This Works Without Authentication:**
+- Traditional CSRF attacks exploit cookie-based sessions
+- Since ScholarSource has no authentication/sessions, traditional CSRF isn't a risk
+- Origin validation provides defense-in-depth against cross-origin POST requests
+- Prevents malicious sites from making unauthorized state-changing requests
+
+**Future Considerations:**
+- When authentication is added, implement CSRF tokens (synchronizer token pattern)
+- Add SameSite cookie attributes for auth cookies
+- Consider double-submit cookie pattern as alternative
+
+**Configuration:**
+- Allowed origins match CORS configuration
+- Additional origins can be added via `ALLOWED_ORIGINS` environment variable
+- Origins are normalized (trailing slashes removed) for comparison
+
 ---
 
 ## 11. Glossary of Terms

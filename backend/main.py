@@ -18,6 +18,7 @@ from backend.jobs import create_job, get_job
 from backend.crew_runner import run_crew_async, validate_crew_inputs
 from backend.logging_config import configure_logging, get_logger
 from backend.rate_limiter import limiter, rate_limit_handler
+from backend.csrf_protection import validate_origin
 from slowapi.errors import RateLimitExceeded
 
 # Configure centralized logging (console only, no log file)
@@ -105,8 +106,10 @@ async def submit_job(request: Request, course_input: CourseInputRequest):
         JobSubmitResponse: Job ID and status
 
     Raises:
-        HTTPException: If inputs are invalid or job creation fails
+        HTTPException: If inputs are invalid, origin is invalid, or job creation fails
     """
+    # Validate Origin header to prevent cross-origin POST requests
+    validate_origin(request)
     # Convert course_input to dict
     inputs = course_input.model_dump()
 
@@ -213,14 +216,17 @@ async def cancel_job(request: Request, job_id: str):
     is still running, it will complete but the results will be marked as cancelled.
 
     Args:
+        request: FastAPI request object (for rate limiting and origin validation)
         job_id: UUID of the job to cancel
 
     Returns:
         dict: Cancellation confirmation
 
     Raises:
-        HTTPException: If job is not found or cannot be cancelled
+        HTTPException: If origin is invalid, job is not found, or cannot be cancelled
     """
+    # Validate Origin header to prevent cross-origin POST requests
+    validate_origin(request)
     job = get_job(job_id)
 
     if not job:
