@@ -13,6 +13,7 @@ import { submitJob } from '../api/client';
 import Hero from '../components/Hero';
 import InlineSearchStatus from '../components/InlineSearchStatus';
 import ResultsTable from '../components/ResultsTable';
+import StatusMessage from '../components/StatusMessage';
 import { TextLabel, HelperText, OptionalBadge, TextInput, Button } from '../components/ui';
 
 export default function HomePage() {
@@ -22,6 +23,7 @@ export default function HomePage() {
   const [searchTitle, setSearchTitle] = useState(null);
   const [textbookInfo, setTextbookInfo] = useState(null);
   const [error, setError] = useState(null);
+  const [statusMessage, setStatusMessage] = useState(null);
 
   // Form state
   const [searchParamType, setSearchParamType] = useState('');
@@ -151,6 +153,7 @@ export default function HomePage() {
 
     try {
       setError(null);
+      setStatusMessage(null);
       setResults(null);
       setSearchTitle(null);
       setTextbookInfo(null);
@@ -173,7 +176,16 @@ export default function HomePage() {
   }, []);
 
   const handleError = useCallback((errorMessage) => {
-    setError(errorMessage);
+    // Check if this is a cancellation
+    if (errorMessage === 'Job was cancelled') {
+      setStatusMessage({
+        type: 'cancelled',
+        title: 'Search Cancelled',
+        message: 'You cancelled the search. No results were generated.'
+      });
+    } else {
+      setError(errorMessage);
+    }
     setIsLoading(false);
   }, []);
 
@@ -181,6 +193,16 @@ export default function HomePage() {
     setResults(null);
     setSearchTitle(null);
     setTextbookInfo(null);
+    setJobId(null);
+  }, []);
+
+  const handleDismissStatus = useCallback(() => {
+    setStatusMessage(null);
+    setJobId(null);
+  }, []);
+
+  const handleDismissError = useCallback(() => {
+    setError(null);
     setJobId(null);
   }, []);
 
@@ -544,24 +566,34 @@ export default function HomePage() {
         </section>
 
         {/* Results Section - Only show after search is initiated */}
-        {(jobId !== null || results !== null || error !== null) && (
+        {(jobId !== null || results !== null || error !== null || statusMessage !== null) && (
           <section>
+            {/* Status Message (Cancellation, etc.) */}
+            {statusMessage && (
+              <StatusMessage
+                type={statusMessage.type}
+                title={statusMessage.title}
+                message={statusMessage.message}
+                actions={
+                  <Button variant="secondary" onClick={handleDismissStatus}>
+                    Dismiss
+                  </Button>
+                }
+              />
+            )}
+
             {/* Error State */}
             {error && (
-              <div className="error-state">
-                <div className="error-state-icon" aria-hidden="true">⚠️</div>
-                <h2 className="error-state-title">Something went wrong</h2>
-                <p className="error-state-message">{error}</p>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setError(null);
-                    setJobId(null);
-                  }}
-                >
-                  Try Again
-                </Button>
-              </div>
+              <StatusMessage
+                type="error"
+                title="Something went wrong"
+                message={error}
+                actions={
+                  <Button variant="primary" onClick={handleDismissError}>
+                    Dismiss
+                  </Button>
+                }
+              />
             )}
 
             {/* Results State */}

@@ -224,6 +224,48 @@
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  /* Confirm Dialog */
+  .confirm-dialog-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .confirm-dialog-content {
+    @apply bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-fadeIn;
+  }
+
+  .confirm-dialog-title {
+    @apply text-lg font-semibold text-slate-900 mb-2;
+  }
+
+  .confirm-dialog-message {
+    @apply text-sm text-slate-700 mb-6;
+  }
+
+  .confirm-dialog-actions {
+    @apply flex gap-3 justify-end;
+  }
+
+  .confirm-dialog-btn-cancel {
+    @apply px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md;
+    @apply hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    @apply transition-colors;
+  }
+
+  .confirm-dialog-btn-confirm {
+    @apply px-4 py-2 text-sm font-medium text-white rounded-md;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
+  }
+
+  .confirm-dialog-btn-confirm-normal {
+    @apply bg-blue-600 hover:bg-blue-700 focus:ring-blue-500;
+  }
+
+  .confirm-dialog-btn-confirm-danger {
+    @apply bg-red-600 hover:bg-red-700 focus:ring-red-500;
+  }
+
   /* Loading Status Component */
   .loading-status-container {
     @apply bg-transparent rounded-2xl p-0;
@@ -357,6 +399,10 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
 }
 
 @keyframes slideDown {
@@ -925,5 +971,67 @@
 
   .error-state-message {
     @apply m-0 mb-6 text-sm text-gray-700;
+  }
+
+  /* Status Message Component */
+  .status-message {
+    @apply bg-white rounded-xl p-8 shadow-lg text-center mx-auto max-w-2xl;
+  }
+
+  .status-message-icon {
+    @apply text-5xl mb-4;
+  }
+
+  .status-message-title {
+    @apply m-0 mb-3 text-xl font-semibold;
+  }
+
+  .status-message-text {
+    @apply m-0 mb-6 text-base text-slate-700 leading-relaxed;
+  }
+
+  .status-message-actions {
+    @apply flex gap-3 justify-center;
+  }
+
+  /* Status Message Type Variants */
+  .status-message-error {
+    @apply border-l-4 border-red-500;
+  }
+
+  .status-message-error .status-message-title {
+    @apply text-red-600;
+  }
+
+  .status-message-warning {
+    @apply border-l-4 border-amber-500;
+  }
+
+  .status-message-warning .status-message-title {
+    @apply text-amber-600;
+  }
+
+  .status-message-info {
+    @apply border-l-4 border-blue-500;
+  }
+
+  .status-message-info .status-message-title {
+    @apply text-blue-600;
+  }
+
+  .status-message-success {
+    @apply border-l-4 border-green-500;
+  }
+
+  .status-message-success .status-message-title {
+    @apply text-green-600;
+  }
+
+  .status-message-cancelled {
+    @apply border-l-4 border-slate-500;
+  }
+
+  .status-message-cancelled .status-message-title {
+    @apply text-slate-700;
   }
 }

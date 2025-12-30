@@ -7,11 +7,13 @@
 
 import { useEffect, useState } from 'react';
 import { getJobStatus, cancelJob } from '../api/client';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function InlineSearchStatus({ jobId, onComplete, onError }) {
   const [status, setStatus] = useState('pending');
   const [statusMessage, setStatusMessage] = useState('Initializing...');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   useEffect(() => {
     let intervalId;
@@ -73,11 +75,12 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
     }
   };
 
-  const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel this job? The search will be stopped.')) {
-      return;
-    }
+  const handleCancelClick = () => {
+    setShowCancelDialog(true);
+  };
 
+  const handleCancelConfirm = async () => {
+    setShowCancelDialog(false);
     setIsCancelling(true);
     try {
       await cancelJob(jobId);
@@ -86,6 +89,10 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
     } finally {
       setIsCancelling(false);
     }
+  };
+
+  const handleCancelDialogClose = () => {
+    setShowCancelDialog(false);
   };
 
   return (
@@ -106,7 +113,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
 
         {(status === 'pending' || status === 'running') && (
           <button
-            onClick={handleCancel}
+            onClick={handleCancelClick}
             disabled={isCancelling}
             type="button"
             className="btn-cancel"
@@ -121,6 +128,18 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
       <p className="mt-3 mb-0 text-xs text-slate-600">
         Our AI agents are analyzing your course, searching for resources, and validating quality. Usually takes <span className="font-medium text-slate-700">1–5 minutes</span>.
       </p>
+
+      {/* Cancel Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showCancelDialog}
+        title="Cancel Search"
+        message="Are you sure you want to cancel this search? The job will be stopped and no results will be returned."
+        confirmText="Yes, Cancel Search"
+        cancelText="Continue Searching"
+        isDanger={true}
+        onConfirm={handleCancelConfirm}
+        onCancel={handleCancelDialogClose}
+      />
     </div>
   );
 }
