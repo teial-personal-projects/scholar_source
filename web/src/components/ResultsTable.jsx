@@ -219,7 +219,16 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
               </button>
 
               <span className="ml-auto text-xs text-slate-600 hidden md:inline">
-                Select resources to paste into NotebookLM.
+                Click "Copy Selected + NotebookLM", then paste into{' '}
+                <a
+                  href="https://notebooklm.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 font-semibold underline hover:text-blue-900"
+                >
+                  NotebookLM
+                </a>{' '}
+                to create flashcards, study guides, and quizzes.
               </span>
             </div>
           </div>
@@ -236,25 +245,6 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
                 onToggleSelect={() => toggleSelected(resource.url)}
               />
             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Section */}
-      <div className="px-6 sm:px-8 pb-6 sm:pb-8">
-        <div className="pt-6 border-t border-slate-200/60">
-          <div className="py-4 px-6 bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-primary rounded-lg text-sm text-blue-900 leading-relaxed shadow-sm">
-            💡 <strong className="font-bold">Tip:</strong> Select the resources you want, click{' '}
-            <strong className="font-bold">“Copy Selected + NotebookLM”</strong>, then paste into{' '}
-            <a
-              href="https://notebooklm.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-950 font-bold underline transition-colors hover:text-primary-dark"
-            >
-              Google NotebookLM
-            </a>{' '}
-            to create flashcards, study guides, and quizzes.
           </div>
         </div>
       </div>
