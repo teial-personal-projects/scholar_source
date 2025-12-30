@@ -42,7 +42,7 @@ export default function Hero() {
       number: 4,
       icon: '✨',
       title: 'Generate Study Tools',
-      description: 'Create summaries, flashcards, and quizzes tailored to your learning style',
+      description: 'In NotebookLM: Create summaries, flashcards, and quizzes tailored to your learning style',
       gradient: 'bg-gradient-to-br from-amber-100 to-amber-50',
       borderColor: 'border-amber-300',
       iconBg: 'bg-amber-200'
@@ -80,7 +80,7 @@ export default function Hero() {
                   From Syllabus to Study Superpower
                 </h1>
                 <p className="hero-subtitle">
-                  Transform any course into your complete learning arsenal
+                Find trusted study resources that can be used in NotebookLM to generate study guides, flashcards, practice tests, etc.
                 </p>
               </div>
               <div className="hero-title-actions">
