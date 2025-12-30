@@ -10,13 +10,6 @@ import { useState } from 'react';
 export default function Hero() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleStartSearch = () => {
-    const searchSection = document.getElementById('search-parameters');
-    if (searchSection) {
-      searchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
     <div className="relative rounded-lg bg-white border border-slate-200 border-l-4 border-l-amber-500 shadow-sm overflow-hidden">
       {/* Collapsed */}
@@ -84,13 +77,6 @@ export default function Hero() {
 
           {/* Actions */}
           <div className="mt-2 flex flex-col sm:flex-row gap-1.5">
-            <button
-              onClick={handleStartSearch}
-              className="min-h-[32px] bg-blue-600 text-white rounded px-3 py-1.5 text-xs font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-1 transition-colors"
-            >
-              Supply Search Parameters
-            </button>
-
             <a
               href="https://notebooklm.google.com"
               target="_blank"
