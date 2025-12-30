@@ -15,7 +15,7 @@ export default function Hero() {
       number: 1,
       icon: '📚',
       title: 'Enter Course Details Below',
-      description: 'Use Course Information below to provide your course URL, textbook info, or ISBN',
+      description: <>Use <strong>Course Information</strong> below to provide your course URL, textbook info, or ISBN</>,
       gradient: 'bg-gradient-to-br from-orange-100 to-orange-50',
       borderColor: 'border-orange-300',
       iconBg: 'bg-orange-200'
@@ -24,7 +24,7 @@ export default function Hero() {
       number: 2,
       icon: '🔍',
       title: 'AI Discovers Resources',
-      description: 'We find textbooks, practice problems, video tutorials, and more',
+      description: 'We find textbooks, practice problems, video tutorials, and more, from trusted sources',
       gradient: 'bg-gradient-to-br from-emerald-100 to-emerald-50',
       borderColor: 'border-emerald-300',
       iconBg: 'bg-emerald-200'
@@ -32,8 +32,8 @@ export default function Hero() {
     {
       number: 3,
       icon: '📋',
-      title: 'Export to NotebookLM',
-      description: 'One-click copy of all resources formatted for Google NotebookLM',
+      title: 'Copy Resource Links',
+      description: <>Copy links from below in the <strong>Discovered Resources</strong> section, after a search, then paste them into your NotebookLM notebook</>,
       gradient: 'bg-gradient-to-br from-pink-100 to-pink-50',
       borderColor: 'border-pink-300',
       iconBg: 'bg-pink-200'
@@ -42,7 +42,7 @@ export default function Hero() {
       number: 4,
       icon: '✨',
       title: 'Generate Study Tools',
-      description: 'In NotebookLM: Create summaries, flashcards, and quizzes tailored to your learning style',
+      description: <><a href="https://notebooklm.google.com" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-bold hover:text-indigo-700 underline">In NotebookLM:</a> Create summaries, flashcards, and quizzes tailored to your learning style</>,
       gradient: 'bg-gradient-to-br from-amber-100 to-amber-50',
       borderColor: 'border-amber-300',
       iconBg: 'bg-amber-200'
@@ -56,7 +56,7 @@ export default function Hero() {
         <div className="hero-collapsed">
           <div className="min-w-0">
             <p className="hero-collapsed-text">
-              📚 Enter details → 🔍 Discover → 📋 Export → ✨ Generate study kit
+              📚 Enter details → 🔍 Discover → 📋 Copy links → ✨ Generate study kit
             </p>
           </div>
 
