@@ -7,3 +7,4 @@ pydantic[email]>=2.0.0
 supabase>=2.0.0
 python-dotenv>=1.0.0
 resend>=0.8.0
+slowapi>=0.1.9

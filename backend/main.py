@@ -17,6 +17,8 @@ from backend.models import (
 from backend.jobs import create_job, get_job
 from backend.crew_runner import run_crew_async, validate_crew_inputs
 from backend.logging_config import configure_logging, get_logger
+from backend.rate_limiter import limiter, rate_limit_handler
+from slowapi.errors import RateLimitExceeded
 
 # Configure centralized logging (console only, no log file)
 configure_logging(
@@ -35,6 +37,10 @@ app = FastAPI(
     description="Backend API for discovering educational resources aligned with course textbooks",
     version="0.1.0"
 )
+
+# Register rate limiter with app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 # CORS configuration - allow frontend origins
 app.add_middleware(
@@ -83,7 +89,8 @@ async def health_check():
 
 
 @app.post("/api/submit", response_model=JobSubmitResponse, tags=["Jobs"])
-async def submit_job(request: CourseInputRequest):
+@limiter.limit("10/hour; 2/minute")
+async def submit_job(request: Request, course_input: CourseInputRequest):
     """
     Submit a new job to find educational resources.
 
@@ -91,7 +98,8 @@ async def submit_job(request: CourseInputRequest):
     for status polling.
 
     Args:
-        request: Course input parameters (at least one field required)
+        request: FastAPI request object (for rate limiting)
+        course_input: Course input parameters (at least one field required)
 
     Returns:
         JobSubmitResponse: Job ID and status
@@ -99,8 +107,8 @@ async def submit_job(request: CourseInputRequest):
     Raises:
         HTTPException: If inputs are invalid or job creation fails
     """
-    # Convert request to dict
-    inputs = request.model_dump()
+    # Convert course_input to dict
+    inputs = course_input.model_dump()
 
     # Validate that at least one input is provided
     if not validate_crew_inputs(inputs):
@@ -146,7 +154,8 @@ async def submit_job(request: CourseInputRequest):
 
 
 @app.get("/api/status/{job_id}", response_model=JobStatusResponse, tags=["Jobs"])
-async def get_job_status(job_id: str):
+@limiter.limit("100/minute")
+async def get_job_status(request: Request, job_id: str):
     """
     Get the current status of a job.
 
@@ -194,7 +203,8 @@ async def get_job_status(job_id: str):
 
 
 @app.post("/api/cancel/{job_id}", tags=["Jobs"])
-async def cancel_job(job_id: str):
+@limiter.limit("20/hour")
+async def cancel_job(request: Request, job_id: str):
     """
     Cancel a running or pending job.
 
