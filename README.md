@@ -88,7 +88,7 @@ Should return:
 **Check Frontend:**
 Open http://localhost:5173 - you should see the course input form.
 
-> **Need help?** See the [Troubleshooting](#-troubleshooting) section below for common issues.
+
 
 ---
 

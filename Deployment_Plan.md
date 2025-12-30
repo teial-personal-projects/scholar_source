@@ -85,15 +85,6 @@ CREATE POLICY "Enable all access for jobs" ON jobs
    - **Project URL** (e.g., `https://abcdefgh.supabase.co`)
    - **anon/public key** (long string starting with `eyJ...`)
 
-### 1.4 Enable Realtime (Optional)
-
-If you plan to use WebSockets for real-time updates in Phase 2:
-
-1. Go to **Database** → **Replication**
-2. Enable replication for `jobs` table
-3. Go to **Project Settings** → **API** → **Realtime**
-4. Enable Realtime for `public.jobs`
-
 **Status:** ✅ Database configured and ready
 
 ---
@@ -102,29 +93,13 @@ If you plan to use WebSockets for real-time updates in Phase 2:
 
 ### 2.1 Prepare Backend for Deployment
 
-1. **Create `railway.json` configuration file:**
-
-```json
-{
-  "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "startCommand": "uvicorn backend.main:app --host 0.0.0.0 --port $PORT",
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
-  }
-}
-```
-
-2. **Create `Procfile` (alternative):**
+1. **Create `Procfile` :**
 
 ```
 web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 ```
 
-3. **Update `pyproject.toml` to ensure all dependencies are listed:**
+2. **Update `pyproject.toml` to ensure all dependencies are listed:**
 
 ```toml
 [project]
@@ -143,6 +118,9 @@ dependencies = [
     "python-dotenv>=1.0.0",
 ]
 ```
+3. **Update `requirements.txt` for railway:**
+Railway needed a requirements.txt so you have to run
+```uv pip compile pyproject.toml -o requirements.txt```
 
 4. **Update CORS origins in `backend/main.py`:**
 
@@ -159,14 +137,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-```
-
-5. **Commit all changes:**
-
-```bash
-git add .
-git commit -m "Prepare backend for Railway deployment"
-git push origin main
 ```
 
 ### 2.2 Deploy to Railway
@@ -282,14 +252,6 @@ npm run build
 npm run preview
 ```
 
-4. **Commit changes:**
-
-```bash
-git add .
-git commit -m "Prepare frontend for Cloudflare Pages deployment"
-git push origin main
-```
-
 ### [✅] 3.2 Deploy to Cloudflare Pages
 
 1. Go to https://dash.cloudflare.com
@@ -371,14 +333,6 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
-```
-
-2. Commit and push:
-
-```bash
-git add backend/main.py
-git commit -m "Update CORS for production frontend URLs"
-git push origin main
 ```
 
 3. Railway will auto-deploy the update (~1-2 minutes)

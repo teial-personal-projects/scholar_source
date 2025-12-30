@@ -349,8 +349,6 @@ Statuses: `pending` → `running` → `completed` or `failed`
 - [ ] Job deletion/cleanup (automatic or manual)
 - [ ] Job expiration policies (auto-delete after 30/60/90 days)
 
-
-
 ---
 
 ## Improvements & Enhancements
@@ -378,11 +376,6 @@ Prioritized list of improvements organized by area and effort level.
   - Show retry countdown to user
   - Manual "Try Again" for non-retryable errors
 
-- [ ] Add specific input validation error messages (2 hours)
-  - Field-level validation with specific error messages
-  - Suggestions for invalid formats (ISBN, URL, etc.)
-  - Real-time validation feedback in form
-
 - [ ] Categorize and improve job failure error messages (3 hours)
   - Detect OpenAI API errors vs network vs validation
   - Show specific next steps based on error type
@@ -393,11 +386,6 @@ Prioritized list of improvements organized by area and effort level.
   - Detect 429 responses from backend/OpenAI
   - Show wait time and auto-retry after delay
   - Queue job if rate limited
-
-- [ ] Implement real-time form validation (6 hours)
-  - Validate fields as user types
-  - Show character counts for text fields
-  - Format hints (ISBN: 978-0-xxx-xxxxx-x)
 
 ### Code Quality & Testing
 
@@ -736,52 +724,6 @@ See [Deployment_Plan.md](Deployment_Plan.md) for detailed production deployment 
 
 ---
 
-## Development Workflow
-
-### Daily Development
-```bash
-# Terminal 1: Backend
-source .venv/bin/activate
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-
-# Terminal 2: Frontend
-cd web
-npm run dev
-```
-
-Both servers auto-reload on file changes.
-
-### Making Changes
-1. Edit code
-2. Save file
-3. Server auto-reloads
-4. Refresh browser to see changes
-
-### Git Workflow
-```bash
-# Check status
-git status
-
-# Add files (excluding secrets)
-git add .
-
-# Commit
-git commit -m "Description of changes"
-
-# Push to remote
-git push origin main
-```
-
-**Never commit:**
-- `.env.local` (root and web/)
-- `__pycache__/`
-- `node_modules/`
-- `report.md`
-
----
-
-## Quick Reference
-
 ### Start Everything
 ```bash
 # Backend
@@ -800,7 +742,6 @@ cd web && npm run dev
 ### Key URLs
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000
-- API Docs: http://localhost:8000/docs
 - Supabase: https://supabase.com/dashboard
 
 ### File Counts
@@ -811,24 +752,6 @@ cd web && npm run dev
 
 ---
 
-## Success Criteria
-
-### MVP Complete When:
-- [x] Supabase database configured with jobs table
-- [x] Jobs persisted to Supabase (survive restarts)
-- [ ] Backend API running and tested
-- [ ] Frontend running and tested
-- [ ] Form accepts inputs and validates
-- [ ] API creates background jobs
-- [ ] Frontend polls job status
-- [ ] Crew executes and generates resources
-- [ ] Markdown parsed into structured JSON
-- [ ] Results displayed in clean table
-- [ ] Copy buttons functional
-- [ ] Copy All URLs functional (for NotebookLM)
-- [ ] Error states handled gracefully
-
----
 
 **Last Updated:** December 21, 2024
 
