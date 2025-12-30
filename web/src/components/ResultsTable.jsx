@@ -98,11 +98,11 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
 
   if (!resources || resources.length === 0) {
     return (
-      <div className="relative rounded-2xl bg-white/80 backdrop-blur p-6 sm:p-8 border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)] border border-indigo-200/70 transition-all overflow-hidden before:content-[''] before:absolute before:-top-1/2 before:-left-1/2 before:w-[200%] before:h-[200%] before:bg-[radial-gradient(circle,rgba(79,70,229,0.06)_0%,transparent_70%)] before:pointer-events-none hover:border-indigo-300 hover:shadow-xl">
-        <div className="p-12 text-center">
-          <div className="text-6xl mb-6 opacity-50">📭</div>
-          <h3 className="m-0 mb-4 text-xl font-bold text-slate-800">No resources found</h3>
-          <p className="m-0 text-base text-slate-600 leading-relaxed">
+      <div className="results-table-empty">
+        <div className="results-table-empty-content">
+          <div className="results-table-empty-icon">📭</div>
+          <h3 className="results-table-empty-title">No resources found</h3>
+          <p className="results-table-empty-text">
             Try adjusting your search criteria or selecting a different search type.
           </p>
         </div>
@@ -115,10 +115,10 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
   return (
     <div className="results-table-container">
       {/* Header Section */}
-      <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 bg-gradient-to-b from-slate-50/50 to-white/50 border-b border-slate-200">
-        <div className="flex justify-between items-start gap-4 flex-wrap mb-4">
-          <div className="min-w-0">
-            <h2 className="m-0 text-2xl font-bold text-slate-800 tracking-tight flex flex-wrap items-center gap-2">
+      <div className="results-table-header">
+        <div className="results-table-header-content">
+          <div className="results-table-title-section">
+            <h2 className="results-table-title">
               Discovered Resources
               <span className="count-badge ml-2">
                 {totalCount}
@@ -128,13 +128,13 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
               </span>
             </h2>
 
-            {searchTitle && <p className="mt-1 mb-0 text-sm text-slate-600 font-medium">{searchTitle}</p>}
+            {searchTitle && <p className="results-table-subtitle">{searchTitle}</p>}
           </div>
 
           {onClear && (
             <button
               onClick={onClear}
-              className="px-4 py-2.5 bg-cyan-500 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-cyan-600 hover:shadow-md active:translate-y-0 max-md:w-full focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
+              className="results-table-clear-btn"
               title="Clear results"
             >
               Clear results
@@ -164,7 +164,7 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
       </div>
 
       {/* Content Section: scroll container now owns sticky selection controls + grid */}
-      <div className="px-6 sm:px-8 py-6">
+      <div className="results-table-content">
         <div
           ref={scrollRef}
           className={`
@@ -174,16 +174,16 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
           `}
         >
           {/* Sticky selection controls */}
-          <div className="sticky top-0 z-20 -mx-1 px-1 pb-3 pt-1 bg-white/80 backdrop-blur border-b border-slate-200">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold border border-blue-200">
+          <div className="results-table-sticky-controls">
+            <div className="results-table-controls-group">
+              <span className="results-table-selection-badge">
                 {selectedCount} of {totalCount} selected
               </span>
 
               <button
                 onClick={copySelectedAndOpenNotebookLM}
                 disabled={nothingSelected}
-                className="px-4 py-2.5 bg-blue-600 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="results-table-notebooklm-btn"
                 title={nothingSelected ? 'Select at least one URL to copy' : 'Copy selected URLs and open NotebookLM'}
               >
                 {copiedSelectedAndOpened ? '✓ Copied + Opened' : 'Copy Selected + NotebookLM'}
@@ -192,18 +192,18 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
               <button
                 onClick={copySelected}
                 disabled={nothingSelected}
-                className="px-4 py-2.5 bg-white text-slate-800 border border-slate-300 rounded-lg text-sm font-semibold cursor-pointer transition-all whitespace-nowrap shadow-sm hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="results-table-copy-btn"
                 title={nothingSelected ? 'Select at least one URL to copy' : 'Copy selected URLs'}
               >
                 {copiedSelected ? '✓ Copied!' : '📋 Copy Selected'}
               </button>
 
-              <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
+              <div className="results-table-control-divider" />
 
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-sm font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-4 decoration-slate-300 hover:decoration-slate-500"
+                className="results-table-control-link"
                 title="Select all URLs"
               >
                 Select all
@@ -212,19 +212,19 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
               <button
                 type="button"
                 onClick={handleClearSelection}
-                className="text-sm font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-4 decoration-slate-300 hover:decoration-slate-500"
+                className="results-table-control-link"
                 title="Clear selection"
               >
                 Clear selection
               </button>
 
-              <span className="ml-auto text-xs text-slate-600 hidden md:inline">
+              <span className="results-table-help-text">
                 Click "Copy Selected + NotebookLM", then paste into{' '}
                 <a
                   href="https://notebooklm.google.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-700 font-semibold underline hover:text-blue-900"
+                  className="results-table-help-link"
                 >
                   NotebookLM
                 </a>{' '}
@@ -234,7 +234,7 @@ export default function ResultsTable({ resources, searchTitle, textbookInfo, onC
           </div>
 
           {/* Grid of cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-3">
+          <div className="results-table-grid">
             {resources.map((resource, index) => (
               <ResultCard
                 key={resource.url || index}

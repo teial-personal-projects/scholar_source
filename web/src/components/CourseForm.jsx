@@ -172,22 +172,22 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
   };
 
   return (
-    <div className="rounded-2xl bg-white/80 backdrop-blur p-4 sm:p-6 border border-slate-200 shadow-[0_10px_30px_-20px_rgba(2,6,23,0.35)]">
-      <h2 className="m-0 mb-4 text-lg font-bold text-slate-900 tracking-tight">Search Parameters</h2>
+    <div className="course-form-container">
+      <h2 className="course-form-title">Search Parameters</h2>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         {/* Submit and Reset Buttons */}
-        <div className="flex gap-2">
+        <div className="course-form-button-group">
           <button
             type="submit"
-            className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            className="course-form-submit-btn"
             disabled={isLoading || !isFormValid()}
           >
             {isLoading ? '🔍 Finding...' : '🔍 Find Resources'}
           </button>
           <button
             type="button"
-            className="px-4 py-2.5 bg-gray-100 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition-all hover:bg-gray-200 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-slate-200/70 focus:ring-offset-2"
+            className="course-form-reset-btn"
             onClick={handleReset}
             disabled={isLoading}
           >
@@ -196,8 +196,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
         </div>
 
         {/* Force Refresh Option */}
-        <div className="px-3 py-2 bg-primary/10 rounded-xl border border-primary/20">
-          <label htmlFor="bypass_cache" className="flex items-center gap-2 cursor-pointer select-none">
+        <div className="course-form-bypass-cache">
+          <label htmlFor="bypass_cache" className="course-form-bypass-cache-label">
             <input
               type="checkbox"
               id="bypass_cache"
@@ -205,24 +205,24 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
               checked={formData.bypass_cache}
               onChange={handleChange}
               disabled={isLoading}
-              className="w-4 h-4 cursor-pointer accent-primary flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
+              className="course-form-bypass-cache-input"
             />
-            <span className="text-sm font-medium text-slate-800 flex-1">🔄 Force refresh</span>
+            <span className="course-form-bypass-cache-text">🔄 Force refresh</span>
           </label>
-          <p className="mt-1 mb-0 text-xs text-slate-600 leading-relaxed pl-6">Bypass cache for latest results (takes longer)</p>
+          <p className="course-form-bypass-cache-hint">Bypass cache for latest results (takes longer)</p>
         </div>
 
         {/* Search Parameters Section */}
-        <div className="flex flex-col gap-0 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-3 py-2.5 bg-gradient-to-r from-slate-100 to-slate-50">
-            <h3 className="m-0 text-sm font-bold text-slate-900 flex items-center gap-1.5">
+        <div className="course-form-search-section">
+          <div className="course-form-search-header">
+            <h3 className="course-form-search-title">
               📚 Course Details <span className="text-red-600">*</span>
             </h3>
           </div>
 
-          <div className="px-3 py-3 flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="search_param_type" className="text-xs font-semibold text-slate-700">
+          <div className="course-form-search-content">
+              <div className="course-form-field-group">
+                <label htmlFor="search_param_type" className="course-form-label">
                   Search Parameters <span className="text-red-600">*</span>
                 </label>
                 <select
@@ -231,7 +231,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                   value={searchParamType}
                   onChange={handleSearchParamChange}
                   disabled={isLoading}
-                  className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white text-slate-900 cursor-pointer transition-all focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="course-form-select"
                 >
                   <option value="">-- Select a search type --</option>
                   <option value="course_url">Course URL</option>
@@ -243,8 +243,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
               {/* Course URL - shown when "Course URL" is selected */}
               {searchParamType === 'course_url' && (
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course_url" className="text-xs font-semibold text-slate-700">Course URL <span className="text-red-600 font-bold">*</span></label>
+                <div className="course-form-field-group">
+                  <label htmlFor="course_url" className="course-form-label">Course URL <span className="text-red-600 font-bold">*</span></label>
                   <input
                     type="url"
                     id="course_url"
@@ -254,15 +254,15 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                     placeholder="https://ocw.mit.edu/courses/..."
                     disabled={isLoading}
                     required
-                    className="px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="course-form-input"
                   />
                 </div>
               )}
 
               {/* Book URL - shown when "Book URL" is selected */}
               {searchParamType === 'book_url' && (
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="book_url" className="text-xs font-semibold text-slate-700">Book URL <span className="text-red-600 font-bold">*</span></label>
+                <div className="course-form-field-group">
+                  <label htmlFor="book_url" className="course-form-label">Book URL <span className="text-red-600 font-bold">*</span></label>
                   <input
                     type="url"
                     id="book_url"
@@ -272,7 +272,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                     placeholder="https://..."
                     disabled={isLoading}
                     required
-                    className="px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="course-form-input"
                   />
                 </div>
               )}
@@ -280,8 +280,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
               {/* Book Title and Author - shown when "Book Title and Author" is selected */}
               {searchParamType === 'book_title_author' && (
                 <>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="book_title" className="text-xs font-semibold text-slate-700">Book Title <span className="text-red-600 font-bold">*</span></label>
+                  <div className="course-form-field-group">
+                    <label htmlFor="book_title" className="course-form-label">Book Title <span className="text-red-600 font-bold">*</span></label>
                     <input
                       type="text"
                       id="book_title"
@@ -291,12 +291,12 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                       placeholder="e.g., Introduction to Algorithms"
                       disabled={isLoading}
                       required
-                      className="px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="course-form-input"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="book_author" className="text-xs font-semibold text-slate-700">Book Author(s) <span className="text-red-600 font-bold">*</span></label>
+                  <div className="course-form-field-group">
+                    <label htmlFor="book_author" className="course-form-label">Book Author(s) <span className="text-red-600 font-bold">*</span></label>
                     <input
                       type="text"
                       id="book_author"
@@ -306,7 +306,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                       placeholder="e.g., Cormen, Leiserson, Rivest, Stein"
                       disabled={isLoading}
                       required
-                      className="px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="course-form-input"
                     />
                   </div>
                 </>
@@ -314,8 +314,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
               {/* ISBN - shown when "Book ISBN" is selected */}
               {searchParamType === 'isbn' && (
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="isbn" className="text-xs font-semibold text-slate-700">Book ISBN <span className="text-red-600 font-bold">*</span></label>
+                <div className="course-form-field-group">
+                  <label htmlFor="isbn" className="course-form-label">Book ISBN <span className="text-red-600 font-bold">*</span></label>
                   <input
                     type="text"
                     id="isbn"
@@ -325,7 +325,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                     placeholder="e.g., 978-0262046305"
                     disabled={isLoading}
                     required
-                    className="px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="course-form-input"
                   />
                 </div>
               )}
@@ -346,45 +346,45 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
               <div className="flex flex-col gap-1 mb-0">
                 <label className="text-xs font-semibold text-slate-700 mb-1">Filter by resource type (leave empty to find all types):</label>
                 <div className="flex flex-col gap-1 mt-1 mb-0">
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md transition-all select-none hover:bg-gray-50 has-[:checked]:bg-primary/10 has-[:checked]:border-l-[3px] has-[:checked]:border-primary">
+                  <label className="course-form-resource-checkbox-label">
                     <input
                       type="checkbox"
                       checked={formData.desired_resource_types?.includes('textbooks') || false}
                       onChange={() => handleResourceTypeChange('textbooks')}
                       disabled={isLoading}
-                      className="w-4 h-4 cursor-pointer accent-primary flex-shrink-0 m-0 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="course-form-resource-checkbox"
                     />
-                    <span className="text-sm font-medium text-slate-800 flex-1">📚 Textbooks</span>
+                    <span className="course-form-resource-checkbox-text">📚 Textbooks</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md transition-all select-none hover:bg-gray-50 has-[:checked]:bg-primary/10 has-[:checked]:border-l-[3px] has-[:checked]:border-primary">
+                  <label className="course-form-resource-checkbox-label">
                     <input
                       type="checkbox"
                       checked={formData.desired_resource_types?.includes('practice_problem_sets') || false}
                       onChange={() => handleResourceTypeChange('practice_problem_sets')}
                       disabled={isLoading}
-                      className="w-4 h-4 cursor-pointer accent-primary flex-shrink-0 m-0 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="course-form-resource-checkbox"
                     />
-                    <span className="text-sm font-medium text-slate-800 flex-1">📐 Practice Problem Sets</span>
+                    <span className="course-form-resource-checkbox-text">📐 Practice Problem Sets</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md transition-all select-none hover:bg-gray-50 has-[:checked]:bg-primary/10 has-[:checked]:border-l-[3px] has-[:checked]:border-primary">
+                  <label className="course-form-resource-checkbox-label">
                     <input
                       type="checkbox"
                       checked={formData.desired_resource_types?.includes('practice_exams_tests') || false}
                       onChange={() => handleResourceTypeChange('practice_exams_tests')}
                       disabled={isLoading}
-                      className="w-4 h-4 cursor-pointer accent-primary flex-shrink-0 m-0 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="course-form-resource-checkbox"
                     />
-                    <span className="text-sm font-medium text-slate-800 flex-1">📋 Practice Exams/Tests</span>
+                    <span className="course-form-resource-checkbox-text">📋 Practice Exams/Tests</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-md transition-all select-none hover:bg-gray-50 has-[:checked]:bg-primary/10 has-[:checked]:border-l-[3px] has-[:checked]:border-primary">
+                  <label className="course-form-resource-checkbox-label">
                     <input
                       type="checkbox"
                       checked={formData.desired_resource_types?.includes('lecture_videos') || false}
                       onChange={() => handleResourceTypeChange('lecture_videos')}
                       disabled={isLoading}
-                      className="w-4 h-4 cursor-pointer accent-primary flex-shrink-0 m-0 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="course-form-resource-checkbox"
                     />
-                    <span className="text-sm font-medium text-slate-800 flex-1">🎥 Lecture Videos</span>
+                    <span className="course-form-resource-checkbox-text">🎥 Lecture Videos</span>
                   </label>
                 </div>
               </div>
@@ -404,8 +404,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           {isFocusTopicsExpanded && (
             <div className="form-section-content">
               {/* Topics List */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="topics_list" className="text-xs font-semibold text-slate-700">Topics List</label>
+              <div className="course-form-field-group">
+                <label htmlFor="topics_list" className="course-form-label">Topics List</label>
                 <textarea
                   id="topics_list"
                   name="topics_list"
@@ -414,11 +414,11 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                   placeholder="e.g., Midterm review, Chapter 4, Dynamic programming, Sorting algorithms"
                   rows="2"
                   disabled={isLoading}
-                  className="resize-y min-h-[55px] px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="course-form-textarea"
                 />
-                <div className="px-2 py-2 bg-gradient-to-r from-amber-100 to-amber-200 border-l-4 border-amber-500 rounded-lg mt-1">
-                  <p className="m-0 text-xs text-amber-900 leading-relaxed">
-                    <strong className="text-amber-950 font-semibold">💡 Tip:</strong> Add 3–6 topics like 'Midterm review', 'Chapter 4', or 'Dynamic programming' for better matches.
+                <div className="course-form-tip-box">
+                  <p className="course-form-tip-text">
+                    <strong className="course-form-tip-bold">💡 Tip:</strong> Add 3–6 topics like 'Midterm review', 'Chapter 4', or 'Dynamic programming' for better matches.
                   </p>
                 </div>
               </div>
@@ -438,8 +438,8 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
           {isExcludeSitesExpanded && (
             <div className="form-section-content">
               {/* Excluded Sites */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="excluded_sites" className="text-xs font-semibold text-slate-700">Exclude Domains</label>
+              <div className="course-form-field-group">
+                <label htmlFor="excluded_sites" className="course-form-label">Exclude Domains</label>
                 <textarea
                   id="excluded_sites"
                   name="excluded_sites"
@@ -448,11 +448,11 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
                   placeholder="e.g., khanacademy.org, coursera.org, udemy.com"
                   rows="2"
                   disabled={isLoading}
-                  className="resize-y min-h-[55px] px-3 py-2 border border-slate-200 rounded-xl text-sm transition-all bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary-light hover:border-slate-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="course-form-textarea"
                 />
-                <div className="px-2 py-2 bg-gradient-to-r from-red-100 to-red-200 border-l-4 border-red-500 rounded-lg mt-1">
-                  <p className="m-0 text-xs text-red-900 leading-relaxed">
-                    <strong className="text-red-950 font-semibold">💡 Tip:</strong> Enter domain names (e.g., 'khanacademy.org') separated by commas to exclude them from results. Useful if your institution blocks certain sites or they require login.
+                <div className="course-form-exclude-tip-box">
+                  <p className="course-form-exclude-tip-text">
+                    <strong className="course-form-exclude-tip-bold">💡 Tip:</strong> Enter domain names (e.g., 'khanacademy.org') separated by commas to exclude them from results. Useful if your institution blocks certain sites or they require login.
                   </p>
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function CourseForm({ onJobSubmitted, isLoading }) {
 
         {/* Validation Error */}
         {validationError && (
-          <div className="px-4 py-4 bg-red-50 border-2 border-red-200 border-l-4 border-l-red-600 rounded-lg text-red-600 text-sm font-medium">
+          <div className="course-form-validation-error">
             {validationError}
           </div>
         )}

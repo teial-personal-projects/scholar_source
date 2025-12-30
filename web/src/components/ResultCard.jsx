@@ -55,7 +55,7 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
 
     // Extract a clean site name from the hostname
     const parts = hostname.split('.');
-    
+
     // For .edu sites, extract university name (skip subdomains like "ocw", "www")
     if (lower.endsWith('.edu')) {
       // Handle subdomains: "ocw.mit.edu" -> "MIT"
@@ -78,7 +78,7 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
     if (parts.length >= 2) {
       const mainName = parts[parts.length - 2];
       // Convert to title case, handling hyphens (e.g., "some-site" -> "Some Site")
-      return mainName.split('-').map(word => 
+      return mainName.split('-').map(word =>
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       ).join(' ');
     }
@@ -119,7 +119,7 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
       title={isSelected ? 'Selected for copy to NotebookLM' : 'Click to select for copy to NotebookLM'}
     >
       {/* Left side checkbox */}
-      <div className="absolute left-2 top-2">
+      <div className="result-card-checkbox">
         <input
           type="checkbox"
           checked={isSelected}
@@ -127,27 +127,27 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
             e.stopPropagation();
             onToggleSelect?.();
           }}
-          className="w-4 h-4 cursor-pointer accent-blue-600 rounded"
+          className="result-card-checkbox-input"
           aria-label={isSelected ? 'Deselect resource' : 'Select resource'}
         />
       </div>
 
       {/* Header row */}
-      <div className="flex items-center gap-2 mb-1.5 pl-7">
+      <div className="result-card-header">
         <span className={getBadgeClass(resource.type)}>
           {resource.type}
         </span>
 
-        <span className="ml-auto text-xs text-slate-500">{getSiteName(resource.url)}</span>
+        <span className="result-card-site-name">{getSiteName(resource.url)}</span>
       </div>
 
       {/* Title */}
-      <h3 className="m-0 mb-1.5 pl-7">
+      <h3 className="result-card-title-wrapper">
         <a
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-base sm:text-lg font-semibold text-slate-900 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded"
+          className="result-card-title-link"
         >
           {getDisplayTitle()}
         </a>
@@ -155,23 +155,23 @@ export default function ResultCard({ resource, index, onCopy, isSelected, onTogg
 
       {/* Description */}
       {resource.description && (
-        <p className="m-0 mb-2 text-sm text-slate-700 line-clamp-2 pl-7">{resource.description}</p>
+        <p className="result-card-description">{resource.description}</p>
       )}
 
       {/* Actions row */}
-      <div className="flex items-center gap-2 pl-7">
+      <div className="result-card-actions">
         <a
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-semibold text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded inline-flex items-center gap-1"
+          className="result-card-visit-link"
         >
           Visit Resource ↗
         </a>
 
         <button
           onClick={handleCopy}
-          className="ml-auto rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 min-h-[40px]"
+          className="result-card-copy-btn"
           title="Copy URL"
           type="button"
         >
