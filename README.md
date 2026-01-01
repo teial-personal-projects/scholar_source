@@ -2,76 +2,208 @@
 
 **Find high-quality study resources aligned with your textbook for Google NotebookLM**
 
-ScholarSource is a web application that helps students discover curated educational resources that complement their course textbooks. By analyzing your book's structure and topics, ScholarSource finds open textbooks, course materials, and learning resources you can add to Google NotebookLM to create comprehensive study materials like flashcards and quizzes.
+ScholarSource is a web application that helps students discover curated educational resources that complement their course textbooks. By analyzing your book's structure and topics, ScholarSource finds open textbooks, course materials, and learning resources you can add to Google NotebookLM to create comprehensive study materials.
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
-Students often struggle to find supplementary learning materials that align with their specific textbook. ScholarSource solves this by:
+Students often struggle to find supplementary learning materials that align with their specific textbook. ScholarSource automates this process by:
 
-1. **Analyzing your book's structure** - Extracts table of contents, topics, and key concepts from book metadata, PDFs, or course pages
-2. **Finding aligned resources** - Searches for 5-7 high-quality, legally accessible resources that follow similar structure to your textbook
+1. **Analyzing textbook structure** - Extracts topics, concepts, and organization from course materials or book metadata
+2. **Discovering aligned resources** - Searches for 5-7 high-quality, legally accessible resources that match the textbook's content structure
 3. **Validating quality** - Ensures resources are free, legal, NotebookLM-compatible, and from reputable sources
-4. **Presenting actionable results** - Provides a student-friendly guide with direct links ready to import into NotebookLM
-
-**Key Feature:** Prioritizes text-based resources (PDFs, web pages) that NotebookLM processes best, with YouTube videos as supplementary materials.
+4. **Presenting actionable results** - Provides resources ready to import into Google NotebookLM
 
 ---
 
-## ⚡ Quick Start
+## Project Structure
 
-Get ScholarSource running locally in 5 minutes!
+```
+scholar_source/
+├── backend/                 # FastAPI backend API
+│   ├── main.py             # API endpoints
+│   ├── models.py           # Pydantic request/response models
+│   ├── jobs.py             # Job management
+│   ├── crew_runner.py      # CrewAI execution wrapper
+│   ├── cache.py            # Caching system
+│   ├── rate_limiter.py     # Rate limiting
+│   └── markdown_parser.py  # Parse crew output to JSON
+│
+├── web/                    # React + Vite frontend
+│   ├── src/
+│   │   ├── pages/
+│   │   │   └── HomePage.jsx
+│   │   ├── components/
+│   │   │   ├── CourseForm.jsx
+│   │   │   └── ResultsTable.jsx
+│   │   └── api/
+│   │       └── client.js
+│   └── package.json
+│
+├── src/scholar_source/     # CrewAI multi-agent system
+│   ├── crew.py            # Agent and task definitions
+│   └── config/
+│       ├── agents.yaml     # Agent configurations
+│       └── tasks.yaml      # Task descriptions
+│
+├── tests/                  # Test suite
+├── docs/                   # Documentation
+│   ├── scholar_source_SDD.md
+│   └── scholar_source_TDD.md
+└── supabase_schema.sql     # Database schema
+```
+
+---
+
+## Installation
 
 ### Prerequisites
-- Python >=3.10 <3.13 with virtual environment
-- Node.js >=18 and npm
-- Supabase project with jobs table created
-- Environment variables configured (see [Installation](#-installation) for details)
 
-### 1. Install Dependencies
+- **Python** >=3.10 <3.13
+- **Node.js** >=18 and npm
+- **Supabase** account (free tier available)
 
-**Backend:**
+### Backend Setup
+
+1. **Create and activate a Python virtual environment** (recommended):
+   ```bash
+   # Create virtual environment
+   python3 -m venv .venv
+
+   # Activate virtual environment
+   # On macOS/Linux:
+   source .venv/bin/activate
+   # On Windows:
+   # .venv\Scripts\activate
+   ```
+
+2. **Install Python dependencies:**
+   ```bash
+   # Make sure virtual environment is activated
+   # Upgrade pip to latest version
+   pip install --upgrade pip
+
+   # Install all backend dependencies from requirements.txt
+   pip install -r requirements.txt
+   ```
+
+   **Backend dependencies installed:**
+   - `crewai[tools]>=0.120.1` - Multi-agent orchestration framework with tools
+   - `fastapi>=0.115.0` - Modern web framework for building APIs
+   - `uvicorn[standard]>=0.30.0` - ASGI server for running FastAPI
+   - `supabase>=2.0.0` - Supabase Python client for database operations
+   - `pydantic[email]>=2.0.0` - Data validation using Python type annotations
+   - `slowapi>=0.1.9` - Rate limiting middleware for FastAPI
+   - `python-multipart>=0.0.9` - Support for form data parsing
+   - `python-dotenv>=1.0.0` - Load environment variables from .env file
+   - `resend>=0.8.0` - Email service integration
+   - `lancedb<0.26` - Vector database (used by CrewAI)
+
+   **Verify installation:**
+   ```bash
+   # Check that key packages are installed
+   python -c "import fastapi, crewai, supabase; print('✅ All dependencies installed')"
+   ```
+
+3. **Set up environment variables** (create `.env` file in project root):
+   ```bash
+   # OpenAI API (required)
+   OPENAI_API_KEY=your_openai_api_key_here
+
+   # Serper API (required for web search)
+   SERPER_API_KEY=your_serper_api_key_here
+
+   # Supabase Database (required)
+   SUPABASE_URL=https://your-project-id.supabase.co
+   SUPABASE_KEY=your_supabase_anon_key_here
+
+   # Optional: Cache TTL configuration
+   COURSE_ANALYSIS_TTL_DAYS=30
+   RESOURCE_RESULTS_TTL_DAYS=7
+
+   # Optional: Redis for multi-instance rate limiting
+   REDIS_URL=redis://...  # Only needed if scaling to 2+ instances
+
+   # Optional: CORS allowed origins (comma-separated)
+   ALLOWED_ORIGINS=http://localhost:5173,https://your-frontend-domain.com
+   ```
+
+4. **Set up Supabase database:**
+   - Create a new Supabase project at https://supabase.com
+   - Run the SQL schema from `supabase_schema.sql` in the Supabase SQL Editor
+   - This creates the `jobs` and `course_cache` tables
+
+### Frontend Setup
+
+1. **Navigate to web directory:**
+   ```bash
+   cd web
+   ```
+
+2. **Install Node dependencies:**
+   ```bash
+   # Install all frontend dependencies from package.json
+   npm install
+   ```
+
+   **Frontend dependencies installed:**
+
+   **Production dependencies:**
+   - `react^19.2.0` - UI framework for building user interfaces
+   - `react-dom^19.2.0` - React DOM bindings for rendering
+
+   **Development dependencies:**
+   - `vite^7.2.4` - Fast build tool and dev server
+   - `@vitejs/plugin-react^5.1.1` - Vite plugin for React
+   - `tailwindcss^3.4.19` - Utility-first CSS framework
+   - `postcss^8.5.6` - CSS post-processor
+   - `autoprefixer^10.4.23` - CSS vendor prefixing
+   - `vitest^1.0.0` - Fast unit test framework
+   - `@testing-library/react^16.3.1` - React component testing utilities
+   - `@testing-library/jest-dom^6.1.0` - Custom Jest matchers for DOM
+   - `@testing-library/user-event^14.5.0` - User interaction simulation
+   - `msw^2.0.0` - API mocking library for tests
+   - `eslint^9.39.1` - JavaScript linter
+   - `jsdom^23.0.0` - DOM implementation for Node.js (testing)
+
+   **Verify installation:**
+   ```bash
+   # Check that key packages are installed
+   npm list react vite tailwindcss
+   ```
+
+3. **Create environment file** (`web/.env.local`):
+   ```bash
+   VITE_API_URL=http://localhost:8000
+   ```
+
+---
+
+## Running the Application
+
+### Development Mode
+
+**Terminal 1 - Start Backend:**
 ```bash
 # From project root
-pip install -e .
-```
-
-**Frontend:**
-```bash
-cd web
-npm install
-```
-
-### 2. Start Services
-
-Open two terminal windows:
-
-**Terminal 1 - Backend:**
-```bash
-source .venv/bin/activate
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
-✅ Backend running at: http://localhost:8000
 
-**Terminal 2 - Frontend:**
+Backend will be available at: http://localhost:8000
+
+**Terminal 2 - Start Frontend:**
 ```bash
+# From web/ directory
 cd web
 npm run dev
 ```
-✅ Frontend running at: http://localhost:5173
 
-### 3. Test It!
+Frontend will be available at: http://localhost:5173
 
-1. Open http://localhost:5173 in your browser
-2. Fill in "Course Name" field (e.g., "Introduction to Algorithms")
-3. Click "Find Resources"
-4. Wait 1-5 minutes for AI agents to discover resources
-5. Copy URLs and paste into NotebookLM!
+### Verify Installation
 
-### Verify It's Working
-
-**Check Backend Health:**
+**Check backend health:**
 ```bash
 curl http://localhost:8000/api/health
 ```
@@ -81,660 +213,157 @@ Should return:
 {
   "status": "healthy",
   "version": "0.1.0",
-  "database": "connected"
+  "database": "skipped"
 }
 ```
 
-**Check Frontend:**
-Open http://localhost:5173 - you should see the course input form.
-
-
+**Check frontend:**
+Open http://localhost:5173 in your browser - you should see the course input form.
 
 ---
 
-## 🏗️ Architecture
+## Required API Keys
 
-ScholarSource is a full-stack application with a modern, scalable architecture:
+### OpenAI API Key
+- **Purpose:** LLM inference for AI agents (GPT-4o, GPT-4o-mini)
+- **Get it:** https://platform.openai.com/api-keys
+- **Cost:** Pay-per-use (GPT-4o is expensive, GPT-4o-mini is cheaper)
+- **Required:** Yes
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         USER INTERFACE                           │
-│                                                                   │
-│  React + Vite Frontend (Cloudflare Pages - Free)                │
-│  - Course/Book input form (9 optional fields)                    │
-│  - Real-time job status polling                                  │
-│  - Results table with resource links                             │
-│  - Export to NotebookLM functionality                            │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         │ HTTPS API Calls
-                         │
-┌────────────────────────▼────────────────────────────────────────┐
-│                      BACKEND API                                 │
-│                                                                   │
-│  FastAPI (Railway - $5/month)                                   │
-│  - POST /api/submit - Create background jobs                    │
-│  - GET /api/status/{job_id} - Poll job status                   │
-│  - GET /api/results/{job_id} - Shareable results                │
-│  - GET /api/health - Health check                               │
-│                                                                   │
-│  Background Job Processing:                                      │
-│  - Async crew execution in threads (2-5 min runtime)            │
-│  - Markdown parsing to structured JSON                           │
-│  - No timeouts (critical for long-running AI tasks)             │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         │ Database Operations
-                         │
-┌────────────────────────▼────────────────────────────────────────┐
-│                      DATABASE                                    │
-│                                                                   │
-│  Supabase PostgreSQL (Free tier / $25/mo Pro)                   │
-│  - Jobs table (UUID-based, persistent storage)                  │
-│  - Job states: pending → running → completed/failed             │
-│  - Persistent job results that survive server restarts          │
-│  - JSONB fields for flexible data storage                       │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         │ Crew Execution
-                         │
-┌────────────────────────▼────────────────────────────────────────┐
-│                    AI AGENT SYSTEM                               │
-│                                                                   │
-│  CrewAI Multi-Agent Framework                                   │
-│  - Book Structure Analyst (GPT-4o + FileReadTool)              │
-│  - Resource Discovery Agent (GPT-4o-mini + SerperDevTool)       │
-│  - Resource Validator (GPT-4o-mini + Web/YouTube tools)         │
-│  - Output Formatter (GPT-4o)                                    │
-│                                                                   │
-│  External APIs:                                                  │
-│  - OpenAI API (GPT-4o, GPT-4o-mini)                            │
-│  - Serper API (web search)                                      │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Serper API Key
+- **Purpose:** Web search for resource discovery
+- **Get it:** https://serper.dev/api-key
+- **Cost:** Pay-per-use (cheaper than Google Custom Search)
+- **Required:** Yes
+
+### Supabase Credentials
+- **Purpose:** PostgreSQL database for job persistence and caching
+- **Get it:** Create project at https://supabase.com
+- **Cost:** Free tier available (500MB database, 50K MAU)
+- **Required:** Yes
+- **What you need:**
+  - `SUPABASE_URL`: Project URL (e.g., `https://xxxxx.supabase.co`)
+  - `SUPABASE_KEY`: Anon key from project settings
 
 ---
 
-## 🚀 Technology Stack
+## Environment Variables Reference
 
-### Frontend
-- **React + Vite** - Modern, fast frontend framework
-- **Deployment**: Cloudflare Pages (Free tier)
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `OPENAI_API_KEY` | ✅ Yes | OpenAI API key for LLM inference | - |
+| `SERPER_API_KEY` | ✅ Yes | Serper API key for web search | - |
+| `SUPABASE_URL` | ✅ Yes | Supabase project URL | - |
+| `SUPABASE_KEY` | ✅ Yes | Supabase anon key | - |
+| `COURSE_ANALYSIS_TTL_DAYS` | No | Cache TTL for course analysis (days) | 30 |
+| `RESOURCE_RESULTS_TTL_DAYS` | No | Cache TTL for full results (days) | 7 |
+| `REDIS_URL` | No | Redis connection string (for multi-instance) | - |
+| `ALLOWED_ORIGINS` | No | CORS allowed origins (comma-separated) | - |
+
+---
+
+## How It Works
+
+1. **User submits course/book information** via the web form
+2. **Backend creates a background job** and returns a job ID
+3. **CrewAI multi-agent system executes** (2-5 minutes):
+   - Analyzes textbook structure
+   - Discovers aligned resources
+   - Validates resource quality
+   - Formats results
+4. **Frontend polls for status** every 2 seconds
+5. **Results displayed** when complete, ready to import into NotebookLM
+
+---
+
+## Deployment
+
+### Deployment Choices
+
+ScholarSource is designed to be deployed on the following platforms:
+
+- **Frontend**: **Cloudflare Pages** (Free tier)
   - Unlimited bandwidth
   - Global CDN
   - Automatic HTTPS
+  - Easy GitHub integration
 
-### Backend
-- **FastAPI** - Python web framework for REST API
-- **Deployment**: Railway ($5/month)
-  - **Why Railway?**
-    1. ✅ **No request timeouts** - CrewAI jobs run 2-5 minutes without interruption
-    2. ✅ **Always-on service** - No cold starts when students are waiting
-    3. ✅ **WebSocket support** - Critical for streaming real-time progress updates
-    4. ✅ **Simpler than alternatives** - Less complexity than Fly.io, better reliability than Render free tier
-  - **Why NOT alternatives?**
-    - Render free tier: 30-second timeout (dealbreaker for long AI jobs)
-    - Render paid ($7): Works but cold starts hurt UX
-    - Fly.io: Unnecessary complexity overhead
-    - DigitalOcean: Works but Railway has better integration
+- **Backend**: **Railway** (~$5/month)
+  - No request timeouts (critical for long-running AI jobs)
+  - Always-on service (no cold starts)
+  - Simple deployment process
+  - Automatic HTTPS
 
-### Database
-- **Supabase PostgreSQL**
-- **Deployment**: **Standalone Supabase** (not Railway's database add-on)
-  - Free tier: 500MB database, 50,000 monthly active users
-  - Pro tier: $25/month when scaling is needed
-  - **Why standalone Supabase?**
-    1. ✅ **Better pricing** - Free tier vs Railway's $10+/month database add-on
-    2. ✅ **Superior tooling** - Dashboard, SQL Editor, real-time subscriptions
-    3. ✅ **Auth ready** - Built-in authentication for future user accounts feature
-    4. ✅ **Independent scaling** - Database and backend scale separately
-    5. ✅ **Portable** - Easy to switch backend providers without data migration
+- **Database**: **Supabase PostgreSQL** (Free tier / $25/month Pro)
+  - Free tier: 500MB database, 50K monthly active users
+  - Better tooling than Railway's database add-on
+  - Built-in authentication ready for future features
 
-### AI Agent System
-- **CrewAI** - Multi-agent orchestration framework
-- **OpenAI API** - GPT-4o and GPT-4o-mini models
-- **Serper API** - Web search capabilities
-- **CrewAI Tools**:
-  - `FileReadTool` - Extract table of contents from PDF textbooks
-  - `SerperDevTool` - Search for educational resources
-  - `WebsiteSearchTool` - Validate web page quality
-  - `YoutubeVideoSearchTool` - Validate YouTube video content
+### Preparing for Railway Deployment
 
----
+**Important:** Railway requires a `requirements.txt` file for Python dependencies, but this project uses `pyproject.toml` for dependency management.
 
-## 📦 Installation
-
-### Prerequisites
-- Python >=3.10 <3.13
-- Node.js >=18 (for frontend)
-- [UV](https://docs.astral.sh/uv/) for Python dependency management
-
-### Backend Setup
-
-1. **Install UV** (if not already installed):
-```bash
-pip install uv
-```
-
-2. **Install Python dependencies**:
-```bash
-crewai install
-```
-
-3. **Update dependencies** (when adding/changing packages in `pyproject.toml`):
-```bash
-uv pip compile pyproject.toml -o requirements.txt
-git add requirements.txt
-git commit -m "Update dependencies"
-```
-
-4. **Set up environment variables** (`.env` file):
-```bash
-# OpenAI API
-OPENAI_API_KEY=your_openai_api_key
-
-# Serper API (web search)
-SERPER_API_KEY=your_serper_api_key
-
-# Supabase Database
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_KEY=your_anon_or_service_role_key
-```
-
-5. **Create Supabase database table**:
-
-Go to Supabase Dashboard → SQL Editor and run:
-
-```sql
-CREATE TABLE jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'completed', 'failed')),
-    inputs JSONB NOT NULL,
-    results JSONB,
-    raw_output TEXT,
-    error TEXT,
-    status_message TEXT,
-    search_title TEXT,
-    metadata JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    completed_at TIMESTAMPTZ
-);
-
-CREATE INDEX idx_jobs_status ON jobs(status);
-CREATE INDEX idx_jobs_created_at ON jobs(created_at DESC);
-
-ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Enable all access for jobs" ON jobs
-    FOR ALL USING (true);
-```
-
-### Frontend Setup
-
-1. **Navigate to web directory**:
-```bash
-cd web
-```
-
-2. **Install Node dependencies**:
-```bash
-npm install
-```
-
-3. **Create environment file** (`web/.env.local`):
-```bash
-VITE_API_URL=http://localhost:8000
-```
-
----
-
-## 🎮 Running the Application
-
-> **First time?** See the [Quick Start](#-quick-start) section above for a streamlined setup guide.
-
-### Development Mode
-
-**Terminal 1 - Start Backend API:**
-```bash
-# From project root
-source .venv/bin/activate
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Terminal 2 - Start Frontend Dev Server:**
-```bash
-# From web/ directory
-cd web
-npm run dev
-```
-
-**Access the app:** http://localhost:5173
-
-**Development Workflow:**
-1. Both servers auto-reload on file changes
-2. Make changes to backend code → backend auto-reloads
-3. Make changes to frontend code → frontend hot-reloads in browser
-4. Test changes immediately without manual restarts
-
-### CLI Testing (Without Web UI)
-
-Test the CrewAI agents directly from command line:
+**Convert pyproject.toml to requirements.txt:**
 
 ```bash
-# Example 1: By book title and author
-python src/scholar_source/main.py \
-  --book-title "Introduction to Algorithms" \
-  --book-author "Cormen, Leiserson, Rivest, Stein"
+# Option 1: Using pip-tools (recommended)
+pip install pip-tools
+pip-compile pyproject.toml -o requirements.txt
 
-# Example 2: By ISBN
-python src/scholar_source/main.py --isbn "978-0262046305"
+# Option 2: Using pip directly
+pip install -e .
+pip freeze > requirements.txt
 
-# Example 3: By PDF file
-python src/scholar_source/main.py --book-pdf-path "/path/to/textbook.pdf"
-
-# Example 4: By book URL
-python src/scholar_source/main.py \
-  --book-url "https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/"
-
-# Example 5: By course information (shorthand)
-python src/scholar_source/main.py \
-  -u "Northwestern University" \
-  -c "GEN_ENG 205-2"
-
-# Test with verbose output
-python test_crew.py
+# Option 3: Manual conversion
+# Extract dependencies from pyproject.toml and create requirements.txt
+# The requirements.txt file is already included in the repository
 ```
 
-**Available CLI Arguments:**
-- `-u, --university-name` - University name (e.g., "MIT")
-- `-c, --course-name` - Course name (e.g., "Introduction to Algorithms")
-- `-url, --course-url` - Course webpage URL
-- `-b, --textbook` - Textbook information (legacy)
-- `-t, --topics-list` - Comma-separated topics
-- `--book-title` - Book title
-- `--book-author` - Book author(s)
-- `--isbn` - ISBN of the book
-- `--book-pdf-path` - Local path to PDF
-- `--book-url` - Online link to book
+**Note:** The `requirements.txt` file is already included in this repository and kept in sync with `pyproject.toml`. If you modify dependencies in `pyproject.toml`, regenerate `requirements.txt` before deploying to Railway.
 
-**Note:** At least one argument must be provided.
+**Railway Deployment Steps:**
 
----
+1. **Create Procfile** (already included in repository):
+   ```
+   web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+   ```
 
-## 🔧 Configuration
+2. **Connect GitHub repository** to Railway
 
-### Agent Configuration
-
-Edit [src/scholar_source/config/agents.yaml](src/scholar_source/config/agents.yaml) to customize:
-- Agent roles and goals
-- LLM models (GPT-4o, GPT-4o-mini)
-- Agent backstories and expertise
-
-### Task Configuration
-
-Edit [src/scholar_source/config/tasks.yaml](src/scholar_source/config/tasks.yaml) to customize:
-- Task descriptions and priorities
-- Expected outputs
-- Resource quality criteria
-
-### Crew Logic
-
-Edit [src/scholar_source/crew.py](src/scholar_source/crew.py) to:
-- Add/remove agents
-- Configure agent tools
-- Change task execution order (sequential/hierarchical)
-
----
-
-## 📊 How It Works
-
-### 1. User Submits Book Information
-Students provide one or more of:
-- Book metadata (title, author, ISBN)
-- PDF file of the textbook
-- Book URL (publisher website, Amazon, etc.)
-- Course information (university, course name, URL)
-
-### 2. Background Job Created
-- FastAPI creates a job in Supabase database
-- Job ID returned to frontend
-- CrewAI execution starts in background thread
-
-### 3. AI Agent Workflow (2-5 minutes)
-
-**Agent 1: Book Structure Analyst (GPT-4o)**
-- Reads PDF to extract table of contents (if provided)
-- Analyzes book metadata to infer topics
-- Identifies course level and discipline area
-- Outputs: course_title, topics list, key_concepts, course_level
-
-**Agent 2: Resource Discovery Agent (GPT-4o-mini)**
-- Searches for 5-7 resources using Serper API
-- Prioritizes open textbooks, PDFs, course notes
-- Matches resources to book's table of contents
-- Ensures legal, free, publicly accessible content
-
-**Agent 3: Resource Validator (GPT-4o-mini)**
-- Verifies URLs are functional (no 404s, paywalls)
-- Checks NotebookLM compatibility (PDF, YouTube, web page)
-- Validates licensing (Creative Commons, Open Access)
-- Scores resources on usefulness (1-10)
-- Filters out low-quality/illegal resources
-
-**Agent 4: Output Formatter (GPT-4o)**
-- Creates student-friendly markdown guide
-- Organizes resources by topic/type
-- Adds NotebookLM import instructions
-- Includes study tips and workflow suggestions
-
-### 4. Results Returned
-- Frontend polls `/api/status/{job_id}` every 2 seconds
-- When complete, displays results in table
-- Student can copy URLs, share results link, or export to NotebookLM
-
----
-
-## 🌐 API Endpoints
-
-### `POST /api/submit`
-Submit a new resource discovery job.
-
-**Request Body:**
-```json
-{
-  "university_name": "MIT",
-  "course_name": "Introduction to Algorithms",
-  "book_title": "Introduction to Algorithms",
-  "book_author": "Cormen, Leiserson, Rivest, Stein",
-  "isbn": "978-0262046305",
-  "book_pdf_path": "",
-  "book_url": "",
-  "course_url": "",
-  "textbook": "",
-  "topics_list": ""
-}
-```
-
-**Response:**
-```json
-{
-  "job_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "pending",
-  "message": "Job submitted successfully"
-}
-```
-
-### `GET /api/status/{job_id}`
-Get job status and results (for polling).
-
-**Response (pending/running):**
-```json
-{
-  "job_id": "550e8400-...",
-  "status": "running",
-  "status_message": "Analyzing book structure...",
-  "search_title": "MIT Introduction to Algorithms",
-  "created_at": "2025-12-20T10:30:00Z"
-}
-```
-
-**Response (completed):**
-```json
-{
-  "job_id": "550e8400-...",
-  "status": "completed",
-  "results": [
-    {
-      "type": "PDF",
-      "title": "MIT 6.006 Course Notes",
-      "source": "MIT OpenCourseWare",
-      "url": "https://...",
-      "description": "Comprehensive lecture notes..."
-    }
-  ],
-  "raw_output": "# Study Resources for Introduction to Algorithms...",
-  "created_at": "2025-12-20T10:30:00Z",
-  "completed_at": "2025-12-20T10:33:45Z"
-}
-```
-
-### `GET /api/results/{job_id}`
-Get completed job results.
-
-Returns 404 if job doesn't exist or isn't completed yet.
-
-### `GET /api/health`
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "healthy"
-}
-```
-
----
-
-## 🚢 Deployment
-
-### Frontend Deployment (Cloudflare Pages)
-
-1. **Connect GitHub repository** to Cloudflare Pages
-2. **Build settings**:
-   - Build command: `npm run build`
-   - Build output directory: `web/dist`
-   - Root directory: `web`
-3. **Environment variables**:
-   - `VITE_API_URL` = `https://your-backend.railway.app`
-
-### Backend Deployment (Railway)
-
-1. **Connect GitHub repository** to Railway
-2. **Add environment variables**:
+3. **Set environment variables** in Railway dashboard:
    - `OPENAI_API_KEY`
    - `SERPER_API_KEY`
    - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-3. **Railway auto-detects** FastAPI and runs: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-4. **Enable persistent storage** if saving files locally (optional)
+   - `SUPABASE_KEY` (or `SUPABASE_ANON_KEY`)
+   - `ALLOWED_ORIGINS` (your frontend URL)
 
-### Database (Supabase)
+4. **Railway auto-detects** Python and installs from `requirements.txt`
 
-Already set up during installation. No additional deployment needed.
+**Cloudflare Pages Deployment Steps:**
 
-**Scaling considerations:**
-- Free tier: 500MB database, 50K MAU
-- Upgrade to Pro ($25/mo) when hitting limits
-- Consider adding indexes for frequently queried fields
+1. **Connect GitHub repository** to Cloudflare Pages
 
----
+2. **Build settings:**
+   - Build command: `npm run build`
+   - Build output directory: `web/dist`
+   - Root directory: `web`
 
-## 📁 Project Structure
+3. **Environment variables:**
+   - `VITE_API_URL` = Your Railway backend URL
 
-```
-/Users/teial/Tutorials/AI/scholar_source/
-├── backend/                      # FastAPI backend
-│   ├── __init__.py
-│   ├── main.py                   # API endpoints
-│   ├── models.py                 # Pydantic request/response models
-│   ├── database.py               # Supabase client
-│   ├── jobs.py                   # Background job management
-│   ├── crew_runner.py            # CrewAI integration wrapper
-│   └── markdown_parser.py        # Parse crew output to JSON
-│
-├── web/                          # React/Vite frontend
-│   ├── src/
-│   │   ├── App.jsx               # Main app with routing
-│   │   ├── pages/
-│   │   │   ├── HomePage.jsx      # Main form page
-│   │   │   └── ResultsPage.jsx   # Shareable results page
-│   │   ├── components/
-│   │   │   ├── CourseForm.jsx    # Input form
-│   │   │   ├── ResultsTable.jsx  # Results display
-│   │   │   └── LoadingStatus.jsx # Job status polling
-│   │   ├── api/
-│   │   │   └── client.js         # API client functions
-│   │   └── styles/
-│   │       └── App.css           # Styles
-│   ├── package.json
-│   └── vite.config.js
-│
-├── src/scholar_source/           # CrewAI implementation
-│   ├── crew.py                   # Agent and task definitions
-│   ├── main.py                   # CLI entry point
-│   └── config/
-│       ├── agents.yaml           # Agent configurations
-│       └── tasks.yaml            # Task descriptions
-│
-├── test_crew.py                  # Testing script
-├── pyproject.toml                # Python dependencies
-├── .env                          # Environment variables
-└── README.md                     # This file
-```
+For detailed deployment instructions, see `docs/Deployment_Plan.md`.
 
 ---
 
-## 🔍 Understanding the Agents
+## Documentation
 
-ScholarSource uses a **sequential multi-agent workflow** powered by CrewAI:
-
-### 1. Book Structure Analyst (`course_intelligence_agent`)
-- **Role**: Extract table of contents and topics from student's book
-- **Tools**: `FileReadTool` (reads PDFs)
-- **Model**: GPT-4o (stronger reasoning for structure extraction)
-- **Output**: Course title, topics list, key concepts, course level
-
-### 2. Resource Discovery Agent (`resource_discovery_agent`)
-- **Role**: Find 5-7 high-quality resources aligned with book structure
-- **Tools**: `SerperDevTool` (web search)
-- **Model**: GPT-4o-mini (cost-effective for search tasks)
-- **Priority**: Open textbooks, PDFs, course notes (text-based for NotebookLM)
-- **Output**: List of resources with URLs, descriptions, coverage topics
-
-### 3. Resource Validator (`resource_validator_agent`)
-- **Role**: Validate resource quality, legality, and NotebookLM compatibility
-- **Tools**: `WebsiteSearchTool`, `YoutubeVideoSearchTool`
-- **Model**: GPT-4o-mini (validation is straightforward)
-- **Checks**: Accessibility, copyright, format compatibility, usefulness
-- **Output**: Filtered list with validation scores (1-10)
-
-### 4. Output Formatter (`output_formatter_agent`)
-- **Role**: Create student-friendly markdown guide
-- **Tools**: None (pure formatting)
-- **Model**: GPT-4o (better at clear, structured writing)
-- **Output**: Markdown document with resources organized by topic, import instructions, study tips
+- **System Design Document:** `docs/scholar_source_SDD.md` - High-level architecture and design rationale
+- **Technical Design Document:** `docs/scholar_source_TDD.md` - Detailed implementation specifications
+- **Testing Guide:** `docs/TESTING_GUIDE.md` - Testing documentation
+- **Deployment Plan:** `docs/Deployment_Plan.md` - Step-by-step deployment guide
 
 ---
 
-## 🧪 Testing
-
-### Test CrewAI Locally
-
-```bash
-# Run test script with verbose output
-python test_crew.py
-
-# Expected: 2-5 minute execution, generates report.md
-```
-
-### Test API Locally
-
-```bash
-# Terminal 1: Start backend
-uvicorn backend.main:app --reload
-
-# Terminal 2: Test endpoints
-curl -X POST http://localhost:8000/api/submit \
-  -H "Content-Type: application/json" \
-  -d '{"book_title": "Introduction to Algorithms", "book_author": "Cormen"}'
-
-# Copy job_id from response, then poll status
-curl http://localhost:8000/api/status/{job_id}
-```
-
-### Test Frontend Locally
-
-```bash
-cd web
-npm run dev
-
-# Open http://localhost:5173
-# Fill form and submit
-# Watch status updates
-# Verify results table displays correctly
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### Startup Issues
-
-**Problem**: Backend won't start
-- **Check**: `.env` has `SUPABASE_URL` and `SUPABASE_KEY` configured
-- **Check**: Virtual environment is activated (`source .venv/bin/activate`)
-- **Check**: Dependencies installed correctly (`pip install -e .`)
-- **Check**: Port 8000 isn't already in use
-
-**Problem**: Frontend won't start
-- **Check**: Dependencies installed (`cd web && npm install`)
-- **Check**: Port 5173 isn't already in use
-- **Check**: `VITE_API_URL` set in `web/.env.local`
-
-### CrewAI Execution Issues
-
-**Problem**: Agents can't find resources
-- **Check**: `SERPER_API_KEY` is set in `.env`
-- **Check**: SerperDevTool is working (test with `python test_crew.py`)
-- **Note**: GPT-4o-mini sometimes struggles with SerperDevTool parameters. Consider upgrading resource_discovery_agent to GPT-4o if issues persist.
-
-**Problem**: FileReadTool can't read PDF
-- **Check**: PDF path is absolute, not relative
-- **Check**: File exists and is readable
-- **Check**: PDF is not encrypted or password-protected
-
-### API Connection Issues
-
-**Problem**: Frontend can't connect to backend
-- **Check**: CORS is configured in `backend/main.py` for frontend origin (should include `http://localhost:5173`)
-- **Check**: `VITE_API_URL` in `web/.env.local` matches backend URL (`http://localhost:8000`)
-- **Check**: Backend is running on expected port (8000)
-
-**Problem**: 404 on `/api/status/{job_id}`
-- **Check**: Job ID is valid UUID
-- **Check**: Job exists in Supabase `jobs` table
-- **Check**: Database connection is working (check `SUPABASE_URL` and `SUPABASE_KEY`)
-
-### Database Issues
-
-**Problem**: Jobs not persisting
-- **Check**: Supabase credentials in `.env`
-- **Check**: `jobs` table exists (run SQL schema from [Installation](#-installation) section)
-- **Check**: Row Level Security policies are set correctly
-- **Check**: Supabase project is active (not paused)
-
----
-
-## 📚 Resources
-
-- [CrewAI Documentation](https://docs.crewai.com)
-- [FastAPI Documentation](https://fastapi.tiangolo.com)
-- [React Documentation](https://react.dev)
-- [Supabase Documentation](https://supabase.com/docs)
-- [Railway Documentation](https://docs.railway.app)
-- [Cloudflare Pages Documentation](https://developers.cloudflare.com/pages)
-
----
-
-## 🤝 Support
-
-For questions or issues:
-- Check the [troubleshooting section](#-troubleshooting) above
-- Review the [CrewAI documentation](https://docs.crewai.com)
-- [Join CrewAI Discord](https://discord.com/invite/X4JWnZnxPb)
-
----
-
-## 📄 License
+## License
 
 This project is built with CrewAI. See [CrewAI GitHub](https://github.com/joaomdmoura/crewai) for framework license details.
