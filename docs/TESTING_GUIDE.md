@@ -4,6 +4,27 @@ Comprehensive guide for running, writing, and maintaining tests for the ScholarS
 
 ---
 
+## Table of Contents
+
+1. [Quick Start](#-quick-start)
+2. [Overview](#-overview)
+3. [Testing Stack](#-testing-stack)
+4. [Test Suite Overview](#-test-suite-overview)
+5. [Backend Testing](#-backend-testing)
+6. [Frontend Testing](#-frontend-testing)
+7. [Running Tests](#-running-tests)
+8. [Installation & Setup](#-installation--setup)
+9. [CI/CD Integration](#-cicd-integration)
+10. [Watch Mode](#-watch-mode)
+11. [What Was Created](#-what-was-created)
+12. [Cache Testing](#-cache-testing)
+13. [Remaining Tasks](#-remaining-tasks)
+14. [Next Steps](#-next-steps)
+15. [Resources](#-resources)
+16. [Summary](#-summary)
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
@@ -20,6 +41,56 @@ npm install -D vitest @vitest/ui @testing-library/react \
 # Run all tests
 cd ..
 ./scripts/test-all.sh
+```
+
+---
+
+## 📋 Overview
+
+This document provides a comprehensive testing strategy and practical guide for the ScholarSource application, covering both backend (FastAPI/Python) and frontend (React/Vite) components.
+
+**Current State:** 155+ test cases implemented
+**Goal:** Maintain robust automated testing with unit tests, integration tests, and E2E tests
+
+---
+
+## 🧬 Testing Stack
+
+### Backend (Python/FastAPI)
+
+| Tool | Version | Purpose | Why |
+|------|---------|---------|-----|
+| **pytest** | ≥7.4.0 | Test runner and framework | Industry standard, fixture support, parametrization |
+| **pytest-asyncio** | ≥0.21.0 | Async test support | FastAPI uses async endpoints |
+| **pytest-cov** | ≥4.1.0 | Code coverage reporting | Track test coverage metrics |
+| **pytest-mock** | ≥3.11.0 | Mocking external dependencies | Mock external dependencies (OpenAI, CrewAI) |
+| **httpx** | ≥0.24.0 | HTTP client for testing FastAPI | Official recommendation for testing FastAPI |
+| **fakeredis** | ≥2.19.0 | Mock Redis for rate limiting | Test rate limiting without real Redis |
+| **faker** | ≥20.0.0 | Generate fake test data | Generate realistic test data |
+
+**Installation:**
+```bash
+pip install -r requirements-dev.txt
+```
+
+### Frontend (React/Vite)
+
+| Tool | Version | Purpose | Why |
+|------|---------|---------|-----|
+| **Vitest** | ≥1.0.0 | Fast, Vite-native test runner | Vite-native, fast, Jest-compatible API |
+| **@vitest/ui** | ≥1.0.0 | Visual test runner UI | Visual test runner (optional) |
+| **@testing-library/react** | ≥14.0.0 | User-centric component testing | User-centric testing approach |
+| **@testing-library/jest-dom** | ≥6.1.0 | Custom DOM matchers | Better assertions for DOM testing |
+| **@testing-library/user-event** | ≥14.5.0 | User interaction simulation | User interaction simulation |
+| **MSW** | ≥2.0.0 | Mock Service Worker for API mocking | Intercept network requests |
+| **jsdom** | ≥23.0.0 | DOM implementation for Node.js | DOM implementation for Node.js |
+
+**Installation:**
+```bash
+cd web
+npm install -D vitest @vitest/ui @testing-library/react \
+  @testing-library/jest-dom @testing-library/user-event \
+  jsdom msw
 ```
 
 ---
@@ -68,6 +139,134 @@ web/src/
 
 ---
 
+## 🔧 Backend Testing
+
+### Test Structure
+
+**Backend Test Directory Organization:**
+
+- `tests/` - Root test directory
+  - `conftest.py` - Shared fixtures
+  - `unit/` - Unit tests
+    - `test_markdown_parser.py` - Markdown parsing logic
+    - `test_models.py` - Pydantic model validation
+    - `test_cache.py` - Cache key generation, storage
+    - `test_rate_limiter.py` - Rate limit logic (with fakeredis)
+  - `integration/` - Integration tests
+    - `test_api_endpoints.py` - FastAPI endpoint tests
+    - `test_job_lifecycle.py` - Submit → Poll → Complete flow
+    - `test_crew_runner.py` - Crew execution (mocked)
+  - `e2e/` - End-to-end tests
+    - `test_full_workflow.py` - End-to-end scenarios
+
+### Unit Tests
+
+#### `tests/unit/test_markdown_parser.py`
+
+**What to test:**
+- ✅ Parse numbered resources correctly
+- ✅ Parse link sections correctly
+- ✅ Filter out ERROR resources
+- ✅ Filter out excluded domains
+- ✅ Extract textbook information
+- ✅ Handle malformed markdown gracefully
+
+Tests should cover parsing numbered resources, filtering error resources, excluding domains, extracting textbook information, and detecting error indicators using parameterized tests. The test class `TestMarkdownParser` should verify that `parse_markdown_to_resources` correctly extracts resources from various markdown formats, filters out resources with "ERROR" in their fields, respects excluded domains, and extracts textbook metadata.
+
+#### `tests/unit/test_models.py`
+
+**What to test:**
+- ✅ Pydantic model validation
+- ✅ Empty string → None conversion
+- ✅ Invalid inputs rejected
+- ✅ Optional field handling
+
+Tests should verify that `CourseInputRequest` accepts valid course URLs, converts empty strings to None, accepts lists of desired resource types, and that optional fields default to None. The `TestResourceModel` class should verify that valid resources can be created with all required fields, and that missing required fields raise Pydantic ValidationError.
+
+#### `tests/unit/test_cache.py`
+
+**What to test:**
+- ✅ Cache key generation
+- ✅ Cache storage and retrieval
+- ✅ TTL expiration logic
+- ✅ Cache invalidation
+
+#### `tests/unit/test_rate_limiter.py`
+
+**What to test:**
+- ✅ Rate limit enforcement
+- ✅ In-memory vs Redis storage selection
+- ✅ Error response format
+- ✅ Rate limit headers
+
+Tests should verify that the rate limiter uses in-memory storage by default when REDIS_URL is not set, and that rate limit error responses return proper 429 status codes with retry_after information. The `TestRateLimiter` class should test rate limiting logic including error response format.
+
+### Integration Tests
+
+#### `tests/integration/test_api_endpoints.py`
+
+**What to test:**
+- ✅ All API endpoints respond correctly
+- ✅ Request/response contracts
+- ✅ Error handling (400, 404, 429, 500)
+- ✅ Rate limiting enforcement
+
+Tests should verify that all API endpoints respond correctly, including the health check endpoint returning 200 with healthy status, the submit endpoint accepting valid course URLs and returning job_id, rejecting empty payloads with 400, rejecting invalid URL formats with 422, and enforcing rate limits. The status endpoint should return pending/running status for new jobs and 404 for nonexistent jobs. The cancel endpoint should successfully cancel running jobs.
+
+#### `tests/integration/test_job_lifecycle.py`
+
+**What to test:**
+- ✅ Full job lifecycle (submit → running → completed)
+- ✅ Job state transitions
+- ✅ Cancellation during execution
+
+Tests should verify the complete job lifecycle, including that jobs progress through states (pending → running → completed) when crew execution is mocked to return quickly, and that cancelled jobs stop execution and show cancelled status. Tests should poll status until completion with appropriate timeouts.
+
+### Fixtures (`tests/conftest.py`)
+
+**Shared test fixtures:**
+
+The `conftest.py` file should include fixtures for setting up test environment variables (suppressing logs, using in-memory storage), creating FastAPI test clients, and mocking successful and failed crew executions. Fixtures should use appropriate scopes (session for environment setup, function for test clients).
+
+**Available Fixtures:**
+- `mock_supabase` - Complete Supabase client mock
+- `mock_crew_success` - CrewAI returns valid markdown
+- `mock_crew_failure` - CrewAI raises exception
+- `mock_crew_with_errors` - CrewAI returns markdown with errors
+
+---
+
+## 🎨 Frontend Testing
+
+### Test Structure
+
+**Frontend Test File Organization:**
+
+- `web/src/components/` - Component test files
+  - `Hero.test.jsx`, `ResultCard.test.jsx`, `InlineSearchStatus.test.jsx`
+  - `ui/Button.test.jsx`, `ui/TextInput.test.jsx`
+- `web/src/pages/` - Page tests
+  - `HomePage.test.jsx`
+- `web/src/api/` - API client tests
+  - `client.test.js`
+- `web/src/test/` - Test configuration and mocks
+  - `setup.js` - Test configuration
+  - `mocks/handlers.js` - MSW API mock handlers
+- `web/vitest.config.js` - Vitest configuration
+- `web/package.json` - Package dependencies
+
+### Test Configuration
+
+#### `web/vitest.config.js`
+
+The Vitest configuration should include React plugin, set globals to true, use jsdom environment, specify setup files, and configure coverage with v8 provider, text/json/html reporters, and exclusions for node_modules and test directories.
+
+#### `web/src/test/setup.js`
+
+The test setup file should extend Vitest's expect with jest-dom matchers, clean up after each test, and mock window.matchMedia for responsive tests. The setup file is imported by Vitest before running tests.
+
+---
+
 ## 🧪 Running Tests
 
 ### All Tests
@@ -104,6 +303,12 @@ pytest tests/integration/
 # Run with coverage report
 pytest --cov=backend --cov-report=html
 open htmlcov/index.html
+
+# Run tests matching pattern
+pytest -k "test_parse"
+
+# Run only fast tests (skip slow integration tests)
+pytest -m "not slow"
 ```
 
 ### Frontend Tests
@@ -171,185 +376,6 @@ chmod +x scripts/*.sh
 ```
 
 ---
-
-## 🧬 Testing Stack
-
-### Backend (Python/FastAPI)
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **pytest** | ≥7.4.0 | Test runner and framework |
-| **pytest-asyncio** | ≥0.21.0 | Async test support for FastAPI |
-| **pytest-cov** | ≥4.1.0 | Code coverage reporting |
-| **pytest-mock** | ≥3.11.0 | Mocking external dependencies |
-| **httpx** | ≥0.24.0 | HTTP client for testing FastAPI |
-| **fakeredis** | ≥2.19.0 | Mock Redis for rate limiting |
-| **faker** | ≥20.0.0 | Generate fake test data |
-
-**Installation:**
-```bash
-pip install -r requirements-dev.txt
-```
-
-### Frontend (React/Vitest)
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Vitest** | ≥1.0.0 | Fast, Vite-native test runner |
-| **@vitest/ui** | ≥1.0.0 | Visual test runner UI |
-| **@testing-library/react** | ≥14.0.0 | User-centric component testing |
-| **@testing-library/jest-dom** | ≥6.1.0 | Custom DOM matchers |
-| **@testing-library/user-event** | ≥14.5.0 | User interaction simulation |
-| **MSW** | ≥2.0.0 | Mock Service Worker for API mocking |
-| **jsdom** | ≥23.0.0 | DOM implementation for Node.js |
-
-**Installation:**
-```bash
-cd web
-npm install -D vitest @vitest/ui @testing-library/react \
-  @testing-library/jest-dom @testing-library/user-event \
-  jsdom msw
-```
-
----
-
-## ✍️ Writing Tests
-
-### Backend Test Example
-
-```python
-import pytest
-from backend.markdown_parser import parse_markdown_to_resources
-
-def test_parse_numbered_resources():
-    """Should parse numbered resource format correctly."""
-    # Arrange
-    markdown = """
-    **1. OpenStax Textbook** (Type: Open Textbook)
-    - **Link:** https://openstax.org/books/calculus
-    - **What it covers:** Calculus fundamentals
-    """
-
-    # Act
-    result = parse_markdown_to_resources(markdown)
-    resources = result['resources']
-
-    # Assert
-    assert len(resources) == 1
-    assert resources[0]['title'] == 'OpenStax Textbook'
-    assert resources[0]['type'] == 'Textbook'
-    assert 'openstax.org' in resources[0]['url']
-```
-
-### Frontend Test Example
-
-```javascript
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import ResultCard from './ResultCard';
-
-describe('ResultCard', () => {
-  it('renders resource information correctly', () => {
-    // Arrange
-    const resource = {
-      type: 'Textbook',
-      title: 'Introduction to Algorithms',
-      source: 'MIT Press',
-      url: 'https://example.com',
-      description: 'Great book',
-    };
-
-    // Act
-    render(<ResultCard resource={resource} index={0} />);
-
-    // Assert
-    expect(screen.getByText('Introduction to Algorithms')).toBeInTheDocument();
-    expect(screen.getByText(/MIT Press/i)).toBeInTheDocument();
-  });
-});
-```
-
----
-
-## 🎭 Mocking External Dependencies
-
-### Backend: Mock Supabase
-
-The test suite includes a complete mock Supabase client:
-
-```python
-def test_with_mock_supabase(mock_supabase):
-    """Use mock_supabase fixture from conftest.py"""
-    # Add data to mock database
-    mock_supabase.jobs_data['test-job-id'] = {
-        'id': 'test-job-id',
-        'status': 'completed',
-        'results': []
-    }
-
-    # Test code that uses Supabase
-    job = get_job('test-job-id')
-    assert job['status'] == 'completed'
-```
-
-**Available Fixtures:**
-- `mock_supabase` - Complete Supabase client mock
-- `mock_crew_success` - CrewAI returns valid markdown
-- `mock_crew_failure` - CrewAI raises exception
-- `mock_crew_with_errors` - CrewAI returns markdown with errors
-
-### Frontend: Mock API with MSW
-
-```javascript
-import { server } from '../test/mocks/server';
-import { http, HttpResponse } from 'msw';
-
-it('handles API error', async () => {
-  // Override handler for this test
-  server.use(
-    http.post('http://localhost:8000/api/submit', () => {
-      return HttpResponse.json(
-        { detail: { error: 'Server error' } },
-        { status: 500 }
-      );
-    })
-  );
-
-  // Test error handling
-  await expect(submitJob({})).rejects.toThrow();
-});
-```
-
-**Mock Endpoints:**
-- `/api/health` - Health check
-- `/api/submit` - Job submission
-- `/api/status/:jobId` - Job status
-- `/api/cancel/:jobId` - Job cancellation
-
----
-
-## 📊 Test Coverage
-
-### View Coverage Reports
-
-**Backend:**
-```bash
-pytest --cov=backend --cov-report=html
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
-start htmlcov/index.html  # Windows
-```
-
-**Frontend:**
-```bash
-cd web
-npm run test:coverage
-open coverage/index.html  # macOS
-xdg-open coverage/index.html  # Linux
-start coverage/index.html  # Windows
-```
-
-
 ## 🚦 Continuous Integration
 
 ### GitHub Actions Workflows
@@ -362,85 +388,12 @@ Tests run automatically on every push and pull request. DISABLED FOR NOW
 - Linting (black, isort, flake8, ESLint)
 - Coverage upload to Codecov
 
+The GitHub Actions workflow should trigger on pushes and pull requests to main branch. It should include two jobs: backend-tests (set up Python 3.12, install dependencies, run pytest with coverage, upload coverage to codecov) and frontend-tests (set up Node.js 18, install dependencies, run tests with coverage, upload coverage to codecov). Both jobs should run on ubuntu-latest.
+
 **`.github/workflows/coverage.yml`:**
 - Combined coverage reports
 - PR comments with summaries
 - Coverage tracking over time
-
----
-
-## 🐛 Troubleshooting
-
-### Backend Issues
-
-**ModuleNotFoundError**
-```bash
-# Ensure dependencies are installed
-pip install -r requirements-dev.txt
-
-# Set PYTHONPATH
-export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-```
-
-**Tests fail in CI but pass locally**
-- Check environment variables in `.github/workflows/test.yml`
-- Ensure all dependencies are in `requirements-dev.txt`
-
-**Rate limit tests interfere**
-- Tests use in-memory rate limiting (not Redis)
-- `fakeredis` handles state isolation
-
-### Frontend Issues
-
-**Import errors**
-```bash
-cd web
-npm install
-```
-
-**Tests timeout**
-```javascript
-it('slow test', async () => {
-  // ...
-}, 15000);  // Increase timeout to 15 seconds
-```
-
-**MSW errors**
-- Check `web/src/test/mocks/server.js` is imported
-- Verify handlers are defined in `web/src/test/mocks/handlers.js`
-
----
-
-## 🔍 Debugging Tests
-
-### Backend
-
-```python
-# Add breakpoint in test
-import pdb; pdb.set_trace()
-
-# Run with -s flag to see print statements
-pytest -s tests/unit/test_models.py
-
-# Run single test with verbose output
-pytest -vv tests/unit/test_models.py::TestResource::test_valid_resource
-```
-
-### Frontend
-
-```javascript
-// Add debugger statement
-it('test', () => {
-  debugger;
-  // ...
-});
-
-// Print component tree
-console.log(screen.debug());
-
-// Run with --inspect flag
-npm test -- --inspect
-```
 
 ---
 
@@ -465,29 +418,8 @@ npm test -- --watch
 
 ---
 
+
 ## 📚 What Was Created
-
-### Backend Files (11 files)
-- `tests/conftest.py` - Shared fixtures (300+ lines)
-- `tests/unit/test_markdown_parser.py` - 60+ test cases
-- `tests/unit/test_models.py` - Pydantic validation tests
-- `tests/unit/test_cache.py` - Cache tests
-- `tests/unit/test_rate_limiter.py` - Rate limit tests
-- `tests/integration/test_api_endpoints.py` - API tests (40+ cases)
-- `tests/integration/test_job_lifecycle.py` - Workflow tests
-- `pytest.ini` - Pytest configuration
-- `requirements-dev.txt` - Dev dependencies
-
-### Frontend Files (8 files)
-- `web/vitest.config.js` - Vitest configuration
-- `web/src/test/setup.js` - Test setup
-- `web/src/test/mocks/handlers.js` - MSW handlers
-- `web/src/test/mocks/server.js` - MSW server
-- `web/src/components/ResultCard.test.jsx` - Component tests
-- `web/src/components/StatusMessage.test.jsx`
-- `web/src/components/ConfirmDialog.test.jsx`
-- `web/src/components/Hero.test.jsx`
-- `web/src/api/client.test.js` - API client tests
 
 ### Scripts & CI/CD (6 files)
 - `scripts/test-backend.sh` - Backend runner
@@ -498,6 +430,65 @@ npm test -- --watch
 - `TESTING_GUIDE.md` - This file
 
 **Total: 25 files, 155+ test cases**
+
+---
+
+## 🗄️ Cache Testing
+
+This section covers testing strategies for the cache implementation. The cache system stores course analysis results to speed up subsequent requests for the same course.
+
+### Test Plan
+
+#### Test Cache Hit/Miss
+
+1. Submit a course URL (e.g., Northwestern Engineering Mechanics page)
+2. Wait for completion - should take ~1-2 minutes (cache miss)
+3. Submit the SAME course URL again
+4. Should complete much faster if using cached analysis
+
+#### Test Force Refresh
+
+1. Submit a course URL with "Force refresh" unchecked
+2. Wait for completion
+3. Submit SAME course URL with "Force refresh" CHECKED
+4. Should bypass cache and run fresh analysis
+
+#### Test Config Invalidation
+
+1. Submit a course URL
+2. Wait for completion (creates cache entry)
+3. Modify `agents.yaml` or `tasks.yaml` (add a comment)
+4. Submit SAME course URL again
+5. Should be cache miss (config hash changed)
+
+#### Test Cache Stats
+
+```python
+from backend.cache import get_cache_stats
+
+stats = get_cache_stats()
+print(stats)
+# Expected output:
+# {
+#   'total_entries': 5,
+#   'valid_entries': 5,  # All match current config hash
+#   'stale_entries': 0,
+#   'config_hash': 'a7f3c2e1...',
+#   'by_type': {
+#     'analysis': 5,
+#     'full': 0
+#   }
+# }
+```
+
+### Testing Checklist
+
+- [✅] Test cache hit scenario
+- [ ] Test cache miss scenario
+- [ ] Test force refresh functionality
+- [ ] Test config invalidation
+- [ ] Test cache stats function
+- [ ] Verify TTL expiration works correctly
 
 ---
 
@@ -556,4 +547,10 @@ This comprehensive testing suite provides:
 ✅ **Coverage tracking** with Codecov
 ✅ **Best practices** for maintainable, reliable tests
 
+By following this guide, you'll have:
+- Confidence in code changes (catch regressions early)
+- Faster development (tests document expected behavior)
+- Better code quality (tests encourage modular design)
+- Easier onboarding (tests serve as documentation)
 
+**Next Steps:** Review this guide, then run tests and continue improving coverage! 🚀
