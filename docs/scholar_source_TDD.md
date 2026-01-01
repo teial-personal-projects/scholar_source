@@ -116,6 +116,45 @@ Deletes jobs older than specified number of days.
 - **Implementation:** Queries jobs where created_at < NOW() - INTERVAL 'max_age_days days' and deletes them
 - **Use Cases:** Automatic cleanup, scheduled maintenance
 
+#### 2.1.2 Job Management Flow
+
+The job management system coordinates job submission, execution, and status tracking through a combination of database state, background threads, and API endpoints.
+
+**1. Job Submission (`/api/submit`)**
+- Client POSTs job request to API endpoint
+- API validates inputs and checks rate limits
+- `create_job()` creates job record in Supabase with `status: "pending"`
+- API immediately returns `job_id` to client
+- `run_crew_async()` is called (non-blocking) to start background execution
+
+**2. Background Execution**
+- `run_crew_async()` spawns a daemon thread that runs `_run_crew_worker()`
+- API returns immediately while thread executes independently
+- Thread creates its own event loop for async execution
+
+**3. Job Execution (in background thread)**
+- Thread updates job status to `"running"` in Supabase via `update_job_status()`
+- CrewAI execution begins (LLM calls, web scraping, resource discovery)
+- Execution takes 2-10 minutes depending on complexity
+- Thread periodically updates `status_message` during execution
+- On completion: updates status to `"completed"` with results via `update_job_status()`
+- On failure: updates status to `"failed"` with error message via `update_job_status()`
+
+**4. Status Polling (`/api/status/{job_id}`)**
+- Client polls this endpoint repeatedly to check job progress
+- API queries Supabase by `job_id` using `get_job()`
+- Returns current status, results (if completed), or error (if failed)
+- No direct communication between API and worker thread
+
+**Key Characteristics:**
+- **State Storage:** Supabase `jobs` table serves as the single source of truth for job state
+- **Execution Model:** Daemon threads (not async tasks, not a queue system)
+- **Communication:** Worker thread writes directly to Supabase; no inter-process communication
+- **No Queue:** Jobs start immediately when submitted (no queuing mechanism)
+- **No Cleanup:** Daemon threads exit automatically when execution completes; no explicit cleanup needed
+
+The job record in Supabase acts as the coordination point between the API (which creates jobs and handles status polling) and the worker thread (which executes the CrewAI workflow and updates job status).
+
 ### 2.2 Crew Runner Component (`backend/crew_runner.py`)
 
 #### 2.2.1 Function Signatures
