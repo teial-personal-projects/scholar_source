@@ -19,19 +19,19 @@ This document provides step-by-step instructions for deploying ScholarSource to 
 
 Before deploying, ensure you have:
 
-- [ ] Git repository with all code committed
-- [ ] OpenAI API key with Tier 2+ rate limits (450k TPM)
-- [ ] Serper API key for web search
-- [ ] Supabase account created
-- [ ] Railway account created (free to sign up)
-- [ ] Cloudflare account created (free to sign up)
-- [ ] Domain name (optional, but recommended for production)
+- [✅] Git repository with all code committed
+- [✅] OpenAI API key with Tier 2+ rate limits (450k TPM)
+- [✅] Serper API key for web search
+- [✅] Supabase account created
+- [✅] Railway account created (free to sign up)
+- [✅] Cloudflare account created (free to sign up)
+- [✅] Domain name (optional, but recommended for production)
 
 ---
 
 ## Part 1: Database Setup (Supabase)
 
-### 1.1 Create Supabase Project
+### [✅] 1.1 Create Supabase Project
 
 1. Go to https://supabase.com/dashboard
 2. Click **"New Project"**
@@ -41,7 +41,7 @@ Before deploying, ensure you have:
    - **Region**: Choose closest to your users (e.g., US East, EU West)
 4. Click **"Create new project"** (takes ~2 minutes)
 
-### 1.2 Create Database Schema
+### [✅] 1.2 Create Database Schema
 
 1. In Supabase Dashboard, go to **SQL Editor**
 2. Click **"New Query"**
@@ -78,7 +78,7 @@ CREATE POLICY "Enable all access for jobs" ON jobs
 
 4. Click **"Run"** to execute
 
-### 1.3 Get Supabase Credentials
+### [✅] 1.3 Get Supabase Credentials
 
 1. In Supabase Dashboard, go to **Project Settings** → **API**
 2. Copy and save these values:
@@ -93,7 +93,7 @@ CREATE POLICY "Enable all access for jobs" ON jobs
 
 ### 2.1 Prepare Backend for Deployment
 
-1. **Create `Procfile` :**
+1. [✅] **Create `Procfile` :**
 
 ```
 web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
@@ -130,8 +130,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",  # Development
-        "https://your-app.pages.dev",  # Cloudflare Pages (temp URL)
-        "https://yourdomain.com",  # Your custom domain (if applicable)
+        "https://https://scholar-source.pages.dev/",  # Cloudflare Pages (temp URL)
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -139,7 +138,7 @@ app.add_middleware(
 )
 ```
 
-### 2.2 Deploy to Railway
+### [✅] 2.2 Deploy to Railway
 
 1. Go to https://railway.app
 2. Click **"Start a New Project"**
@@ -148,34 +147,90 @@ app.add_middleware(
 5. Select your `scholar_source` repository
 6. Railway will auto-detect Python and start building
 
-### 2.3 Configure Environment Variables
+### 2.3 Create Redis Database (Required for Scaling)
+
+1. *[✅] *Sign up for Redis Cloud** (if not already done):
+   - Go to https://redis.com/try-free/
+   - Create account and verify email
+   - Select "Fixed plan" → "Free" (30MB, perfect for getting started)
+
+2. [✅] **Create Redis Database:**
+   - Click "New database"
+   - Name: `scholarsource-queue`
+   - Region: Choose closest to your Railway deployment region
+   - Click "Activate"
+
+3. [✅] **Get Redis Connection URL:**
+   - Go to database configuration
+   - Copy the "Public endpoint" connection string
+   - Format: `redis://default:PASSWORD@HOST:PORT`
+   - **Save this URL** - you'll need it for Railway environment variables
+
+###  [✅] 2.4 Configure Environment Variables
 
 1. In Railway dashboard, click on your deployed service
 2. Go to **"Variables"** tab
 3. Add the following environment variables:
 
 ```bash
+# API Keys
 OPENAI_API_KEY=sk-proj-...your_key_here
 SERPER_API_KEY=...your_serper_key_here
+
+# Database
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=eyJhbGc...your_anon_key_here
+SUPABASE_ANON_KEY=eyJhbGc...your_anon_key_here
+
+# Redis (Required for task queue and rate limiting)
+REDIS_URL=redis://default:PASSWORD@HOST:PORT
 ```
 
 4. Click **"Deploy"** to restart with new variables
 
-### 2.4 Configure Railway Service
+### [✅] 2.5 Enable Worker Process
 
-1. **Set up custom domain (optional):**
+Railway will automatically detect the `Procfile` and start both `web` and `worker` processes.
+
+**Verify both processes are running:**
+
+1. Go to "Deployments" tab
+2. Click on latest deployment
+3. You should see logs from both:
+   - `web` process: Uvicorn startup messages
+   - `worker` process: Celery worker startup messages
+
+**Expected worker logs:**
+```
+celery@... v5.3.x (...)
+[config]
+.> app:         scholar_source:0x...
+.> transport:   redis://...
+.> results:     redis://...
+.> concurrency: 2 (prefork)
+
+[queues]
+.> crew_jobs        exchange=crew(direct) key=crew.jobs
+.> default          exchange=default(direct) key=default
+
+[tasks]
+  . backend.tasks.run_crew_task
+
+celery@... ready.
+```
+
+### [✅] 2.6 Configure Railway Service
+
+1. [✅] **Set up custom domain (optional):**
    - Go to **"Settings"** → **"Domains"**
    - Add custom domain (e.g., `api.yourdomain.com`)
    - Update your DNS records as instructed
 
-2. **Configure health checks:**
+2. [✅] **Configure health checks:**
    - Go to **"Settings"** → **"Health Checks"**
    - Set health check path: `/api/health`
    - Set timeout: 30 seconds
 
-3. **Enable always-on service:**
+3. [✅] **Enable always-on service:**
    - Go to **"Settings"** → **"Service"**
    - Ensure service is on **"Always On"** plan ($5/month)
    - This prevents cold starts and ensures 24/7 availability
@@ -184,8 +239,32 @@ SUPABASE_KEY=eyJhbGc...your_anon_key_here
    - Go to **"Settings"** → **"Resources"**
    - Set memory limit: 512MB-1GB (should be sufficient)
    - Set CPU limit: 1-2 vCPUs
+   NOTE: FREE VERSION ONLY LETS YOU GET 8MB MAX
 
-### 2.5 Verify Backend Deployment
+### 2.7 Configure Scaling (Optional)
+
+**Scale the Worker Process:**
+
+By default, Railway runs 1 instance of each process. To scale:
+
+1. Go to your service settings
+2. Click on "Settings" tab
+3. Under "Replicas", you can set:
+   - **Horizontal scaling:** Number of instances (costs more)
+   - **Vertical scaling:** CPU/Memory per instance
+
+**Recommended Starter Configuration:**
+- **Web instances:** 1 (scale up if API becomes slow)
+- **Worker instances:** 1-2 (scale based on queue depth)
+- **Memory:** 512MB - 1GB per instance
+- **CPU:** Shared (upgrade to dedicated if needed)
+
+**Auto-scaling (Pro plan):**
+- Railway Pro supports auto-scaling based on CPU/memory
+- Configure min/max instances
+- Automatically scales workers based on load
+
+### 2.8 Verify Backend Deployment
 
 1. Copy your Railway deployment URL (e.g., `https://scholarsource-dev.up.railway.app`)
 2. Test the health endpoint:
@@ -199,18 +278,36 @@ curl https://scholarsource-dev.up.railway.app/api/health
 {"status": "healthy"}
 ```
 
-3. Test job submission (optional):
+3. **Submit Test Job:**
+   ```bash
+   curl -X POST https://scholarsource-dev.up.railway.app/api/submit \
+     -H "Content-Type: application/json" \
+     -d '{
+       "course_name": "Test Course",
+       "university_name": "Test University",
+       "book_title": "Test Book",
+       "book_author": "Test Author"
+     }'
+   ```
+   Expected: Returns `job_id`
 
-```bash
-curl -X POST https://scholarsource-dev.up.railway.app/api/submit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "university_name": "MIT",
-    "course_name": "Introduction to Algorithms",
-    "book_title": "Introduction to Algorithms",
-    "book_author": "Cormen, Leiserson, Rivest, Stein"
-  }'
-```
+4. **Check Job Status:**
+   ```bash
+   curl https://scholarsource-dev.up.railway.app/api/status/{job_id}
+   ```
+   Expected: Returns job status (`queued`, `running`, `completed`, or `failed`)
+
+5. **Monitor Worker Logs:**
+   - Go to Railway dashboard → Deployments → Latest
+   - Filter logs by `worker` process
+   - You should see Celery processing the job
+
+**Check Redis Connection:**
+
+In Railway logs, verify:
+- ✅ No Redis connection errors
+- ✅ Worker successfully connected to Redis
+- ✅ Tasks are being enqueued and consumed
 
 **Status:** ✅ Backend deployed and running on Railway
 
@@ -337,9 +434,9 @@ app.add_middleware(
 
 3. Railway will auto-deploy the update (~1-2 minutes)
 
-### [✅]4.2 Set Up Monitoring
+### [ ] 4.2 Set Up Monitoring
 
-#### Railway (Backend Monitoring)
+#### 4.2.1 Railway (Backend Monitoring)
 
 1. Go to Railway dashboard → **"Observability"**
 2. Enable metrics collection (Enabled by default). But you can't see alerts unless you're on the pro plan.
@@ -348,7 +445,7 @@ app.add_middleware(
    - High memory usage (>80%)
    - Service downtime
 
-#### Supabase (Database Monitoring)
+#### 4.2.2 Supabase (Database Monitoring)
 
 1. Go to Supabase dashboard → **"Reports"**
 2. Monitor:
@@ -356,7 +453,7 @@ app.add_middleware(
    - API requests (stay under limits)
    - Active connections
 
-#### Cloudflare (Frontend Monitoring)
+#### 4.2.3 Cloudflare (Frontend Monitoring)
 
 1. Go to Cloudflare dashboard → **"Analytics"**
 2. Monitor:
@@ -364,9 +461,9 @@ app.add_middleware(
    - Bandwidth usage (unlimited on free tier)
    - Error rates
 
-### 4.4 Configure Backups
+### 4.3 Configure Backups
 
-#### Supabase Database Backups
+#### [ ] Supabase Database Backups
 
 1. Go to Supabase dashboard → **"Database"** → **"Backups"**
 2. Verify automatic daily backups are enabled
@@ -653,6 +750,238 @@ Track these metrics to measure deployment success:
 
 ---
 
+## Part 10: Railway Deployment Troubleshooting
+
+### 10.1 Common Deployment Issues
+
+#### Issue 1: Worker Not Starting
+
+**Symptoms:**
+- Only see `web` process logs
+- No Celery startup messages
+- Jobs stay in `queued` status forever
+
+**Causes:**
+- Procfile not detected
+- Worker process crashed during startup
+- Missing dependencies
+
+**Fixes:**
+1. Verify `Procfile` exists in repository root
+2. Check Railway deployment logs for errors
+3. Ensure `celery` is in `requirements.txt`
+4. Verify `REDIS_URL` is set correctly
+
+#### Issue 2: Redis Connection Failed
+
+**Symptoms:**
+```
+celery.exceptions.ImproperlyConfigured: CELERY_BROKER_URL is not set
+```
+or
+```
+redis.exceptions.ConnectionError: Error connecting to Redis
+```
+
+**Fixes:**
+1. Verify `REDIS_URL` environment variable is set
+2. Check Redis Cloud database is active
+3. Verify Redis URL format: `redis://default:PASSWORD@HOST:PORT`
+4. Check Redis Cloud firewall allows Railway IPs (usually not an issue)
+5. Test Redis connection:
+   ```bash
+   railway run python -c "from redis import Redis; r=Redis.from_url('$REDIS_URL'); print(r.ping())"
+   ```
+
+#### Issue 3: Environment Variables Not Loading
+
+**Symptoms:**
+- Missing API keys errors
+- Database connection failed
+- Application crashes on startup
+
+**Fixes:**
+1. Go to Railway Variables tab
+2. Verify all required variables are set
+3. Check for typos in variable names
+4. Redeploy after adding variables (click "Deploy" → "Redeploy")
+
+#### Issue 4: Port Binding Error
+
+**Symptoms:**
+```
+Error binding to 0.0.0.0:8000
+```
+
+**Cause:**
+- Using hardcoded port instead of `$PORT`
+
+**Fix:**
+- Procfile should use `$PORT`, not `8000`:
+  ```
+  web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+  ```
+
+#### Issue 5: Jobs Not Being Processed
+
+**Symptoms:**
+- Jobs stuck in `queued` status
+- Worker logs show "ready" but no task execution
+
+**Fixes:**
+1. Check worker logs for errors
+2. Verify queue names match:
+   - `backend/celery_app.py` defines queues
+   - Procfile worker listens to correct queues
+3. Manually test task:
+   ```python
+   from backend.tasks import run_crew_task
+   result = run_crew_task.delay("test-job-id", {...})
+   ```
+
+### 10.2 Useful Railway CLI Commands
+
+```bash
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Login
+railway login
+
+# View logs (live)
+railway logs
+
+# View logs (worker only)
+railway logs --filter worker
+
+# Run command in Railway environment
+railway run python scripts/test.py --redis
+
+# SSH into Railway container (Pro plan)
+railway shell
+```
+
+### 10.3 Monitoring and Maintenance
+
+#### Monitoring Checklist
+
+**Daily:**
+- [ ] Check Railway dashboard for any crashed processes
+- [ ] Monitor error rate in logs
+- [ ] Check queue depth (jobs waiting to be processed)
+
+**Weekly:**
+- [ ] Review worker processing times
+- [ ] Check Redis memory usage
+- [ ] Monitor Railway resource usage (CPU, memory)
+- [ ] Review cost dashboard
+
+**Monthly:**
+- [ ] Optimize worker count based on traffic patterns
+- [ ] Review and optimize database queries
+- [ ] Update dependencies (`pip list --outdated`)
+
+#### Key Metrics to Track
+
+1. **Queue Depth:** How many jobs waiting
+   - Check Redis: `LLEN crew_jobs` command
+   - Goal: Keep under 10-20 for good latency
+
+2. **Worker Utilization:** Are workers busy or idle?
+   - Check Celery logs for task start/complete messages
+   - Scale up if workers constantly busy
+   - Scale down if workers mostly idle
+
+3. **Job Duration:** How long jobs take
+   - Add logging in `backend/tasks.py`
+   - Track P50, P95, P99 durations
+   - Optimize slow jobs
+
+4. **Error Rate:** Failed jobs
+   - Monitor Railway logs for exceptions
+   - Check job status distribution in database
+   - Investigate and fix failed job patterns
+
+### 10.4 Scaling Strategy
+
+#### When to Scale UP (More Resources per Instance)
+
+**Symptoms:**
+- High CPU usage (>80% sustained)
+- High memory usage (>80%)
+- API response times increasing
+- Worker tasks timing out
+
+**Actions:**
+1. Go to Railway Settings → Resources
+2. Increase CPU/Memory allocation
+3. Monitor performance improvement
+
+#### When to Scale OUT (More Instances)
+
+**Symptoms:**
+- Queue depth consistently high (>20 jobs)
+- API response time high despite low CPU
+- Workers can't keep up with job submissions
+
+**Actions:**
+
+**Scale Workers:**
+1. Go to Railway service settings
+2. Increase replica count for worker process
+3. Start with +1 worker, monitor queue depth
+4. Continue scaling until queue depth is healthy
+
+**Scale API:**
+1. Less common to need multiple API instances initially
+2. Scale when API CPU/memory is high
+3. Ensure Redis-backed rate limiting is active
+4. Railway will load balance across API instances
+
+#### Cost-Effective Scaling Tips
+
+1. **Scale workers first** - Usually the bottleneck
+2. **Use autoscaling** (Pro plan) - Only pay for what you need
+3. **Monitor queue depth** - Scale based on data, not guesses
+4. **Optimize job duration** - Faster jobs = need fewer workers
+5. **Use caching** - Reduce redundant work
+6. **Schedule heavy tasks** - Run during off-peak hours if possible
+
+### 10.5 Deployment Checklist
+
+Before going live with production traffic:
+
+**Pre-Deployment:**
+- [ ] All tests pass locally (`python scripts/test.py --all`)
+- [ ] Redis Cloud database created and accessible
+- [ ] All environment variables documented
+- [ ] Frontend updated with Railway API URL
+- [ ] CORS settings updated in `backend/main.py` (if needed)
+
+**Deployment:**
+- [ ] Railway project created from GitHub
+- [ ] All environment variables set in Railway
+- [ ] Both `web` and `worker` processes running
+- [ ] Health check endpoint returns 200 OK
+- [ ] Test job submission and completion works
+- [ ] Redis connection successful (check logs)
+
+**Post-Deployment:**
+- [ ] Monitor logs for 1 hour for any errors
+- [ ] Submit real test job and verify completion
+- [ ] Check worker is processing jobs correctly
+- [ ] Verify rate limiting works across requests
+- [ ] Set up alerts for critical errors
+- [ ] Document Railway dashboard access for team
+
+**Ongoing:**
+- [ ] Weekly: Review error logs and performance metrics
+- [ ] Monthly: Check Railway costs and optimize
+- [ ] As needed: Scale workers based on queue depth
+- [ ] As needed: Update dependencies and redeploy
+
+---
+
 ## Next Steps After Deployment
 
 Once deployed and stable:
@@ -745,6 +1074,6 @@ supabase db dump -f backup.sql
 
 ---
 
-**Deployment Plan Version:** 1.0
+**Deployment Plan Version:** 1.1
 **Last Updated:** December 2024
-**Status:** Ready for production deployment
+**Status:** Ready for production deployment with scaling support
