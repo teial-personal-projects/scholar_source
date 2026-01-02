@@ -1,0 +1,315 @@
+"""
+Celery Tasks
+
+This module defines all Celery tasks for the ScholarSource application.
+Tasks are executed by Celery workers in separate processes.
+"""
+
+import sys
+import os
+import re
+import asyncio
+import traceback
+from pathlib import Path
+from typing import Dict
+from celery import Task
+
+# Add src to path to import ScholarSource
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from backend.celery_app import app
+from scholar_source.crew import ScholarSource
+from backend.jobs import update_job_status, get_job
+from backend.markdown_parser import parse_markdown_to_resources
+from backend.cache import get_cached_analysis, set_cached_analysis
+from backend.logging_config import get_logger
+
+# Get logger for this module
+logger = get_logger(__name__)
+
+
+@app.task(
+    bind=True,
+    name="backend.tasks.run_crew_task",
+    queue="crew_jobs",
+    max_retries=3,
+    default_retry_delay=60,
+    acks_late=True,
+    reject_on_worker_lost=True,
+)
+def run_crew_task(
+    self: Task,
+    job_id: str,
+    inputs: Dict[str, str],
+    bypass_cache: bool = False
+) -> Dict[str, any]:
+    """
+    Celery task to run the ScholarSource crew.
+
+    This task:
+    1. Updates job status to 'running'
+    2. Executes the crew with provided inputs using kickoff_async()
+    3. Parses the markdown output into structured resources
+    4. Updates job with results or error
+    5. Supports cancellation via Celery's revoke mechanism
+
+    Args:
+        self: Celery task instance (auto-injected when bind=True)
+        job_id: UUID of the job to run
+        inputs: Dictionary of course input parameters
+        bypass_cache: If True, bypass cache and get fresh results
+
+    Returns:
+        Dict with status and results/error information
+    """
+    logger.info(f"Starting Celery task for job {job_id} (task_id: {self.request.id})")
+
+    # Check if job was cancelled before starting
+    job = get_job(job_id)
+    if job and job.get("status") == "cancelled":
+        logger.info(f"Job {job_id} was cancelled before execution started")
+        return {"status": "cancelled", "message": "Job was cancelled before execution"}
+
+    try:
+        # Update status to running
+        update_job_status(
+            job_id,
+            status="running",
+            status_message="Initializing CrewAI agents...",
+            metadata={"celery_task_id": self.request.id}
+        )
+
+        # Normalize inputs - convert None to empty string, but preserve lists for desired_resource_types
+        normalized_inputs = {}
+        for key, value in inputs.items():
+            if key == 'desired_resource_types':
+                # Keep as list (empty list if None or empty)
+                normalized_inputs[key] = value if isinstance(value, list) else ([] if value is None else [])
+            else:
+                normalized_inputs[key] = (value if value is not None else "")
+
+        # Ensure all required keys exist
+        required_keys = [
+            'university_name', 'course_name', 'course_url', 'textbook',
+            'topics_list', 'book_title', 'book_author', 'isbn',
+            'book_pdf_path', 'book_url', 'desired_resource_types', 'excluded_sites'
+        ]
+
+        for key in required_keys:
+            if key not in normalized_inputs:
+                if key == 'desired_resource_types':
+                    normalized_inputs[key] = []
+                else:
+                    normalized_inputs[key] = ""
+
+        # Check cache for course analysis
+        cached_analysis = get_cached_analysis(
+            normalized_inputs,
+            cache_type="analysis",
+            bypass_cache=bypass_cache
+        )
+
+        if cached_analysis:
+            logger.info(f"✅ CACHE HIT - Job {job_id}: Using cached course analysis")
+            logger.debug(f"Cache data: textbook_title={cached_analysis.get('textbook_title', 'N/A')}")
+            update_job_status(
+                job_id,
+                status="running",
+                status_message="Using cached course analysis, discovering resources..."
+            )
+        else:
+            cache_reason = "bypass_cache=True" if bypass_cache else "no cached data found"
+            logger.info(f"❌ CACHE MISS - Job {job_id}: Running fresh analysis ({cache_reason})")
+            update_job_status(
+                job_id,
+                status="running",
+                status_message="Analyzing course and book structure..."
+            )
+
+        # Initialize crew
+        crew_instance = ScholarSource()
+        crew = crew_instance.crew()
+
+        logger.info(f"🚀 Starting CrewAI execution for job {job_id}")
+
+        # Run crew asynchronously
+        # Note: We need to run the async crew in an event loop
+        result = asyncio.run(_run_crew_async(crew, normalized_inputs, job_id))
+
+        # Update status
+        update_job_status(
+            job_id,
+            status="running",
+            status_message="Parsing results..."
+        )
+
+        # Extract raw output
+        raw_output = str(result.raw) if hasattr(result, 'raw') else str(result)
+
+        # Try to read the report.md file if it exists
+        report_path = Path("report.md")
+        if report_path.exists():
+            with open(report_path, "r") as f:
+                markdown_content = f.read()
+        else:
+            # Use raw output as fallback
+            markdown_content = raw_output
+
+        # Check if the crew returned an error
+        if "ERROR:" in markdown_content[:500]:
+            error_match = re.search(r'ERROR:\s*(.+?)(?:\n|$)', markdown_content)
+            error_msg = error_match.group(1) if error_match else "Cannot access provided resources"
+
+            update_job_status(
+                job_id,
+                status="failed",
+                error=error_msg,
+                status_message="Failed to access course or book resources",
+                raw_output=markdown_content[:1000]
+            )
+            return {
+                "status": "failed",
+                "error": error_msg,
+                "job_id": job_id
+            }
+
+        # Parse markdown into structured resources and metadata
+        excluded_sites = normalized_inputs.get('excluded_sites', '')
+        parsed_data = parse_markdown_to_resources(markdown_content, excluded_sites=excluded_sites)
+        resources = parsed_data.get("resources", [])
+        textbook_info = parsed_data.get("textbook_info")
+
+        # Cache course analysis results if this was a fresh analysis
+        if not cached_analysis and textbook_info:
+            analysis_results = {
+                "textbook_title": textbook_info.get("title", ""),
+                "textbook_author": textbook_info.get("author", ""),
+                "textbook_source": textbook_info.get("source", ""),
+                "raw_analysis": markdown_content[:2000]
+            }
+
+            set_cached_analysis(normalized_inputs, analysis_results, cache_type="analysis")
+            logger.info(f"💾 CACHE STORED - Job {job_id}: Cached analysis for future use")
+            if textbook_info:
+                logger.debug(f" Cached: title='{textbook_info.get('title', 'N/A')}', author='{textbook_info.get('author', 'N/A')}'")
+
+        # Prepare metadata
+        metadata = {
+            "resource_count": len(resources),
+            "crew_output_length": len(raw_output),
+            "cache_used": bool(cached_analysis),
+            "celery_task_id": self.request.id
+        }
+        if textbook_info:
+            metadata["textbook_info"] = textbook_info
+
+        # Check if job was cancelled during execution
+        job = get_job(job_id)
+        if job and job.get("status") == "cancelled":
+            logger.info(f"Job {job_id} was cancelled during execution, discarding results")
+            return {"status": "cancelled", "message": "Job was cancelled during execution"}
+
+        # Update job with results
+        update_job_status(
+            job_id,
+            status="completed",
+            status_message="Resource discovery completed successfully",
+            results=resources,
+            raw_output=markdown_content,
+            metadata=metadata
+        )
+
+        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources")
+
+        return {
+            "status": "completed",
+            "job_id": job_id,
+            "resource_count": len(resources)
+        }
+
+    except Exception as e:
+        # Log error and update job
+        error_message = str(e)
+        stack_trace = traceback.format_exc()
+
+        logger.error(f"Job {job_id} failed: {error_message}")
+        logger.error(stack_trace)
+
+        update_job_status(
+            job_id,
+            status="failed",
+            error=error_message,
+            status_message="Job failed due to an error",
+            metadata={
+                "error_type": type(e).__name__,
+                "stack_trace": stack_trace,
+                "celery_task_id": self.request.id
+            }
+        )
+
+        # Re-raise exception to trigger Celery retry mechanism
+        raise self.retry(exc=e, countdown=60)
+
+
+async def _run_crew_async(crew, inputs: Dict[str, str], job_id: str):
+    """
+    Helper function to run crew asynchronously.
+
+    Args:
+        crew: CrewAI crew instance
+        inputs: Normalized input parameters
+        job_id: Job ID for logging
+
+    Returns:
+        Crew execution result
+    """
+    logger.info(f"Running crew kickoff_async for job {job_id}")
+    result = await crew.kickoff_async(inputs=inputs)
+    return result
+
+
+@app.task(
+    bind=True,
+    name="backend.tasks.cleanup_old_results",
+    queue="default",
+)
+def cleanup_old_results(self: Task) -> Dict[str, any]:
+    """
+    Periodic task to clean up old job results and expired cache entries.
+
+    This task can be scheduled using Celery Beat to run periodically.
+
+    Returns:
+        Dict with cleanup statistics
+    """
+    logger.info("Starting cleanup of old results")
+
+    # TODO: Implement cleanup logic
+    # - Delete old jobs from database (e.g., completed jobs older than 30 days)
+    # - Clean up expired cache entries
+    # - Clean up orphaned files
+
+    return {
+        "status": "completed",
+        "message": "Cleanup completed successfully"
+    }
+
+
+@app.task(
+    bind=True,
+    name="backend.tasks.health_check",
+    queue="default",
+)
+def health_check(self: Task) -> Dict[str, any]:
+    """
+    Health check task to verify worker is functioning.
+
+    Returns:
+        Dict with health status
+    """
+    logger.info("Health check task executed")
+    return {
+        "status": "healthy",
+        "worker_id": self.request.hostname,
+        "task_id": self.request.id
+    }
