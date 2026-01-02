@@ -281,7 +281,7 @@ Migration from thread-based job execution to a distributed task queue architectu
 
 #### 5.1.1 Task Queue Implementation
 
-**Component:** New `backend/queue.py` or use RQ/Celery
+**Component:** New `backend/queue.py` or use Celery
 
 **Changes:**
 - Replace `run_crew_async()` threading with queue enqueue
@@ -296,8 +296,8 @@ Migration from thread-based job execution to a distributed task queue architectu
 
 **Dependencies:**
 - Add `redis` Python package
-- Add `rq` or `celery` package
-- Add `rq-dashboard` or `flower` for monitoring (optional)
+- Add `celery` package
+- Add `flower` for monitoring (optional)
 
 #### 5.1.2 Worker Process Separation
 
@@ -308,19 +308,6 @@ Migration from thread-based job execution to a distributed task queue architectu
 - Worker connects to Redis queue
 - Worker updates job status in Supabase
 - Handle worker health checks and graceful shutdown
-
-**Code Structure:**
-```python
-# backend/worker.py (new)
-from rq import Worker, Queue, Connection
-from backend.crew_runner import run_crew_task  # Refactored function
-
-def start_worker():
-    redis_conn = get_redis_connection()
-    queue = Queue('default', connection=redis_conn)
-    worker = Worker([queue], connection=redis_conn)
-    worker.work()
-```
 
 **Deployment:**
 - Separate container/service for workers
@@ -362,7 +349,6 @@ limiter = Limiter(
 - Handle job cancellation in worker process
 
 **Implementation:**
-- RQ: Use `Job.cancel()` method
 - Celery: Use `revoke()` method
 - Update job status in database
 
@@ -391,7 +377,6 @@ limiter = Limiter(
 - Improve error reporting
 
 **Queue Features:**
-- RQ: Built-in retry mechanism
 - Celery: Retry policies and error handling
 - Configure max retries and backoff
 
@@ -407,7 +392,6 @@ limiter = Limiter(
 - Worker processes consume priority queues first
 
 **Implementation:**
-- RQ: Multiple named queues
 - Celery: Priority queues or routing
 
 #### 5.3.2 Result Backend
@@ -429,10 +413,9 @@ limiter = Limiter(
 **Component:** New monitoring setup
 
 **Changes:**
-- Queue monitoring dashboard (RQ Dashboard or Flower)
+- Queue monitoring dashboard (Flower)
 - Metrics: Queue depth, worker count, job duration
 - Alerts for queue buildup or worker failures
-- Distributed tracing (optional)
 
 ---
 
@@ -533,7 +516,7 @@ limiter = Limiter(
    - [ ] Update `Procfile` or deployment config
 
 #### 11. [ ] Monitoring Setup
-   - [ ] Add queue monitoring (RQ Dashboard or Flower)
+   - [ ] Add queue monitoring (Flower)
    - [ ] Basic metrics collection
    - [ ] Logging improvements
 
@@ -586,38 +569,9 @@ limiter = Limiter(
 
 ## 7. Technology Choices
 
-### 7.1 Task Queue: RQ vs Celery
+### 7.1 Task Queue: Celery
 
-#### Option A: RQ (Redis Queue) - **RECOMMENDED**
-
-**Pros:**
-- Simpler API and setup
-- Lower learning curve
-- Good for Python-only projects
-- Built-in dashboard (rq-dashboard)
-- Sufficient for current needs
-- Lightweight
-
-**Cons:**
-- Less feature-rich than Celery
-- Python-only (not an issue here)
-- Fewer advanced features
-
-**Package:** `rq>=1.15.0`
-
-**Code Example:**
-```python
-from rq import Queue
-from redis import Redis
-
-redis_conn = Redis.from_url(os.getenv("REDIS_URL"))
-queue = Queue('default', connection=redis_conn)
-
-# Enqueue job
-job = queue.enqueue('backend.crew_runner.run_crew_task', job_id, inputs, bypass_cache)
-```
-
-#### Option B: Celery
+#### Option: Celery
 
 **Pros:**
 - More features (priorities, routing, scheduling)
@@ -632,29 +586,16 @@ job = queue.enqueue('backend.crew_runner.run_crew_task', job_id, inputs, bypass_
 
 **Package:** `celery>=5.3.0`
 
-**Recommendation:** Start with **RQ** for simplicity. Can migrate to Celery later if advanced features are needed.
 
 ### 7.2 Redis Provider Options
 
-#### Option A: Redis Cloud (Recommended for small scale)
+#### Option: Redis Cloud (Recommended for small scale)
 - Managed service
 - Free tier available
 - Easy setup
 - Good for getting started
 
-#### Option B: AWS ElastiCache / GCP Memorystore / Azure Cache
-- Managed service from cloud provider
-- Better integration with existing infrastructure
-- More control and customization
-- Higher cost but more features
-
-#### Option C: Self-hosted Redis
-- Full control
-- Lower cost at scale
-- Requires maintenance
-- Good for dedicated infrastructure
-
-**Recommendation:** Start with managed service (Redis Cloud or cloud provider), migrate to self-hosted if cost becomes a factor.
+**Recommendation:** Starting with free tier
 
 ### 7.3 Deployment Platform Considerations
 
@@ -739,7 +680,6 @@ job = queue.enqueue('backend.crew_runner.run_crew_task', job_id, inputs, bypass_
 ### 9.2 Monitoring Tools
 
 #### Queue Monitoring
-- **RQ Dashboard:** Built-in web UI for RQ
 - **Flower:** Celery monitoring (if using Celery)
 - **Custom Dashboard:** Build with queue metrics API
 
@@ -866,8 +806,6 @@ job = queue.enqueue('backend.crew_runner.run_crew_task', job_id, inputs, bypass_
 ```python
 # requirements.txt additions
 redis>=5.0.0          # Redis client
-rq>=1.15.0            # Redis Queue (if choosing RQ)
-# OR
 celery>=5.3.0         # Celery (if choosing Celery)
 ```
 
@@ -878,8 +816,6 @@ celery>=5.3.0         # Celery (if choosing Celery)
 REDIS_URL=redis://localhost:6379/0  # Redis connection string
 
 # Optional
-RQ_QUEUE_NAME=default               # Queue name (default: 'default')
-RQ_WORKER_CONCURRENCY=4             # Worker concurrency (if using RQ)
 CELERY_BROKER_URL=...               # If using Celery
 CELERY_RESULT_BACKEND=...           # If using Celery
 ```
@@ -896,9 +832,7 @@ web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 **New:**
 ```
 web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
-worker: rq worker --url $REDIS_URL default
-# OR for Celery:
-# worker: celery -A backend.celery_app worker --loglevel=info
+worker: celery -A backend.celery_app worker --loglevel=info
 ```
 
 #### Docker Compose (if used)
@@ -913,7 +847,7 @@ services:
   
   worker:
     build: .
-    command: rq worker --url redis://redis:6379/0 default
+    command: celery -A backend.celery_app worker --loglevel=info
     environment:
       - REDIS_URL=redis://redis:6379/0
   
@@ -925,22 +859,575 @@ services:
 
 ---
 
+## 12. Local Development vs Production Deployment
+
+### 12.1 Local Development Setup
+
+**Purpose:** Run the full stack locally for development and testing.
+
+**Architecture:**
+```
+Terminal 1: API Server (with hot reload)
+Terminal 2: Celery Worker (background job processor)
+Terminal 3: Frontend Dev Server (React with Vite)
+Redis: External service (Redis Cloud) or local Docker
+```
+
+**How to Run:**
+
+```bash
+# Terminal 1: API Server
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal 2: Celery Worker
+./scripts/start_worker.sh
+
+# Terminal 3: Frontend
+cd web && npm run dev
+```
+
+**Key Characteristics:**
+- **Manual Start:** You manually start each process in separate terminals
+- **Hot Reload:** API restarts on code changes (`--reload` flag)
+- **Port 8000:** API runs on fixed port 8000 for local testing
+- **Visibility:** See all logs in separate terminal windows
+- **Environment:** Uses `.env` file for configuration
+- **Redis:** Can use Redis Cloud free tier or local Redis in Docker
+
+**When to Use:**
+- Active development and debugging
+- Running tests with `scripts/test.py`
+- Experimenting with new features
+- Local testing before pushing to production
+
+---
+
+### 12.2 Production Deployment (Railway)
+
+**Purpose:** Run the full stack in production with automatic process management.
+
+**Architecture:**
+```
+Railway Service (ScholarSource):
+├── web process (from Procfile)
+│   └── uvicorn backend.main:app --port $PORT
+└── worker process (from Procfile)
+    └── celery -A backend.celery_app worker
+
+Redis: External Redis Cloud service
+Frontend: Separate Cloudflare Pages deployment
+```
+
+**How it Works:**
+
+1. **Procfile Defines Processes:**
+   ```
+   web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+   worker: celery -A backend.celery_app worker --loglevel=info --queues=crew_jobs,default --concurrency=2
+   ```
+
+2. **Railway Auto-starts Both:**
+   - Reads Procfile on deployment
+   - Starts `web` process automatically (public HTTP endpoint)
+   - Starts `worker` process automatically (background, no public port)
+
+3. **Railway Manages:**
+   - Assigns dynamic port via `$PORT` environment variable
+   - Routes external traffic to the `web` process
+   - Restarts processes if they crash
+   - Handles scaling (add more instances)
+
+**Key Characteristics:**
+- **Automatic Start:** Railway starts both processes from Procfile
+- **No Hot Reload:** Restart deployment to pick up code changes
+- **Dynamic Port:** Railway assigns port via `$PORT` env var
+- **Single View:** Logs combined in Railway dashboard
+- **Environment:** Uses Railway environment variables (configured in dashboard)
+- **Redis:** Must be external service (Redis Cloud recommended)
+
+**When to Use:**
+- Production traffic
+- After code is tested locally
+- When you need high availability
+- When you need to scale horizontally
+
+---
+
+### 12.3 Comparison Table
+
+| Aspect | Local Development | Production (Railway) |
+|--------|------------------|---------------------|
+| **Start Method** | Manual (3 terminal windows) | Automatic (Procfile) |
+| **API Restart** | Auto (`--reload` flag) | Manual (redeploy) |
+| **Port** | Fixed (8000) | Dynamic (`$PORT`) |
+| **Worker Start** | `./scripts/start_worker.sh` | Auto from Procfile |
+| **Logs** | Separate terminals | Railway dashboard |
+| **Environment** | `.env` file | Railway env vars |
+| **Redis** | Redis Cloud or local | Redis Cloud (required) |
+| **Scaling** | 1 instance each | N instances (configurable) |
+| **Purpose** | Development/testing | Production traffic |
+
+---
+
+## 13. Railway Deployment Guide
+
+### 13.1 Prerequisites
+
+Before deploying to Railway, ensure you have:
+
+1. ✅ **Completed Phase 1 (Steps 1-5)** - Celery and worker setup complete
+2. ✅ **Redis Cloud Account** - Free tier at https://redis.com/try-free/
+3. ✅ **Railway Account** - Sign up at https://railway.app
+4. ✅ **GitHub Repository** - Code pushed to GitHub
+5. ✅ **All Environment Variables** - Have all required values ready
+
+---
+
+### 13.2 Step-by-Step Railway Deployment
+
+#### Step 1: Create Redis Database
+
+1. **Sign up for Redis Cloud** (if not already done):
+   - Go to https://redis.com/try-free/
+   - Create account and verify email
+   - Select "Fixed plan" → "Free" (30MB, perfect for getting started)
+
+2. **Create Redis Database:**
+   - Click "New database"
+   - Name: `scholarsource-queue`
+   - Region: Choose closest to your Railway deployment region
+   - Click "Activate"
+
+3. **Get Redis Connection URL:**
+   - Go to database configuration
+   - Copy the "Public endpoint" connection string
+   - Format: `redis://default:PASSWORD@HOST:PORT`
+   - **Save this URL** - you'll need it for Railway environment variables
+
+#### Step 2: Create Railway Project
+
+1. **Create New Project:**
+   - Go to https://railway.app/dashboard
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Authorize Railway to access your GitHub account
+   - Select your ScholarSource repository
+
+2. **Initial Deployment:**
+   - Railway will detect it's a Python project
+   - It will attempt to deploy, but will likely fail (missing env vars)
+   - This is expected - we'll configure environment variables next
+
+#### Step 3: Configure Environment Variables
+
+1. **Open Project Settings:**
+   - Click on your deployed service
+   - Go to "Variables" tab
+
+2. **Add All Required Environment Variables:**
+
+   ```bash
+   # API Keys (required)
+   OPENAI_API_KEY=sk-...
+   SERPER_API_KEY=...
+
+   # Supabase (required)
+   SUPABASE_URL=https://...
+   SUPABASE_ANON_KEY=...
+
+   # Redis (REQUIRED for production)
+   REDIS_URL=redis://default:PASSWORD@HOST:PORT
+
+   # Optional: Model Configuration
+   COURSE_INTELLIGENCE_AGENT_MODEL=openai/gpt-4o
+   RESOURCE_DISCOVERY_AGENT_MODEL=openai/gpt-4o-mini
+   RESOURCE_VALIDATOR_AGENT_MODEL=openai/gpt-4o-mini
+   OUTPUT_FORMATTER_AGENT_MODEL=openai/gpt-4o-mini
+
+   # Optional: Cache TTL
+   COURSE_ANALYSIS_TTL_DAYS=30
+   RESOURCE_RESULTS_TTL_DAYS=7
+   ```
+
+3. **Click "Add" for each variable**
+
+4. **Verify REDIS_URL:**
+   - Double-check the Redis URL is correct
+   - Format: `redis://default:PASSWORD@HOST:PORT`
+   - Common mistake: Missing `redis://` prefix
+
+#### Step 4: Enable Worker Process
+
+Railway will automatically detect the `Procfile` and start both `web` and `worker` processes.
+
+**Verify both processes are running:**
+
+1. Go to "Deployments" tab
+2. Click on latest deployment
+3. You should see logs from both:
+   - `web` process: Uvicorn startup messages
+   - `worker` process: Celery worker startup messages
+
+**Expected worker logs:**
+```
+celery@... v5.3.x (...)
+[config]
+.> app:         scholar_source:0x...
+.> transport:   redis://...
+.> results:     redis://...
+.> concurrency: 2 (prefork)
+.> task events: OFF
+
+[queues]
+.> crew_jobs        exchange=crew(direct) key=crew.jobs
+.> default          exchange=default(direct) key=default
+
+[tasks]
+  . backend.tasks.run_crew_task
+
+celery@... ready.
+```
+
+#### Step 5: Configure Scaling (Optional)
+
+**Scale the Worker Process:**
+
+By default, Railway runs 1 instance of each process. To scale:
+
+1. Go to your service settings
+2. Click on "Settings" tab
+3. Under "Replicas", you can set:
+   - **Horizontal scaling:** Number of instances (costs more)
+   - **Vertical scaling:** CPU/Memory per instance
+
+**Recommended Starter Configuration:**
+- **Web instances:** 1 (scale up if API becomes slow)
+- **Worker instances:** 1-2 (scale based on queue depth)
+- **Memory:** 512MB - 1GB per instance
+- **CPU:** Shared (upgrade to dedicated if needed)
+
+**Auto-scaling (Pro plan):**
+- Railway Pro supports auto-scaling based on CPU/memory
+- Configure min/max instances
+- Automatically scales workers based on load
+
+#### Step 6: Update Frontend Configuration
+
+Your frontend (Cloudflare Pages) needs to point to the Railway API.
+
+1. **Get Railway API URL:**
+   - Go to your Railway service
+   - Click "Settings" → "Domains"
+   - Copy the generated domain (e.g., `scholarsource-production.up.railway.app`)
+   - Or add custom domain
+
+2. **Update Frontend Environment Variable:**
+   - Go to Cloudflare Pages project settings
+   - Add/update environment variable:
+   ```
+   VITE_API_URL=https://your-railway-domain.up.railway.app
+   ```
+   - Redeploy frontend
+
+#### Step 7: Verify Deployment
+
+**Run Health Checks:**
+
+1. **API Health Check:**
+   ```bash
+   curl https://your-railway-domain.up.railway.app/api/health
+   ```
+   Expected: `{"status":"healthy"}`
+
+2. **Submit Test Job:**
+   ```bash
+   curl -X POST https://your-railway-domain.up.railway.app/api/submit \
+     -H "Content-Type: application/json" \
+     -d '{
+       "course_name": "Test Course",
+       "university_name": "Test University",
+       "book_title": "Test Book",
+       "book_author": "Test Author"
+     }'
+   ```
+   Expected: Returns `job_id`
+
+3. **Check Job Status:**
+   ```bash
+   curl https://your-railway-domain.up.railway.app/api/status/{job_id}
+   ```
+   Expected: Returns job status (`queued`, `running`, `completed`, or `failed`)
+
+4. **Monitor Worker Logs:**
+   - Go to Railway dashboard → Deployments → Latest
+   - Filter logs by `worker` process
+   - You should see Celery processing the job
+
+**Check Redis Connection:**
+
+In Railway logs, verify:
+- ✅ No Redis connection errors
+- ✅ Worker successfully connected to Redis
+- ✅ Tasks are being enqueued and consumed
+
+---
+
+### 13.3 Common Deployment Issues
+
+#### Issue 1: Worker Not Starting
+
+**Symptoms:**
+- Only see `web` process logs
+- No Celery startup messages
+- Jobs stay in `queued` status forever
+
+**Causes:**
+- Procfile not detected
+- Worker process crashed during startup
+- Missing dependencies
+
+**Fixes:**
+1. Verify `Procfile` exists in repository root
+2. Check Railway deployment logs for errors
+3. Ensure `celery` is in `requirements.txt`
+4. Verify `REDIS_URL` is set correctly
+
+#### Issue 2: Redis Connection Failed
+
+**Symptoms:**
+```
+celery.exceptions.ImproperlyConfigured: CELERY_BROKER_URL is not set
+```
+or
+```
+redis.exceptions.ConnectionError: Error connecting to Redis
+```
+
+**Fixes:**
+1. Verify `REDIS_URL` environment variable is set
+2. Check Redis Cloud database is active
+3. Verify Redis URL format: `redis://default:PASSWORD@HOST:PORT`
+4. Check Redis Cloud firewall allows Railway IPs (usually not an issue)
+5. Test Redis connection:
+   ```bash
+   railway run python -c "from redis import Redis; r=Redis.from_url('$REDIS_URL'); print(r.ping())"
+   ```
+
+#### Issue 3: Environment Variables Not Loading
+
+**Symptoms:**
+- Missing API keys errors
+- Database connection failed
+- Application crashes on startup
+
+**Fixes:**
+1. Go to Railway Variables tab
+2. Verify all required variables are set
+3. Check for typos in variable names
+4. Redeploy after adding variables (click "Deploy" → "Redeploy")
+
+#### Issue 4: Port Binding Error
+
+**Symptoms:**
+```
+Error binding to 0.0.0.0:8000
+```
+
+**Cause:**
+- Using hardcoded port instead of `$PORT`
+
+**Fix:**
+- Procfile should use `$PORT`, not `8000`:
+  ```
+  web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+  ```
+
+#### Issue 5: Jobs Not Being Processed
+
+**Symptoms:**
+- Jobs stuck in `queued` status
+- Worker logs show "ready" but no task execution
+
+**Fixes:**
+1. Check worker logs for errors
+2. Verify queue names match:
+   - `backend/celery_app.py` defines queues
+   - Procfile worker listens to correct queues
+3. Manually test task:
+   ```python
+   from backend.tasks import run_crew_task
+   result = run_crew_task.delay("test-job-id", {...})
+   ```
+
+---
+
+### 13.4 Monitoring and Maintenance
+
+#### Monitoring Checklist
+
+**Daily:**
+- [ ] Check Railway dashboard for any crashed processes
+- [ ] Monitor error rate in logs
+- [ ] Check queue depth (jobs waiting to be processed)
+
+**Weekly:**
+- [ ] Review worker processing times
+- [ ] Check Redis memory usage
+- [ ] Monitor Railway resource usage (CPU, memory)
+- [ ] Review cost dashboard
+
+**Monthly:**
+- [ ] Optimize worker count based on traffic patterns
+- [ ] Review and optimize database queries
+- [ ] Update dependencies (`pip list --outdated`)
+
+#### Key Metrics to Track
+
+1. **Queue Depth:** How many jobs waiting
+   - Check Redis: `LLEN crew_jobs` command
+   - Goal: Keep under 10-20 for good latency
+
+2. **Worker Utilization:** Are workers busy or idle?
+   - Check Celery logs for task start/complete messages
+   - Scale up if workers constantly busy
+   - Scale down if workers mostly idle
+
+3. **Job Duration:** How long jobs take
+   - Add logging in `backend/tasks.py`
+   - Track P50, P95, P99 durations
+   - Optimize slow jobs
+
+4. **Error Rate:** Failed jobs
+   - Monitor Railway logs for exceptions
+   - Check job status distribution in database
+   - Investigate and fix failed job patterns
+
+#### Useful Railway CLI Commands
+
+```bash
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Login
+railway login
+
+# View logs (live)
+railway logs
+
+# View logs (worker only)
+railway logs --filter worker
+
+# Run command in Railway environment
+railway run python scripts/test.py --redis
+
+# SSH into Railway container (Pro plan)
+railway shell
+```
+
+---
+
+### 13.5 Scaling Strategy
+
+#### When to Scale UP (More Resources per Instance)
+
+**Symptoms:**
+- High CPU usage (>80% sustained)
+- High memory usage (>80%)
+- API response times increasing
+- Worker tasks timing out
+
+**Actions:**
+1. Go to Railway Settings → Resources
+2. Increase CPU/Memory allocation
+3. Monitor performance improvement
+
+#### When to Scale OUT (More Instances)
+
+**Symptoms:**
+- Queue depth consistently high (>20 jobs)
+- API response time high despite low CPU
+- Workers can't keep up with job submissions
+
+**Actions:**
+
+**Scale Workers:**
+1. Go to Railway service settings
+2. Increase replica count for worker process
+3. Start with +1 worker, monitor queue depth
+4. Continue scaling until queue depth is healthy
+
+**Scale API:**
+1. Less common to need multiple API instances initially
+2. Scale when API CPU/memory is high
+3. Ensure Redis-backed rate limiting is active
+4. Railway will load balance across API instances
+
+#### Cost-Effective Scaling Tips
+
+1. **Scale workers first** - Usually the bottleneck
+2. **Use autoscaling** (Pro plan) - Only pay for what you need
+3. **Monitor queue depth** - Scale based on data, not guesses
+4. **Optimize job duration** - Faster jobs = need fewer workers
+5. **Use caching** - Reduce redundant work
+6. **Schedule heavy tasks** - Run during off-peak hours if possible
+
+---
+
+### 13.6 Deployment Checklist
+
+Before going live with production traffic:
+
+**Pre-Deployment:**
+- [ ] All tests pass locally (`python scripts/test.py --all`)
+- [ ] Redis Cloud database created and accessible
+- [ ] All environment variables documented
+- [ ] Frontend updated with Railway API URL
+- [ ] CORS settings updated in `backend/main.py` (if needed)
+
+**Deployment:**
+- [ ] Railway project created from GitHub
+- [ ] All environment variables set in Railway
+- [ ] Both `web` and `worker` processes running
+- [ ] Health check endpoint returns 200 OK
+- [ ] Test job submission and completion works
+- [ ] Redis connection successful (check logs)
+
+**Post-Deployment:**
+- [ ] Monitor logs for 1 hour for any errors
+- [ ] Submit real test job and verify completion
+- [ ] Check worker is processing jobs correctly
+- [ ] Verify rate limiting works across requests
+- [ ] Set up alerts for critical errors
+- [ ] Document Railway dashboard access for team
+
+**Ongoing:**
+- [ ] Weekly: Review error logs and performance metrics
+- [ ] Monthly: Check Railway costs and optimize
+- [ ] As needed: Scale workers based on queue depth
+- [ ] As needed: Update dependencies and redeploy
+
+---
+
 ## Conclusion
 
 Scaling ScholarSource requires migrating from a thread-based architecture to a queue-based distributed system. The primary changes are:
 
-1. **Task Queue:** Implement RQ or Celery for job processing
+1. **Task Queue:** Implement Celery for job processing
 2. **Worker Separation:** Move job execution to separate worker processes
 3. **Redis Integration:** Use Redis for queue and rate limiting
 4. **Horizontal Scaling:** Enable independent scaling of API and workers
 
-The recommended approach is to start with **RQ** for simplicity, implement in **phases**, and focus on **monitoring** from the beginning. This will enable the system to handle 10-100x more concurrent jobs while maintaining reliability and reasonable costs.
+The recommended approach is to start with **Celery** (chosen), implement in **phases**, and focus on **monitoring** from the beginning. This will enable the system to handle 10-100x more concurrent jobs while maintaining reliability and reasonable costs.
 
 **Estimated Timeline:** 3-4 weeks for full implementation
 **Estimated Cost Increase:** $10-50/month for Phase 1, scaling up with usage
 **Risk Level:** Medium (significant architecture change, but well-understood patterns)
 
+**Current Status:** Phase 1 Steps 1-5 Complete ✅
+- Celery configured and tested
+- Worker process created and tested
+- Ready for Railway deployment
+
 ---
 
-**Document Status:** Draft - Ready for review and implementation planning
-
+**Document Status:** Implementation in progress - Phase 1 near completion
