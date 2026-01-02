@@ -35,7 +35,6 @@ scholar_source/
 │   │   ├── pages/
 │   │   │   └── HomePage.jsx
 │   │   ├── components/
-│   │   │   ├── CourseForm.jsx
 │   │   │   └── ResultsTable.jsx
 │   │   └── api/
 │   │       └── client.js

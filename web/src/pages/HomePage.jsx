@@ -36,12 +36,14 @@ export default function HomePage() {
     topics_list: '',
     desired_resource_types: [],
     excluded_sites: '',
+    targeted_sites: '',
     bypass_cache: false
   });
   const [validationError, setValidationError] = useState('');
   const [isResourceTypesExpanded, setIsResourceTypesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
   const [isExcludeSitesExpanded, setIsExcludeSitesExpanded] = useState(false);
+  const [isTargetSitesExpanded, setIsTargetSitesExpanded] = useState(false);
 
 
   // Form handlers
@@ -79,6 +81,7 @@ export default function HomePage() {
       topics_list: formData.topics_list,
       desired_resource_types: formData.desired_resource_types,
       excluded_sites: formData.excluded_sites,
+      targeted_sites: formData.targeted_sites,
       bypass_cache: formData.bypass_cache
     });
   };
@@ -105,12 +108,14 @@ export default function HomePage() {
       topics_list: '',
       desired_resource_types: [],
       excluded_sites: '',
+      targeted_sites: '',
       bypass_cache: false
     });
     setValidationError('');
     setIsResourceTypesExpanded(false);
     setIsFocusTopicsExpanded(false);
     setIsExcludeSitesExpanded(false);
+    setIsTargetSitesExpanded(false);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -508,6 +513,46 @@ export default function HomePage() {
                 </div>
               </div>
 
+
+              {/* Target Sites Accordion */}
+              <div className="accordion accordion-blue mb-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTargetSitesExpanded(!isTargetSitesExpanded)}
+                  className="accordion-header accordion-header-blue"
+                >
+                  <div className="accordion-header-content">
+                    <span className="accordion-title">🎯 Target Specific Sites</span>
+                    <OptionalBadge />
+                  </div>
+                  <svg className={`accordion-icon ${isTargetSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isTargetSitesExpanded && (
+                  <div className="accordion-body accordion-body-blue">
+                    <TextLabel htmlFor="targeted_sites">
+                      Target Domains
+                    </TextLabel>
+                    <div className="mt-1">
+                      <TextInput
+                        as="textarea"
+                        id="targeted_sites"
+                        name="targeted_sites"
+                        value={formData.targeted_sites}
+                        onChange={handleChange}
+                        placeholder="e.g., stanford.edu, berkeley.edu, myuniversity.edu"
+                        rows="2"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <HelperText>
+                      💡 Enter domain names separated by commas to prioritize results from specific sites
+                    </HelperText>
+                  </div>
+                )}
+              </div>
+              
               {/* Exclude Sites Accordion */}
               <div className="accordion accordion-red mb-2">
                 <button
@@ -546,6 +591,7 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
+
 
             {/* Validation Error */}
             {validationError && (

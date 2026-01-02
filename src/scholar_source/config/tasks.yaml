@@ -78,7 +78,7 @@ course_analysis_task:
 
     **IMPORTANT:** Focused topics lead to better resource matching. A course covering "Chapters 1-5" should have 5 topic areas, not 15.
 
-    Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list}, {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url}, {desired_resource_types}
+    Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list}, {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url}, {desired_resource_types}, {targeted_sites}
   expected_output: >
     A structured analysis containing:
 
@@ -114,6 +114,15 @@ course_analysis_task:
 resource_search_task:
   description: >
     Search for 5-7 high-quality resources from USA-based institutions matching the course topics.
+
+    **USER-TARGETED SITES (HIGH PRIORITY):**
+    Check the {targeted_sites} input parameter. If provided, PRIORITIZE resources from domains in this list.
+    - Parse targeted_sites as comma-separated domain names (e.g., "stanford.edu, berkeley.edu, myschool.edu")
+    - When searching, add "site:[domain]" to your search queries to find resources from these specific sites
+    - Example: If user specified "stanford.edu", search "statics practice problems site:stanford.edu"
+    - Try to find at least 2-3 resources from targeted sites if they exist and match the course topics
+    - This is useful when students want resources from their own institution or specific universities
+    - If no quality resources found from targeted sites, proceed with general search
 
     **USER-EXCLUDED SITES (CRITICAL):**
     Check the {excluded_sites} input parameter. If provided, REJECT any resource from domains in this list.

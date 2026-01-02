@@ -92,7 +92,7 @@ def run_crew_task(
         required_keys = [
             'university_name', 'course_name', 'course_url', 'textbook',
             'topics_list', 'book_title', 'book_author', 'isbn',
-            'book_pdf_path', 'book_url', 'desired_resource_types', 'excluded_sites'
+            'book_pdf_path', 'book_url', 'desired_resource_types', 'excluded_sites', 'targeted_sites'
         ]
 
         for key in required_keys:
