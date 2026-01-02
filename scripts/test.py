@@ -270,6 +270,64 @@ def test_file_structure():
     return all_ok
 
 
+def test_rate_limiting_config():
+    """Test rate limiting configuration (checks Redis usage)."""
+    print("\n" + "=" * 60)
+    print("TEST: Rate Limiting Configuration")
+    print("=" * 60)
+
+    try:
+        from backend.rate_limiter import limiter
+        import redis
+        
+        redis_url = os.getenv('REDIS_URL')
+        
+        if redis_url:
+            # Should be using Redis
+            print(f'✅ REDIS_URL is set')
+            
+            # Verify Redis connection works
+            try:
+                redis_client = redis.from_url(redis_url)
+                redis_client.ping()
+                print('✅ Redis connection verified')
+                
+                # Check if limiter is using Redis storage
+                if hasattr(limiter, '_storage') and hasattr(limiter._storage, 'connection_pool'):
+                    print('✅ Rate limiter is using Redis storage')
+                else:
+                    print('⚠️  Rate limiter storage type unclear (may still be using Redis)')
+                
+            except Exception as e:
+                print(f'❌ Redis connection failed: {e}')
+                return False
+        else:
+            # Should allow in-memory if explicitly set
+            allow_in_memory = os.getenv('ALLOW_IN_MEMORY_RATE_LIMIT', 'false').lower() in ('true', '1', 'yes')
+            if allow_in_memory:
+                print('⚠️  Using in-memory rate limiting (ALLOW_IN_MEMORY_RATE_LIMIT is set)')
+                print('   This is OK for development, but Redis is required for production')
+            else:
+                print('❌ REDIS_URL not set and ALLOW_IN_MEMORY_RATE_LIMIT not enabled')
+                print('   Rate limiting requires Redis for production deployments')
+                return False
+        
+        print(f'✅ Rate limiter initialized successfully')
+        return True
+        
+    except ValueError as e:
+        if 'REDIS_URL' in str(e):
+            print(f'⚠️  {e}')
+            print('   Set REDIS_URL or ALLOW_IN_MEMORY_RATE_LIMIT=true for development')
+            return False
+        raise
+    except Exception as e:
+        print(f'❌ Rate limiting config test failed: {e}')
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def test_rate_limiting():
     """Test API rate limiting (requires running server)."""
     print("\n" + "=" * 60)
@@ -341,6 +399,7 @@ def run_all_tests():
         ('Imports', test_imports),
         ('Celery Configuration', test_celery_config),
         ('Redis Connection', test_redis_connection),
+        ('Rate Limiting Configuration', test_rate_limiting_config),
         ('Task Queue Configuration', test_task_queue_config),
         ('Refactored Runner', test_refactored_runner),
     ]
@@ -408,6 +467,8 @@ Examples:
                        help='Test task queue configuration')
     parser.add_argument('--api', action='store_true',
                        help='Test API rate limiting (requires running server)')
+    parser.add_argument('--rate-limit', action='store_true',
+                       help='Test rate limiting configuration')
 
     args = parser.parse_args()
 
@@ -434,6 +495,8 @@ Examples:
         results.append(('Task Queue Config', test_task_queue_config()))
     if args.refactored:
         results.append(('Refactored Runner', test_refactored_runner()))
+    if args.rate_limit:
+        results.append(('Rate Limiting Config', test_rate_limiting_config()))
     if args.api:
         results.append(('API Rate Limiting', test_rate_limiting()))
 

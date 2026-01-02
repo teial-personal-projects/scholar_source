@@ -2,10 +2,11 @@
 Rate Limiting Configuration
 
 Implements rate limiting for API endpoints using slowapi.
-Automatically uses Redis if REDIS_URL is set, otherwise falls back to in-memory.
+Uses Redis for distributed rate limiting across multiple instances.
 
 ⚠️  IMPORTANT: In-memory storage only works for single-instance deployments!
-    If you scale to multiple Railway instances, you MUST use Redis.
+    For production/scaling, REDIS_URL is required.
+    In-memory mode is only allowed when ALLOW_IN_MEMORY_RATE_LIMIT is explicitly set.
 """
 
 import os
@@ -16,24 +17,32 @@ from fastapi import Request
 from starlette.responses import JSONResponse
 
 
-# Check for Redis connection string (for multi-instance deployments)
+# Check for Redis connection string (required for production/scaling)
 REDIS_URL = os.getenv("REDIS_URL")
+ALLOW_IN_MEMORY = os.getenv("ALLOW_IN_MEMORY_RATE_LIMIT", "false").lower() in ("true", "1", "yes")
 
 if REDIS_URL:
-    # Multi-instance: Use Redis for shared rate limiting across instances
+    # Production: Use Redis for shared rate limiting across instances
     limiter = Limiter(
         key_func=get_remote_address,
         storage_uri=REDIS_URL,
         default_limits=["1000/hour"]
     )
     print("✅ Rate limiting: Redis (multi-instance mode)")
-else:
-    # Single instance: Use in-memory storage
+elif ALLOW_IN_MEMORY:
+    # Development/Testing: Use in-memory storage (only when explicitly allowed)
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=["1000/hour"]
     )
-    print("⚠️  Rate limiting: In-memory (single instance only)")
+    print("⚠️  Rate limiting: In-memory (development mode only - single instance)")
+else:
+    # Production without Redis: Raise error
+    raise ValueError(
+        "REDIS_URL environment variable is required for rate limiting. "
+        "Set REDIS_URL to your Redis connection string, or set "
+        "ALLOW_IN_MEMORY_RATE_LIMIT=true for local development/testing only."
+    )
 
 
 def rate_limit_handler(request: Request, exc: RateLimitExceeded):
