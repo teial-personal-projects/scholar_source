@@ -7,6 +7,12 @@ Tasks are executed by Celery workers in separate processes.
 
 import sys
 import os
+
+# Force unbuffered output and terminal-like behavior for Rich/CrewAI
+os.environ["PYTHONUNBUFFERED"] = "1"
+os.environ["FORCE_COLOR"] = "1"  # Force Rich to output colors/formatting
+os.environ["TERM"] = "xterm-256color"  # Pretend we're in a terminal
+
 import re
 import asyncio
 import traceback
@@ -263,8 +269,22 @@ async def _run_crew_async(crew, inputs: Dict[str, str], job_id: str):
     Returns:
         Crew execution result
     """
-    logger.info(f"Running crew kickoff_async for job {job_id}")
+    # Flush before crew execution
+    sys.stdout.flush()
+    sys.stderr.flush()
+    
+    logger.info(f"[CrewAI] Starting crew.kickoff_async for job {job_id}")
+    print(f"[CrewAI] === CREW EXECUTION START === job_id={job_id}", flush=True)
+    
     result = await crew.kickoff_async(inputs=inputs)
+    
+    # Flush after crew execution
+    sys.stdout.flush()
+    sys.stderr.flush()
+    
+    print(f"[CrewAI] === CREW EXECUTION END === job_id={job_id}", flush=True)
+    logger.info(f"[CrewAI] Completed crew.kickoff_async for job {job_id}")
+    
     return result
 
 

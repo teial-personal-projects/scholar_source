@@ -107,11 +107,14 @@ class ScholarSource():
         # To learn how to add knowledge sources to your crew, check out the documentation:
         # https://docs.crewai.com/concepts/knowledge#what-is-knowledge
 
+        # verbose=2 for maximum output, or use env var
+        verbose_level = int(os.getenv('CREWAI_VERBOSE', '2'))
+        
         return Crew(
             agents=self.agents, # Automatically created by the @agent decorator
             tasks=self.tasks, # Automatically created by the @task decorator
             process=Process.sequential,
-            verbose=True,
+            verbose=verbose_level,
             max_iter=int(os.getenv('MAX_CREW_ITERATIONS', '15')),  # Read from environment or default to 15
             # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
         )
