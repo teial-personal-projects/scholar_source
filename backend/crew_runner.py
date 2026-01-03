@@ -1,308 +1,143 @@
 """
 CrewAI Runner
 
-Runs the ScholarSource crew asynchronously and manages job status updates with cancellation support.
+Runs the ScholarSource crew using Celery task queue for distributed job processing.
+Replaces the old threading-based approach with a scalable queue-based architecture.
 """
 
 import sys
-import os
-import re
-import asyncio
-import traceback
-from io import StringIO
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 # Add src to path to import ScholarSource
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from scholar_source.crew import ScholarSource
 from backend.jobs import update_job_status, get_job
-from backend.markdown_parser import parse_markdown_to_resources
-# Email service - COMMENTED OUT
-# from backend.email_service import send_results_email
-from backend.cache import (
-    get_cached_analysis,
-    set_cached_analysis
-)
 from backend.logging_config import get_logger
 
 # Get logger for this module
 logger = get_logger(__name__)
 
-# Store active crew tasks so we can cancel them
-_active_tasks = {}
 
-
-def run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None:
+def run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> str:
     """
-    Run the ScholarSource crew asynchronously with cancellation support.
+    Enqueue a ScholarSource crew job to the Celery task queue.
+
+    This function replaces the old threading-based approach with Celery task queue.
+    The actual job execution happens in a separate worker process via the run_crew_task Celery task.
 
     This function:
-    1. Updates job status to 'running'
-    2. Executes the crew with provided inputs using kickoff_async()
-    3. Parses the markdown output into structured resources
-    4. Updates job with results or error
-    5. Supports cancellation via cancel_crew_job()
+    1. Validates the job exists and is in pending status
+    2. Enqueues the job to Celery task queue
+    3. Updates job metadata with Celery task ID
+    4. Returns the Celery task ID for tracking
 
     Args:
         job_id: UUID of the job to run
         inputs: Dictionary of course input parameters
         bypass_cache: If True, bypass cache and get fresh results
+
+    Returns:
+        str: Celery task ID for the enqueued task
+
+    Raises:
+        ValueError: If job doesn't exist or is not in pending status
     """
-    import threading
+    # Import here to avoid circular dependency
+    from backend.tasks import run_crew_task
 
-    def run_in_thread():
-        # Create new event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # Verify job exists and is in correct status
+    job = get_job(job_id)
+    if not job:
+        raise ValueError(f"Job {job_id} does not exist")
 
-        try:
-            loop.run_until_complete(_run_crew_worker(job_id, inputs, bypass_cache=bypass_cache))
-        finally:
-            loop.close()
+    job_status = job.get("status")
+    if job_status not in ["pending", "queued"]:
+        logger.warning(
+            f"Job {job_id} is in status '{job_status}', expected 'pending' or 'queued'. "
+            f"Proceeding with enqueue anyway."
+        )
 
-    thread = threading.Thread(target=run_in_thread, daemon=True)
-    thread.start()
+    # Enqueue the task to Celery
+    logger.info(f"Enqueueing job {job_id} to Celery task queue")
+    celery_result = run_crew_task.apply_async(
+        args=[job_id, inputs, bypass_cache],
+        task_id=None,  # Let Celery generate task ID
+        queue="crew_jobs",  # Use the crew_jobs queue
+        priority=5,  # Default priority (can be adjusted based on user tier, etc.)
+    )
+
+    celery_task_id = celery_result.id
+    logger.info(f"Job {job_id} enqueued with Celery task ID: {celery_task_id}")
+
+    # Update job status to queued with task ID
+    update_job_status(
+        job_id,
+        status="queued",
+        status_message="Job queued for processing",
+        metadata={
+            "celery_task_id": celery_task_id,
+            "bypass_cache": bypass_cache
+        }
+    )
+
+    return celery_task_id
 
 
 def cancel_crew_job(job_id: str) -> bool:
     """
-    Cancel an active crew job by cancelling its async task.
+    Cancel an active crew job by revoking its Celery task.
+
+    This function:
+    1. Retrieves the job and its Celery task ID from the database
+    2. Revokes the Celery task (terminates if running, removes if queued)
+    3. Updates the job status to 'cancelled'
 
     Args:
         job_id: UUID of the job to cancel
 
     Returns:
-        bool: True if task was found and cancelled, False otherwise
+        bool: True if task was found and revoked, False otherwise
     """
-    task = _active_tasks.get(job_id)
-    if task and not task.done():
-        task.cancel()
-        logger.info(f"Cancelled crew task for job {job_id}")
-        return True
-    return False
+    from backend.celery_app import app
 
-
-async def _run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None:
-    """
-    Worker function that runs in background thread.
-
-    Args:
-        job_id: UUID of the job
-        inputs: Course input parameters
-        bypass_cache: If True, bypass cache and get fresh results
-    """
-    # Check if job was cancelled before starting
+    # Get the job to find the Celery task ID
     job = get_job(job_id)
-    if job and job.get("status") == "cancelled":
-        logger.info(f"Job {job_id} was cancelled before execution started")
-        return
+    if not job:
+        logger.warning(f"Cannot cancel job {job_id}: Job not found")
+        return False
 
-    try:
-        # Update status to running
+    # Get Celery task ID from job metadata
+    metadata = job.get("metadata", {})
+    celery_task_id = metadata.get("celery_task_id")
+
+    if not celery_task_id:
+        logger.warning(f"Cannot cancel job {job_id}: No Celery task ID found in metadata")
+        # Still update job status to cancelled for consistency
         update_job_status(
             job_id,
-            status="running",
-            status_message="Initializing CrewAI agents..."
+            status="cancelled",
+            status_message="Job cancelled by user",
+            error="Job was cancelled (no active task found)"
         )
+        return False
 
-        # Normalize inputs - convert None to empty string, but preserve lists for desired_resource_types
-        normalized_inputs = {}
-        for key, value in inputs.items():
-            if key == 'desired_resource_types':
-                # Keep as list (empty list if None or empty)
-                normalized_inputs[key] = value if isinstance(value, list) else ([] if value is None else [])
-            else:
-                normalized_inputs[key] = (value if value is not None else "")
+    # Revoke the Celery task
+    # terminate=True will kill the worker processing the task (if it's running)
+    # signal='SIGTERM' is a graceful termination signal
+    logger.info(f"Revoking Celery task {celery_task_id} for job {job_id}")
+    app.control.revoke(celery_task_id, terminate=True, signal='SIGTERM')
 
-        # Ensure all required keys exist
-        required_keys = [
-            'university_name', 'course_name', 'course_url', 'textbook',
-            'topics_list', 'book_title', 'book_author', 'isbn',
-            'book_pdf_path', 'book_url', 'desired_resource_types', 'excluded_sites'
-        ]
+    # Update job status to cancelled
+    update_job_status(
+        job_id,
+        status="cancelled",
+        status_message="Job cancelled by user",
+        error="Job was cancelled before completion"
+    )
 
-        for key in required_keys:
-            if key not in normalized_inputs:
-                if key == 'desired_resource_types':
-                    normalized_inputs[key] = []
-                else:
-                    normalized_inputs[key] = ""
-
-        # Check cache for course analysis
-        cached_analysis = get_cached_analysis(
-            normalized_inputs,
-            cache_type="analysis",
-            bypass_cache=bypass_cache
-        )
-
-        if cached_analysis:
-            logger.info(f"✅ CACHE HIT - Job {job_id}: Using cached course analysis")
-            logger.debug(f"Cache data: textbook_title={cached_analysis.get('textbook_title', 'N/A')}")
-            update_job_status(
-                job_id,
-                status="running",
-                status_message="Using cached course analysis, discovering resources..."
-            )
-        else:
-            cache_reason = "bypass_cache=True" if bypass_cache else "no cached data found"
-            logger.info(f"❌ CACHE MISS - Job {job_id}: Running fresh analysis ({cache_reason})")
-            update_job_status(
-                job_id,
-                status="running",
-                status_message="Analyzing course and book structure..."
-            )
-
-        # Initialize and run crew asynchronously
-        crew_instance = ScholarSource()
-        crew = crew_instance.crew()
-
-        # Log that we're starting the crew
-        logger.info(f"🚀 Starting CrewAI execution for job {job_id}")
-
-        # Create async task for crew execution
-        # Note: CrewAI's verbose=True uses print() statements, not logging
-        # These will go to stdout/stderr and should appear in console
-        crew_task = asyncio.create_task(crew.kickoff_async(inputs=normalized_inputs))
-
-        # Store task so it can be cancelled
-        _active_tasks[job_id] = crew_task
-
-        try:
-            # Wait for crew to complete or be cancelled
-            result = await crew_task
-        except asyncio.CancelledError:
-            logger.info(f"Job {job_id} was cancelled during execution")
-            update_job_status(
-                job_id,
-                status="cancelled",
-                status_message="Job cancelled by user",
-                error="Job was cancelled before completion"
-            )
-            return
-        finally:
-            # Remove from active tasks
-            _active_tasks.pop(job_id, None)
-
-        # Update status
-        update_job_status(
-            job_id,
-            status="running",
-            status_message="Parsing results..."
-        )
-
-        # Extract raw output
-        raw_output = str(result.raw) if hasattr(result, 'raw') else str(result)
-
-        # Try to read the report.md file if it exists
-        report_path = Path("report.md")
-        if report_path.exists():
-            with open(report_path, "r") as f:
-                markdown_content = f.read()
-        else:
-            # Use raw output as fallback
-            markdown_content = raw_output
-
-        # Check if the crew returned an error (e.g., couldn't access sources)
-        if "ERROR:" in markdown_content[:500]:  # Check first 500 chars for error
-            # Extract error message
-            error_match = re.search(r'ERROR:\s*(.+?)(?:\n|$)', markdown_content)
-            error_msg = error_match.group(1) if error_match else "Cannot access provided resources"
-
-            update_job_status(
-                job_id,
-                status="failed",
-                error=error_msg,
-                status_message="Failed to access course or book resources",
-                raw_output=markdown_content[:1000]  # Store first 1000 chars for debugging
-            )
-            return
-
-        # Parse markdown into structured resources and metadata
-        excluded_sites = normalized_inputs.get('excluded_sites', '')
-        parsed_data = parse_markdown_to_resources(markdown_content, excluded_sites=excluded_sites)
-        resources = parsed_data.get("resources", [])
-        textbook_info = parsed_data.get("textbook_info")
-
-        # Cache course analysis results if this was a fresh analysis (cache miss)
-        if not cached_analysis and textbook_info:
-            # Extract course analysis data for caching
-            analysis_results = {
-                "textbook_title": textbook_info.get("title", ""),
-                "textbook_author": textbook_info.get("author", ""),
-                "textbook_source": textbook_info.get("source", ""),
-                # Store raw markdown section for potential future use
-                "raw_analysis": markdown_content[:2000]  # First 2000 chars includes course analysis
-            }
-
-            # Cache the results for future requests
-            set_cached_analysis(normalized_inputs, analysis_results, cache_type="analysis")
-            logger.info(f"💾 CACHE STORED - Job {job_id}: Cached analysis for future use")
-            if textbook_info:
-                logger.debug(f" Cached: title='{textbook_info.get('title', 'N/A')}', author='{textbook_info.get('author', 'N/A')}'")
-
-        # Prepare metadata
-        metadata = {
-            "resource_count": len(resources),
-            "crew_output_length": len(raw_output),
-            "cache_used": bool(cached_analysis)  # Track if cache was used
-        }
-        if textbook_info:
-            metadata["textbook_info"] = textbook_info
-
-        # Check if job was cancelled during execution
-        job = get_job(job_id)
-        if job and job.get("status") == "cancelled":
-            logger.info(f"Job {job_id} was cancelled during execution, discarding results")
-            return
-
-        # Update job with results
-        update_job_status(
-            job_id,
-            status="completed",
-            status_message="Resource discovery completed successfully",
-            results=resources,
-            raw_output=markdown_content,
-            metadata=metadata
-        )
-
-        # Email notification - COMMENTED OUT
-        # email = inputs.get('email')
-        # if email:
-        #     # Get job data for search title
-        #     job = get_job(job_id)
-        #     search_title = job.get('search_title', 'Your Search') if job else 'Your Search'
-        #
-        #     # Send email (non-blocking, failure won't affect job status)
-        #     try:
-        #         send_results_email(
-        #             to_email=email,
-        #             search_title=search_title,
-        #             resources=resources,
-        #             job_id=job_id
-        #         )
-        #     except Exception as email_error:
-        #         logger.warning(f"Failed to send email to {email}: {str(email_error)}")
-
-    except Exception as e:
-        # Log error and update job
-        error_message = str(e)
-        stack_trace = traceback.format_exc()
-
-        logger.error(f"Job {job_id} failed: {error_message}")
-        logger.error(stack_trace)
-
-        update_job_status(
-            job_id,
-            status="failed",
-            error=error_message,
-            status_message="Job failed due to an error",
-            metadata={
-                "error_type": type(e).__name__,
-                "stack_trace": stack_trace
-            }
-        )
+    logger.info(f"Successfully cancelled job {job_id} (Celery task: {celery_task_id})")
+    return True
 
 
 def validate_crew_inputs(inputs: Dict[str, str]) -> bool:
@@ -310,7 +145,7 @@ def validate_crew_inputs(inputs: Dict[str, str]) -> bool:
     Validate that crew inputs meet minimum requirements.
 
     At least one of the following must be provided:
-    - (course_name OR university_name) OR course_url
+    - (course_name AND university_name) OR course_url
     - (book_title AND book_author) OR isbn
     - book_pdf_path
     - book_url
@@ -323,8 +158,7 @@ def validate_crew_inputs(inputs: Dict[str, str]) -> bool:
     """
     # Check for course information
     has_course_info = bool(
-        inputs.get('course_name') or
-        inputs.get('university_name') or
+        (inputs.get('course_name') and inputs.get('university_name')) or
         inputs.get('course_url')
     )
 

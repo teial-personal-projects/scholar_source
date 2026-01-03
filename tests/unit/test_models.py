@@ -11,7 +11,7 @@ from backend.models import (
     JobSubmitResponse,
     Resource,
     JobStatusResponse,
-    TextbookInfo
+    HealthResponse
 )
 
 
@@ -77,6 +77,16 @@ class TestCourseInputRequest:
         request = CourseInputRequest(**data)
 
         assert request.excluded_sites == "khanacademy.org, coursera.org"
+
+    def test_targeted_sites_string(self):
+        """Should accept targeted_sites as string."""
+        data = {
+            "course_url": "https://example.com",
+            "targeted_sites": "stanford.edu, berkeley.edu"
+        }
+        request = CourseInputRequest(**data)
+
+        assert request.targeted_sites == "stanford.edu, berkeley.edu"
 
     def test_bypass_cache_flag(self):
         """Should accept bypass_cache boolean flag."""
@@ -310,33 +320,21 @@ class TestJobStatusResponse:
         assert response.completed_at is None
 
 
-class TestTextbookInfo:
-    """Test TextbookInfo model."""
+class TestHealthResponse:
+    """Test HealthResponse model."""
 
-    def test_valid_textbook_info(self):
-        """Should create valid textbook info."""
+    def test_valid_health_response(self):
+        """Should create valid health response."""
         data = {
-            "title": "Introduction to Algorithms",
-            "author": "Cormen, Leiserson, Rivest, Stein",
-            "edition": "4th",
-            "isbn": "978-0262046305"
+            "status": "healthy",
+            "version": "0.1.0",
+            "database": "connected"
         }
-        textbook = TextbookInfo(**data)
+        health = HealthResponse(**data)
 
-        assert textbook.title == "Introduction to Algorithms"
-        assert textbook.author == "Cormen, Leiserson, Rivest, Stein"
-        assert textbook.edition == "4th"
-        assert textbook.isbn == "978-0262046305"
-
-    def test_textbook_info_all_optional(self):
-        """Should allow all fields to be None."""
-        data = {}
-        textbook = TextbookInfo(**data)
-
-        assert textbook.title is None
-        assert textbook.author is None
-        assert textbook.edition is None
-        assert textbook.isbn is None
+        assert health.status == "healthy"
+        assert health.version == "0.1.0"
+        assert health.database == "connected"
 
 
 class TestModelSerialization:

@@ -1,112 +1,72 @@
 course_analysis_task:
   description: >
-    Analyze course/book info to identify academic discipline and topics. CRITICAL: correctly identify field to prevent off-topic resources.
+    Analyze course page to extract textbook information, topics, and resource URLs.
+    
+    **PRIMARY OBJECTIVE:**
+    Extract textbook title and author from the course page - this is MANDATORY for downstream agents.
+    
+    **WORKFLOW:**
+    1. If course_name and course_university provided (no URL):
+       - Use web search to find official course page URL
+    
+    2. Fetch course page content:
+       - Use "Webpage Content Fetcher" on course_url
+       - Search for textbook in sections: "Materials", "Textbook", "Required Text", "Resources"
+       - Common formats: "Title, Author", "Title by Author", "Title (Author)", multi-line
+       - Parse into separate textbook_title and textbook_author fields
+    
+    3. Extract syllabus (if present):
+       - Convert relative URLs to absolute URLs
+       - Fetch syllabus ONCE using "Webpage Content Fetcher" (HTML or PDF)
+       - Syllabus is authoritative for textbook info and course scope
+    
+    4. Determine topics (priority order):
+       - If user provided topics_list → use as primary focus
+       - Extract from syllabus schedule/outline (shows actual course coverage)
+       - Extract from course description
+       - Cross-reference textbook ToC with syllabus to identify covered chapters only
+       - BE SPECIFIC: "Chapters 3-7" should map to specific chapter titles, not all chapters
+    
+    5. Extract all resource URLs:
+       - List all links to lecture notes, problem sets, exams, videos, etc.
+       - DO NOT navigate to these links (prevents redirect loops)
+       - These URLs will be used by downstream resource search agents
+    
+    **DEPTH RESTRICTION:**
+    - Navigate ONLY to: main course page + syllabus (if found)
+    - Extract but don't navigate to other resources
+    
+    **ERROR HANDLING:**
+    - If course page not accessible: halt with clear message
+    - If no textbook found: set textbook_source="not_found" and continue
+    - If zero topics AND no textbook AND no description: return error asking user to provide topics_list or textbook PDF
+    - Validation: At least one of (user_topics, general_topics, textbook_title) must exist
+    
+    Inputs: {university_name}, {course_name}, {course_url}, {topics_list}, 
+            {desired_resource_types}, {targeted_sites}
 
-    **ABSOLUTE REQUIREMENT - TEXTBOOK EXTRACTION:**
-    Your PRIMARY task is to extract the textbook title and author from the course page. This is MANDATORY.
-    - Use "Webpage Content Fetcher" tool FIRST to get the course page content
-    - Search the content for "Textbook:", "Text:", "Required", "Book:", etc.
-    - You MUST output textbook_title and textbook_author fields if ANY textbook info is found
-    - Example: "Engineering Mechanics: Statics, Bedford, Fowler" → textbook_title="Engineering Mechanics: Statics", textbook_author="Bedford, Fowler"
-    - If you cannot find textbook info after fetching the page, set textbook_source="not_found"
-    - The downstream agents and frontend display depend on these fields - they are CRITICAL
-
-    **DEPTH RESTRICTION - VERY IMPORTANT:**
-    - ONLY navigate to the main course page URL provided by the user
-    - If a syllabus link is found on the main page, you MAY navigate to that ONE additional link (syllabi often contain textbook and topic info)
-    - DO NOT navigate to any other links (lecture notes, assignments, problem sets, etc.) to avoid redirect loops
-    - However, DO extract and list ALL resource URLs found on the course page and syllabus (lecture notes, problem sets, exams, videos, etc.)
-    - These extracted URLs will be used by other agents to find relevant study materials
-    - This prevents infinite redirect loops while still capturing all course resources
-
-    **TOOL USAGE:**
-    1. Use "Webpage Content Fetcher" tool to fetch the full text content of the course URL
-    2. Search the fetched content for textbook information
-    3. Only use WebsiteSearchTool if you need to search within the page after fetching
-
-    **TEXTBOOK EXTRACTION - CRITICAL:**
-    1. Fetch course page using "Webpage Content Fetcher" tool with the course_url
-    2. In the fetched content, look for textbook information with these patterns:
-       - "Textbook:" or "Text:" or "Required text:" or "Required textbook:"
-       - "Book:" or "Required book:"
-       - Look in sections labeled "Materials", "Required Materials", "Course Materials", "Resources"
-    3. The textbook info may appear on the same line, next line, or in nearby lines
-    4. Common formats to handle:
-       - "Textbook: Title, Author1, Author2"
-       - "Text: Title by Author"
-       - "Textbook: Title. Author."
-       - "Title (Author)"
-       - "Author1, Author2, Title" (author-first format)
-       - Multi-line format where title is on one line and author on the next (or vice versa)
-    5. Parsing rules (try in order):
-       - If line contains " by " → split at " by ": before = title, after = author
-       - If line has format "Title (Author)" → extract both
-       - If comma-separated AND contains ":" in textbook context → Look for common author last names (Bedford, Fowler, etc.) at START of text after colon
-         * If first word looks like author name (capitalized, common last name) → everything before last comma = author, after = title
-         * Otherwise → First part before first comma = title, rest = author
-       - If period-separated → Before first/second period = title, after = author
-       - If spread across lines → Look for author patterns (names, "by", "Author:") and title patterns (colons in titles like "Engineering Mechanics: Statics")
-    6. Return separate textbook_title and textbook_author fields
-    7. Also look for syllabus links (may be relative URLs like "../documents/syllabus.pdf")
-
-    **SYLLABUS:** If you find a syllabus link, convert relative URLs to absolute URLs using the course page domain.
-    You SHOULD fetch the syllabus ONCE using "Webpage Content Fetcher" whether it's HTML or PDF - syllabi are the authoritative source for textbook and topic info.
-    Extract textbook info and topics from syllabus.
-
-    **CRITICAL - NARROW TOPIC SCOPE:** When extracting topics from the syllabus:
-    - ONLY include topics/chapters that are explicitly referenced in the syllabus schedule/outline
-    - If syllabus says "Chapters 1-5" or "Sections 3.1-3.4", ONLY include those specific chapters/sections
-    - If syllabus lists specific topics by name (e.g., "Week 1: Vectors, Week 2: Forces"), ONLY include those topics
-    - DO NOT include all chapters from the textbook table of contents - only what the syllabus actually covers
-    - This ensures resource search is focused on what the course actually teaches, not the entire textbook
-
-    **TEXTBOOK TABLE OF CONTENTS:** If you found a textbook title and author, you may search the web
-    for "[title] [author] table of contents" to get chapter topics (optional, only if needed for topics).
-    IMPORTANT: If you have a syllabus, cross-reference the ToC with the syllabus to identify ONLY the chapters/sections the course covers.
-
-    **TOPICS:**
-    - **IF user provided topics_list:** Use those topics as PRIMARY focus. Still identify general course subject, but mark user topics as the priority search targets.
-    - **IF NO topics_list:** Extract topics ONLY from what the course actually covers (syllabus schedule, course description). DO NOT include all textbook chapters.
-    - **PRIORITY ORDER for topic extraction:**
-      1. Syllabus schedule/outline (most authoritative - shows what course actually covers)
-      2. Course description/overview (shows course focus)
-      3. Textbook ToC cross-referenced with syllabus (ONLY chapters/sections the syllabus references)
-    - **BE SPECIFIC:** If syllabus says "Chapters 3-7", map those to actual chapter titles from ToC (e.g., "Forces", "Equilibrium", "Structures", "Friction", "Virtual Work")
-    - Always include both user_specified_topics (if any) and general_course_topics in output so downstream agents know what to prioritize.
-
-    **ERROR IF:** Zero topics AND no textbook found AND no course description → "ERROR: Cannot determine course topics. Provide textbook PDF or topics list."
-
-    **IMPORTANT:** Focused topics lead to better resource matching. A course covering "Chapters 1-5" should have 5 topic areas, not 15.
-
-    Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list}, {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url}, {desired_resource_types}
   expected_output: >
-    A structured analysis containing:
-
-    - course_title: The course name from the course page (e.g., "Engineering Analysis II")
-    - course_number: The course number (e.g., "GEN_ENG 205-2")
-    - textbook_title: Full textbook title (e.g., "Engineering Mechanics: Statics") - REQUIRED if found on page
-    - textbook_author: Author name(s) (e.g., "Bedford, Fowler") - REQUIRED if found on page
-    - textbook_edition: Edition if specified (e.g., "5th edition")
+    JSON object containing:
+    
+    **Required fields:**
+    - course_title: Course name from page
+    - course_number: Course code
+    - textbook_title: Full title (null if not found)
+    - textbook_author: Author(s) (null if not found)
+    - textbook_source: "course_page" | "user_provided" | "not_found"
+    - search_priority: "user_topics" | "general_topics"
+    
+    **Topic fields:**
+    - user_specified_topics: From topics_list input (empty array if none)
+    - general_course_topics: All topics from syllabus/course (focused on actual coverage)
+    - subject_keywords: Descriptive keywords for subject area
+    
+    **Optional fields:**
+    - textbook_edition: Edition if specified
     - textbook_isbn: ISBN if found
-    - textbook_source: Where textbook info came from ("course_page", "user_provided", "not_found")
-    - syllabus_url: URL to syllabus if found on course page
-    - user_specified_topics: Topics from user's topics_list input (e.g., ["line integrals", "surface integrals"]) - EMPTY if not provided
-    - general_course_topics: Comprehensive list of ALL topics from textbook ToC, syllabus, course page
-      (e.g., ["Vectors", "Forces", "Systems of Forces and Moments", "Equilibrium", "Structures",
-      "Centroids", "Centers of Mass", "Moments of Inertia", "Friction", "Internal Forces", "Virtual Work"])
-    - search_priority: "user_topics" if user_specified_topics is non-empty, otherwise "general_topics"
-    - course_level: "introductory" | "intermediate" | "advanced" | "professional"
-    - subject_keywords: List of keywords describing the subject based on topics (e.g., ["statics", "mechanics", "forces", "equilibrium"])
-
-    **CRITICAL OUTPUT REQUIREMENT:**
-    After running ALL WebsiteSearchTool queries, examine the results for textbook information:
-    - Look for book titles containing colons (e.g., "Engineering Mechanics: Statics")
-    - Look for author last names (e.g., "Bedford", "Fowler")
-    - If you see BOTH together (e.g., "Engineering Mechanics: Statics, Bedford, Fowler"), parse into separate fields
-    - Split by first comma: everything before = title, everything after = author(s)
-    - You MUST output textbook_title and textbook_author if found, even if format is ambiguous
-    - If uncertain about parsing, include both fields with your best interpretation
-    - These fields are CRITICAL for the frontend display
+    - syllabus_url: Link to syllabus
+    - resource_urls: List of all resource links found
+    - course_level: "introductory" | "intermediate" | "advanced"
 
     Format as a clean JSON object or structured text that subsequent agents can easily parse.
   agent: course_intelligence_agent
@@ -114,6 +74,15 @@ course_analysis_task:
 resource_search_task:
   description: >
     Search for 5-7 high-quality resources from USA-based institutions matching the course topics.
+
+    **USER-TARGETED SITES (HIGH PRIORITY):**
+    Check the {targeted_sites} input parameter. If provided, PRIORITIZE resources from domains in this list.
+    - Parse targeted_sites as comma-separated domain names (e.g., "stanford.edu, berkeley.edu, myschool.edu")
+    - When searching, add "site:[domain]" to your search queries to find resources from these specific sites
+    - Example: If user specified "stanford.edu", search "statics practice problems site:stanford.edu"
+    - Try to find at least 2-3 resources from targeted sites if they exist and match the course topics
+    - This is useful when students want resources from their own institution or specific universities
+    - If no quality resources found from targeted sites, proceed with general search
 
     **USER-EXCLUDED SITES (CRITICAL):**
     Check the {excluded_sites} input parameter. If provided, REJECT any resource from domains in this list.

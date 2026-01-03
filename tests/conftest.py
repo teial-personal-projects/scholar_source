@@ -25,8 +25,9 @@ def test_env():
     # Suppress logs during tests
     os.environ["LOG_LEVEL"] = "ERROR"
 
-    # Use in-memory rate limiting (not Redis)
+    # Use in-memory rate limiting for tests (not Redis)
     os.environ.pop("REDIS_URL", None)
+    os.environ["ALLOW_IN_MEMORY_RATE_LIMIT"] = "true"
 
     # Set test Supabase credentials (mocked, not real)
     os.environ["SUPABASE_URL"] = "https://test.supabase.co"

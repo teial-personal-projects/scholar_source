@@ -35,7 +35,6 @@ scholar_source/
 │   │   ├── pages/
 │   │   │   └── HomePage.jsx
 │   │   ├── components/
-│   │   │   ├── CourseForm.jsx
 │   │   │   └── ResultsTable.jsx
 │   │   └── api/
 │   │       └── client.js
@@ -192,7 +191,18 @@ uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 
 Backend will be available at: http://localhost:8000
 
-**Terminal 2 - Start Frontend:**
+**Terminal 2 - Start Celery Worker:**
+```bash
+# From project root
+./scripts/start_worker.sh
+
+# Or manually:
+celery -A backend.celery_app worker --loglevel=info --queues=crew_jobs,default --concurrency=2
+```
+
+The worker processes jobs from the task queue. **Required** for job execution.
+
+**Terminal 3 - Start Frontend:**
 ```bash
 # From web/ directory
 cd web
@@ -255,10 +265,12 @@ Open http://localhost:5173 in your browser - you should see the course input for
 | `SERPER_API_KEY` | ✅ Yes | Serper API key for web search | - |
 | `SUPABASE_URL` | ✅ Yes | Supabase project URL | - |
 | `SUPABASE_KEY` | ✅ Yes | Supabase anon key | - |
+| `REDIS_URL` | ✅ Yes | Redis connection for task queue & rate limiting | `redis://localhost:6379/0` |
 | `COURSE_ANALYSIS_TTL_DAYS` | No | Cache TTL for course analysis (days) | 30 |
 | `RESOURCE_RESULTS_TTL_DAYS` | No | Cache TTL for full results (days) | 7 |
-| `REDIS_URL` | No | Redis connection string (for multi-instance) | - |
 | `ALLOWED_ORIGINS` | No | CORS allowed origins (comma-separated) | - |
+
+**Note:** `REDIS_URL` is now required for production deployments. Get a free Redis instance from [Redis Cloud](https://redis.com/try-free/).
 
 ---
 

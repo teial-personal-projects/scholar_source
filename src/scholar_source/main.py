@@ -95,7 +95,7 @@ def validate_inputs(inputs):
     """
     # Check for valid input combinations
     has_course_info = (
-        (inputs.get('course_name') or inputs.get('university_name')) or 
+        (inputs.get('course_name') and inputs.get('university_name')) or 
         inputs.get('course_url')
     )
     

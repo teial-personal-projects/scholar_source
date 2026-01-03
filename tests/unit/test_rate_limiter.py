@@ -18,12 +18,12 @@ class TestRateLimiter:
         assert limiter is not None
         assert hasattr(limiter, 'limit')
 
-    def test_limiter_uses_in_memory_by_default(self, monkeypatch):
-        """Should use in-memory storage when REDIS_URL not set."""
-        monkeypatch.delenv("REDIS_URL", raising=False)
-
+    def test_limiter_uses_in_memory_when_allowed(self):
+        """Should use in-memory storage when ALLOW_IN_MEMORY_RATE_LIMIT is set (via conftest)."""
+        # In test environment, ALLOW_IN_MEMORY_RATE_LIMIT is set in conftest.py
         # Limiter should exist (using in-memory storage)
         assert limiter is not None
+        assert hasattr(limiter, 'limit')
 
     def test_limiter_has_default_limits(self):
         """Should have default rate limits configured."""

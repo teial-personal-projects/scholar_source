@@ -468,11 +468,37 @@ def _extract_textbook_info(content: str) -> Dict[str, str]:
     Returns:
         Dict with 'title', 'author', and 'source' keys, or None if not found
     """
-    # Try to find textbook information section
+
+    # First, try to find a structured "Textbook Information" section with separate fields
+    # Format: ## Textbook Information
+    #         **Textbook:** Title
+    #         **Author:** Author Name
+    section_match = re.search(
+        r'#+\s*(?:Textbook Information|Course Textbook|Official Textbook)[:\s]*\n(.*?)(?=\n#|\n---|\Z)',
+        content,
+        re.IGNORECASE | re.DOTALL
+    )
+    
+    if section_match:
+        section = section_match.group(1)
+        
+        # Look for **Textbook:** or **Title:** pattern
+        title_match = re.search(r'\*\*(?:Textbook|Title|Book):\*\*\s*([^\n]+)', section, re.IGNORECASE)
+        title = title_match.group(1).strip() if title_match else None
+        
+        # Look for **Author:** pattern
+        author_match = re.search(r'\*\*Authors?:\*\*\s*([^\n]+)', section, re.IGNORECASE)
+        author = author_match.group(1).strip() if author_match else None
+        
+        # Look for **Source:** pattern
+        source_match = re.search(r'\*\*Source:\*\*\s*([^\n]+)', section, re.IGNORECASE)
+        source = source_match.group(1).strip() if source_match else None
+        
+        if title or author:
+            return {"title": title, "author": author, "source": source}
+    
+    # Fallback: Try individual line patterns
     textbook_patterns = [
-        r'#+ Textbook Information[:\n]+(.*?)(?=\n#|$)',
-        r'#+ Course Textbook[:\n]+(.*?)(?=\n#|$)',
-        r'#+ Official Textbook[:\n]+(.*?)(?=\n#|$)',
         r'\*\*Textbook:\*\*\s*([^\n]+)',
         r'\*\*Text:\*\*\s*([^\n]+)',
         r'\*\*Official Textbook:\*\*\s*([^\n]+)',
@@ -530,8 +556,8 @@ def _extract_textbook_info(content: str) -> Dict[str, str]:
                                 "source": None
                             }
 
-            # Extract title
-            title_match = re.search(r'(?:\*\*)?(?:Title|Book)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
+            # Extract title (matches Title:, Book:, or Textbook:)
+            title_match = re.search(r'(?:\*\*)?(?:Title|Book|Textbook)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
             title = title_match.group(1).strip() if title_match else None
 
             # Extract author(s)

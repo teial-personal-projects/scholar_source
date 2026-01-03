@@ -243,8 +243,7 @@ Frontend Domain
 - ❌ **Trade-off:** Initial page load slightly slower than SSR (acceptable for this use case)
 
 **Key Components:**
-- HomePage (main container, state management)
-- CourseForm (input validation, form handling)
+- HomePage (main container, state management, inline form handling)
 - ResultsTable (display, filtering, sorting)
 - Status polling (client-side, 2-second intervals)
 
@@ -426,11 +425,12 @@ The user interface follows a **single-page application** pattern with client-sid
 ```
 HomePage (container)
 ├── Hero (intro section)
-├── CourseForm (input form)
+├── Search Form (inline in HomePage)
 │   ├── Search type selector
 │   ├── Input fields (conditional display)
+│   ├── Optional accordions (Resource Types, Focus Topics, Exclude Sites, Target Sites)
 │   └── Submit/reset buttons
-├── LoadingStatus (polling display)
+├── InlineSearchStatus (polling display)
 └── ResultsTable (results display)
     ├── Filter controls
     ├── Resource cards

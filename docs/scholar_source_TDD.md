@@ -440,48 +440,43 @@ The polling is implemented using `useEffect` hook:
 - Stops polling when job completes, fails, or is cancelled
 - Cleans up interval on unmount or jobId change
 
-### 4.2 CourseForm Component (`web/src/components/CourseForm.jsx`)
+### 4.2 Search Form (Inline in `web/src/pages/HomePage.jsx`)
+
+The search form is implemented inline within HomePage rather than as a separate component.
 
 #### 4.2.1 Form Fields
 
 **Search Type Selector:**
-- Dropdown with options: course_url, book_info, isbn, topics
+- Dropdown with options: course_url, book_url, book_title_author, isbn
 - Controls which input fields are shown
 
-**Course Information Fields:**
-- `university_name` - Text input
-- `course_name` - Text input
-- `course_url` - URL input with validation
+**Dynamic Input Fields (based on search type):**
+- `course_url` - URL input (shown when "Course URL" selected)
+- `book_url` - URL input (shown when "Book URL" selected)
+- `book_title` + `book_author` - Text inputs (shown when "Book Title + Author" selected)
+- `isbn` - Text input (shown when "Book ISBN" selected)
 
-**Book Information Fields:**
-- `book_title` - Text input
-- `book_author` - Text input
-- `isbn` - Text input
-- `book_url` - URL input
-
-**Filter Fields:**
-- `desired_resource_types` - Checkboxes (textbooks, practice_problem_sets, etc.)
-- `topics_list` - Textarea (comma-separated)
-- `excluded_sites` - Textarea (comma-separated domains)
-- `bypass_cache` - Checkbox (force refresh)
+**Optional Accordion Sections:**
+- `desired_resource_types` - Checkboxes (textbooks, practice_problem_sets, practice_exams_tests, lecture_videos)
+- `topics_list` - Textarea (comma-separated focus topics)
+- `excluded_sites` - Textarea (comma-separated domains to exclude)
+- `targeted_sites` - Textarea (comma-separated domains to prioritize)
+- `bypass_cache` - Checkbox (force refresh, skip cache)
 
 #### 4.2.2 Validation Logic
 
 **`isFormValid()` function**
 
-Validates that at least one required field is filled. Checks for:
-- course_url, OR
-- book_title AND book_author, OR
-- isbn, OR
-- book_url, OR
-- topics_list, OR
-- university_name AND course_name
+Validates based on selected search type:
+- `course_url`: course_url must not be empty
+- `book_url`: book_url must not be empty
+- `book_title_author`: both book_title AND book_author must not be empty
+- `isbn`: isbn must not be empty
 
 **Validation Rules:**
-- Form is valid if at least one required field is filled
-- Required fields depend on selected search type
-- Validation error displayed if form invalid
 - Submit button disabled when form invalid
+- Validation error displayed on submit attempt with invalid form
+- Error cleared when user modifies inputs
 
 ### 4.3 ResultsTable Component (`web/src/components/ResultsTable.jsx`)
 
@@ -1221,7 +1216,7 @@ Run `cd web && npm run test:coverage` then open `coverage/index.html`
 - `backend/models.py` - Pydantic models
 - `backend/rate_limiter.py` - Rate limiting
 - `web/src/pages/HomePage.jsx` - Main page component
-- `web/src/components/CourseForm.jsx` - Form component
+- `web/src/pages/HomePage.jsx` - Main page with inline search form
 - `web/src/components/ResultsTable.jsx` - Results display
 - `src/scholar_source/crew.py` - CrewAI crew definition
 

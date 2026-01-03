@@ -1,0 +1,153 @@
+"""
+Celery Application Configuration
+
+This module configures Celery for distributed task queue processing.
+It handles job execution, worker management, and task routing.
+"""
+
+import os
+from celery import Celery
+from kombu import Queue, Exchange
+
+# Get Redis URL from environment
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# Initialize Celery app
+app = Celery(
+    "scholar_source",
+    broker=REDIS_URL,
+    backend=REDIS_URL,
+    include=["backend.tasks"]  # Module where tasks are defined
+)
+
+# Celery Configuration
+app.conf.update(
+    # Task serialization
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="UTC",
+    enable_utc=True,
+
+    # Result backend settings
+    result_backend=REDIS_URL,
+    result_expires=3600,  # Results expire after 1 hour
+    result_extended=True,  # Store more task metadata
+
+    # Task execution settings
+    task_track_started=True,  # Track when tasks start
+    task_time_limit=3600,  # Hard time limit: 1 hour (kills task)
+    task_soft_time_limit=3000,  # Soft time limit: 50 minutes (raises exception)
+    task_acks_late=True,  # Acknowledge task after completion (important for reliability)
+    task_reject_on_worker_lost=True,  # Reject task if worker dies
+
+    # Worker settings
+    worker_prefetch_multiplier=1,  # Only fetch one task at a time (important for long-running tasks)
+    worker_max_tasks_per_child=100,  # Restart worker after 100 tasks (prevents memory leaks)
+    worker_disable_rate_limits=False,
+    worker_log_format="[%(asctime)s: %(levelname)s/%(processName)s] %(message)s",
+    worker_task_log_format="[%(asctime)s: %(levelname)s/%(processName)s][%(task_name)s(%(task_id)s)] %(message)s",
+
+    # Retry settings (default for all tasks, can be overridden per task)
+    task_default_retry_delay=60,  # Wait 60 seconds before retrying
+    task_max_retries=3,  # Maximum 3 retries
+
+    # Task routing
+    task_routes={
+        "backend.tasks.run_crew_task": {
+            "queue": "crew_jobs",
+            "routing_key": "crew.jobs",
+        },
+    },
+
+    # Queue definitions
+    task_queues=(
+        Queue(
+            "crew_jobs",
+            Exchange("crew", type="direct"),
+            routing_key="crew.jobs",
+            queue_arguments={"x-max-priority": 10},  # Enable priority queue
+        ),
+        Queue(
+            "default",
+            Exchange("default", type="direct"),
+            routing_key="default",
+        ),
+    ),
+
+    # Task priority settings
+    task_default_priority=5,  # Default priority (0-10, higher is more important)
+
+    # Monitoring
+    worker_send_task_events=True,  # Send task events for monitoring
+    task_send_sent_event=True,
+
+    # Error handling
+    task_ignore_result=False,  # Store results even for failed tasks
+    task_store_errors_even_if_ignored=True,
+
+    # Security (in production, consider message signing)
+    # task_serializer='json' already set above
+
+    # Beat schedule (for periodic tasks - optional for now)
+    beat_schedule={
+        # Example: Clean up old results every hour
+        # "cleanup-old-results": {
+        #     "task": "backend.tasks.cleanup_old_results",
+        #     "schedule": 3600.0,  # Every hour
+        # },
+    },
+)
+
+# Optional: Configure additional settings based on environment
+if os.getenv("CELERY_BROKER_USE_SSL"):
+    app.conf.broker_use_ssl = {
+        "ssl_cert_reqs": "required",
+        "ssl_ca_certs": "/etc/ssl/certs/ca-certificates.crt",
+    }
+
+if os.getenv("CELERY_RESULT_BACKEND_USE_SSL"):
+    app.conf.redis_backend_use_ssl = {
+        "ssl_cert_reqs": "required",
+        "ssl_ca_certs": "/etc/ssl/certs/ca-certificates.crt",
+    }
+
+# Task error handler
+@app.task(bind=True)
+def error_handler(self, uuid):
+    """
+    Error handler for failed tasks.
+    This will be called when a task fails after all retries.
+    """
+    from backend.logging_config import get_logger
+    logger = get_logger(__name__)
+
+    result = self.app.AsyncResult(uuid)
+    logger.error(
+        f"Task {uuid} failed: {result.result}",
+        exc_info=result.traceback
+    )
+
+# Configure task base class for automatic retry on common exceptions
+class BaseTask(app.Task):
+    """
+    Base task class with automatic retry logic for common exceptions.
+    """
+    autoretry_for = (
+        Exception,  # Retry on any exception (can be more specific)
+    )
+    retry_kwargs = {
+        "max_retries": 3,
+        "countdown": 60,  # Wait 60 seconds before retry
+    }
+    retry_backoff = True  # Exponential backoff
+    retry_backoff_max = 600  # Max 10 minutes backoff
+    retry_jitter = True  # Add random jitter to backoff
+
+# Update default task class
+app.Task = BaseTask
+
+if __name__ == "__main__":
+    # For testing: Start a worker with
+    # celery -A backend.celery_app worker --loglevel=info
+    app.start()
