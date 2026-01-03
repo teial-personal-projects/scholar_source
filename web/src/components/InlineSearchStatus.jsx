@@ -140,6 +140,8 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
   const getDefaultMessage = (status) => {
     switch (status) {
       case 'pending':
+        return 'Job created, waiting to be queued...';
+      case 'queued':
         return 'Job queued, waiting to start...';
       case 'running':
         return 'Analyzing course and discovering resources...';
@@ -189,7 +191,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
           </div>
         </div>
 
-        {(status === 'pending' || status === 'running') && (
+        {(status === 'pending' || status === 'queued' || status === 'running') && (
           <button
             onClick={handleCancelClick}
             disabled={isCancelling}
