@@ -5,18 +5,71 @@
  * Displays inside the Search Parameters card for better visual integration.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { getJobStatus, cancelJob } from '../api/client';
 import ConfirmDialog from './ConfirmDialog';
+
+// Timeout in minutes (default 8 minutes)
+const SEARCH_TIMEOUT_MINUTES = parseInt(import.meta.env.VITE_SEARCH_TIMEOUT_MINUTES || '8', 10);
+const SEARCH_TIMEOUT_MS = SEARCH_TIMEOUT_MINUTES * 60 * 1000;
+
+// Format elapsed time as "Xm Ys" or "Xs"
+function formatElapsedTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+  return `${seconds}s`;
+}
 
 export default function InlineSearchStatus({ jobId, onComplete, onError }) {
   const [status, setStatus] = useState('pending');
   const [statusMessage, setStatusMessage] = useState('Initializing...');
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isTimedOut, setIsTimedOut] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  
+  // Track if job is still active (not completed/failed/cancelled)
+  const isActiveRef = useRef(true);
+  const timeoutIdRef = useRef(null);
+  const startTimeRef = useRef(Date.now());
+  const elapsedIntervalRef = useRef(null);
+
+  // Auto-cancel function for timeout
+  const handleTimeoutCancel = useCallback(async () => {
+    if (!isActiveRef.current) return; // Job already finished
+    
+    console.log(`Search timeout after ${SEARCH_TIMEOUT_MINUTES} minutes, cancelling job ${jobId}`);
+    setIsTimedOut(true);
+    setIsCancelling(true);
+    
+    try {
+      await cancelJob(jobId);
+      // The polling will pick up the cancelled status and call onError
+    } catch (error) {
+      console.error('Failed to cancel timed-out job:', error);
+      onError(`Search timed out after ${SEARCH_TIMEOUT_MINUTES} minutes and failed to cancel`);
+    }
+  }, [jobId, onError]);
 
   useEffect(() => {
     let intervalId;
+    isActiveRef.current = true;
+    startTimeRef.current = Date.now();
+
+    // Update elapsed time every second
+    elapsedIntervalRef.current = setInterval(() => {
+      setElapsedTime(Date.now() - startTimeRef.current);
+    }, 1000);
+
+    // Set up timeout to auto-cancel
+    timeoutIdRef.current = setTimeout(() => {
+      handleTimeoutCancel();
+    }, SEARCH_TIMEOUT_MS);
 
     const pollStatus = async () => {
       try {
@@ -27,7 +80,10 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
 
         // Check if job is complete or failed
         if (data.status === 'completed') {
+          isActiveRef.current = false;
           clearInterval(intervalId);
+          clearTimeout(timeoutIdRef.current);
+          clearInterval(elapsedIntervalRef.current);
 
           const textbookInfo = data.metadata?.textbook_info || null;
           const courseInfo = {
@@ -38,14 +94,24 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
           };
           onComplete(data.results, data.raw_output, data.search_title, courseInfo);
         } else if (data.status === 'failed' || data.status === 'cancelled') {
+          isActiveRef.current = false;
           clearInterval(intervalId);
-          const errorMsg = data.status === 'cancelled'
-            ? 'Job was cancelled'
-            : (data.error || 'Job failed with unknown error');
+          clearTimeout(timeoutIdRef.current);
+          clearInterval(elapsedIntervalRef.current);
+          
+          // Check if this was a timeout cancellation
+          const errorMsg = isTimedOut
+            ? `Search timed out after ${SEARCH_TIMEOUT_MINUTES} minutes`
+            : data.status === 'cancelled'
+              ? 'Job was cancelled'
+              : (data.error || 'Job failed with unknown error');
           onError(errorMsg);
         }
       } catch (error) {
+        isActiveRef.current = false;
         clearInterval(intervalId);
+        clearTimeout(timeoutIdRef.current);
+        clearInterval(elapsedIntervalRef.current);
         onError(error.message);
       }
     };
@@ -58,11 +124,18 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
 
     // Cleanup on unmount
     return () => {
+      isActiveRef.current = false;
       if (intervalId) {
         clearInterval(intervalId);
       }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+      if (elapsedIntervalRef.current) {
+        clearInterval(elapsedIntervalRef.current);
+      }
     };
-  }, [jobId, onComplete, onError]);
+  }, [jobId, onComplete, onError, handleTimeoutCancel, isTimedOut]);
 
   const getDefaultMessage = (status) => {
     switch (status) {
@@ -102,9 +175,14 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="mt-0.5 spinner" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <h4 className="m-0 text-sm sm:text-base font-semibold text-slate-900">
-              Finding resources
-            </h4>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="m-0 text-sm sm:text-base font-semibold text-slate-900">
+                Finding resources
+              </h4>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                ⏱ {formatElapsedTime(elapsedTime)}
+              </span>
+            </div>
             <p className="mt-1 mb-0 text-sm text-slate-700" aria-live="polite">
               {statusMessage}
             </p>
@@ -127,6 +205,9 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
       {/* Footer */}
       <p className="mt-3 mb-0 text-xs text-slate-600">
         Our AI agents are analyzing your course, searching for resources, and validating quality. Usually takes <span className="font-medium text-slate-700">1–5 minutes</span>.
+        {SEARCH_TIMEOUT_MINUTES && (
+          <span className="text-slate-500"> (timeout: {SEARCH_TIMEOUT_MINUTES} min)</span>
+        )}
       </p>
 
       {/* Cancel Confirmation Dialog */}
