@@ -7,10 +7,20 @@ It handles job execution, worker management, and task routing.
 
 import os
 from celery import Celery
+from celery.signals import worker_ready
 from kombu import Queue, Exchange
+from backend.logging_config import get_logger, configure_logging
+
+# Configure logging for Celery worker
+configure_logging(log_level="INFO")
+logger = get_logger(__name__)
 
 # Get Redis URL from environment
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+# Log startup message
+print("🚀 CELERY APP MODULE LOADED", flush=True)
+logger.info("🚀 CELERY APP MODULE LOADED")
 
 # Initialize Celery app
 app = Celery(
@@ -82,10 +92,6 @@ app.conf.update(
     worker_send_task_events=True,  # Send task events for monitoring
     task_send_sent_event=True,
     
-    # Don't hijack root logger - let CrewAI print() statements through
-    worker_hijack_root_logger=False,
-    worker_redirect_stdouts=False,  # Don't redirect stdout/stderr
-
     # Error handling
     task_ignore_result=False,  # Store results even for failed tasks
     task_store_errors_even_if_ignored=True,
@@ -150,6 +156,20 @@ class BaseTask(app.Task):
 
 # Update default task class
 app.Task = BaseTask
+
+
+# Signal handler for when worker is ready
+@worker_ready.connect
+def on_worker_ready(sender, **kwargs):
+    """Called when the Celery worker is ready to accept tasks."""
+    print("=" * 60, flush=True)
+    print("🚀 CELERY WORKER STARTED ON RAILWAY", flush=True)
+    print(f"   Worker: {sender}", flush=True)
+    print(f"   Redis URL: {REDIS_URL[:30]}...", flush=True)
+    print("=" * 60, flush=True)
+    logger.info("🚀 CELERY WORKER STARTED ON RAILWAY")
+    logger.info(f"Worker ready: {sender}")
+
 
 if __name__ == "__main__":
     # For testing: Start a worker with
