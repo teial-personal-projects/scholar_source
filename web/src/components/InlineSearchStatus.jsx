@@ -75,6 +75,9 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
       try {
         const data = await getJobStatus(jobId);
 
+        // Debug: log status changes
+        console.log(`[InlineSearchStatus] Job ${jobId} status: "${data.status}"`);
+
         setStatus(data.status);
         setStatusMessage(data.status_message || getDefaultMessage(data.status));
 
@@ -94,6 +97,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
           };
           onComplete(data.results, data.raw_output, data.search_title, courseInfo);
         } else if (data.status === 'failed' || data.status === 'cancelled') {
+          console.log(`[InlineSearchStatus] Job ${jobId} ended with status: ${data.status}, error: ${data.error}`);
           isActiveRef.current = false;
           clearInterval(intervalId);
           clearTimeout(timeoutIdRef.current);
@@ -108,6 +112,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
           onError(errorMsg);
         }
       } catch (error) {
+        console.error(`[InlineSearchStatus] Poll error for job ${jobId}:`, error);
         isActiveRef.current = false;
         clearInterval(intervalId);
         clearTimeout(timeoutIdRef.current);
