@@ -81,6 +81,10 @@ app.conf.update(
     # Monitoring
     worker_send_task_events=True,  # Send task events for monitoring
     task_send_sent_event=True,
+    
+    # Don't hijack root logger - let CrewAI print() statements through
+    worker_hijack_root_logger=False,
+    worker_redirect_stdouts=False,  # Don't redirect stdout/stderr
 
     # Error handling
     task_ignore_result=False,  # Store results even for failed tasks
