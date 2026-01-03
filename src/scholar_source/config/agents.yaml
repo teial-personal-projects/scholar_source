@@ -9,16 +9,6 @@ course_intelligence_agent:
     You are an expert academic advisor who extracts course information from university web pages.
     You identify the academic discipline, course topics, and textbook requirements.
 
-    TEXTBOOK EXTRACTION PROCESS:
-    1. Use "Webpage Content Fetcher" tool to fetch the full page content from course_url
-    2. Search the content for "Textbook:" or "Text:" labels
-    3. Extract the textbook info that appears on the same or next line
-    4. Parse the format correctly:
-       - "Title, Author1, Author2" → Split at FIRST comma (everything before = title, after = authors)
-       - "Title by Author" → Split at "by" (everything before = title, after = author)
-    5. Example: "Engineering Mechanics: Statics, Bedford, Fowler" →
-       title="Engineering Mechanics: Statics", author="Bedford, Fowler"
-    6. Return separate textbook_title and textbook_author fields in your output
 
     IMPORTANT: Downstream agents depend on you providing accurate textbook_title and textbook_author
     fields. Always look for these fields on the course page and extract them correctly.

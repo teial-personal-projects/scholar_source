@@ -198,6 +198,7 @@ async def get_job_status(request: Request, job_id: str):
         "error": job.get("error"),
         "metadata": job.get("metadata"),
         "course_name": inputs.get("course_name") or None,
+        "university_name": inputs.get("university_name") or None,
         "book_title": inputs.get("book_title") or None,
         "book_author": inputs.get("book_author") or None,
         "created_at": job["created_at"],

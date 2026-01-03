@@ -62,7 +62,7 @@ def _generate_cache_key(inputs: Dict[str, Any], config_hash: str) -> str:
     Generate a cache key from inputs and config hash.
     
     The cache key is based on:
-    - course_url (primary identifier)
+    - course_url or course_name and university_name (primary identifier)
     - book_url (if provided)
     - book_title + book_author (if provided)
     - isbn (if provided)
@@ -83,6 +83,8 @@ def _generate_cache_key(inputs: Dict[str, Any], config_hash: str) -> str:
     # Primary identifiers
     if inputs.get('course_url'):
         key_parts.append(f"course:{inputs['course_url']}")
+    elif inputs.get('course_name') and inputs.get('university_name'):
+        key_parts.append(f"course:{inputs['course_name']}|{inputs['university_name']}")
     if inputs.get('book_url'):
         key_parts.append(f"book_url:{inputs['book_url']}")
     if inputs.get('book_title') and inputs.get('book_author'):

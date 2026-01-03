@@ -94,6 +94,7 @@ export default function HomePage() {
     if (!searchParamType) return false;
     switch (searchParamType) {
       case 'course_url': return formData.course_url.trim() !== '';
+      case 'course_name_university': return formData.course_name.trim() !== '' && formData.university_name.trim() !== '';
       case 'book_url': return formData.book_url.trim() !== '';
       case 'book_title_author': return formData.book_title.trim() !== '' && formData.book_author.trim() !== '';
       case 'isbn': return formData.isbn.trim() !== '';
@@ -136,6 +137,12 @@ export default function HomePage() {
       case 'course_url':
         if (formData.course_url.trim() === '') {
           setValidationError('Please provide a Course URL');
+          return;
+        }
+        break;
+      case 'course_name_university':
+        if (formData.course_name.trim() === '' || formData.university_name.trim() === '') {
+          setValidationError('Please provide both Course Name and University');
           return;
         }
         break;
@@ -284,6 +291,7 @@ export default function HomePage() {
                       aria-describedby="search-type-helper"
                     >
                       <option value="">Select type...</option>
+                      <option value="course_name_university">Course Name + University</option>
                       <option value="course_url">Course URL</option>
                       <option value="book_url">Book URL</option>
                       <option value="book_title_author">Book Title + Author</option>
@@ -293,6 +301,7 @@ export default function HomePage() {
                   <p id="search-type-helper" className="helper-text-inline">
                     {!searchParamType && "Selecting a search type will show required fields below."}
                     {searchParamType === 'course_url' && "Enter the URL of the course page you want to search."}
+                    {searchParamType === 'course_name_university' && "Enter the course name/code and university. We'll find the course page."}
                     {searchParamType === 'book_url' && "Enter the URL of the book page you want to search."}
                     {searchParamType === 'book_title_author' && (
                       <>Enter both the <span className="font-medium">book title</span> and at least one <span className="font-medium">author</span>.</>
@@ -318,6 +327,45 @@ export default function HomePage() {
                         disabled={isLoading}
                         required
                       />
+                    </div>
+                  </div>
+                )}
+
+                {searchParamType === 'course_name_university' && (
+                  <div className="search-grid-two-col">
+                    <div>
+                      <TextLabel htmlFor="course_name" required>
+                        Course Name
+                      </TextLabel>
+                      <div className="mt-1">
+                        <TextInput
+                          type="text"
+                          id="course_name"
+                          name="course_name"
+                          value={formData.course_name}
+                          onChange={handleChange}
+                          placeholder="e.g., MATH 228-2 or Introduction to Algorithms"
+                          disabled={isLoading}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <TextLabel htmlFor="university_name" required>
+                        University
+                      </TextLabel>
+                      <div className="mt-1">
+                        <TextInput
+                          type="text"
+                          id="university_name"
+                          name="university_name"
+                          value={formData.university_name}
+                          onChange={handleChange}
+                          placeholder="e.g., Northwestern or MIT"
+                          disabled={isLoading}
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
