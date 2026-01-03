@@ -29,6 +29,8 @@ export default function HomePage() {
   const [searchParamType, setSearchParamType] = useState('');
   const [formData, setFormData] = useState({
     course_url: '',
+    course_name: '',
+    university_name: '',
     book_url: '',
     book_title: '',
     book_author: '',
@@ -74,6 +76,8 @@ export default function HomePage() {
     if (validationError) setValidationError('');
     setFormData({
       course_url: '',
+      course_name: '',
+      university_name: '',
       book_url: '',
       book_title: '',
       book_author: '',
@@ -101,6 +105,8 @@ export default function HomePage() {
     setSearchParamType('');
     setFormData({
       course_url: '',
+      course_name: '',
+      university_name: '',
       book_url: '',
       book_title: '',
       book_author: '',
@@ -412,7 +418,7 @@ export default function HomePage() {
                     Bypass cache
                   </span>
                   <span className="checkbox-label-helper">
-                    Don't use cached results from previous searches
+                    Don't use cached results from previous searches. (Will make searches a bit slower.)
                   </span>
                 </label>
               </div>
@@ -433,7 +439,7 @@ export default function HomePage() {
                     Bypass cache
                   </span>
                   <span className="checkbox-label-helper">
-                    Don't use cached results from previous searches
+                    Don't use cached results from previous searches. (Will make searches a bit slower.)
                   </span>
                 </label>
               </div>

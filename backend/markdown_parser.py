@@ -530,8 +530,8 @@ def _extract_textbook_info(content: str) -> Dict[str, str]:
                                 "source": None
                             }
 
-            # Extract title
-            title_match = re.search(r'(?:\*\*)?(?:Title|Book)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
+            # Extract title (matches Title:, Book:, or Textbook:)
+            title_match = re.search(r'(?:\*\*)?(?:Title|Book|Textbook)[:\s]+\*?\*?([^\n\*]+)', section_text, re.IGNORECASE)
             title = title_match.group(1).strip() if title_match else None
 
             # Extract author(s)
