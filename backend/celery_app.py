@@ -19,7 +19,6 @@ logger = get_logger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Log startup message
-print("🚀 CELERY APP MODULE LOADED", flush=True)
 logger.info("🚀 CELERY APP MODULE LOADED")
 
 # Initialize Celery app

@@ -6,6 +6,7 @@ Handles job submission and status polling.
 """
 
 import os
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from backend.models import (
@@ -19,6 +20,7 @@ from backend.crew_runner import run_crew_async, validate_crew_inputs
 from backend.logging_config import configure_logging, get_logger
 from backend.rate_limiter import limiter, rate_limit_handler
 from backend.csrf_protection import validate_origin
+from backend.celery_app import app as celery_app
 from slowapi.errors import RateLimitExceeded
 
 # Configure centralized logging (console only, no log file)
@@ -73,6 +75,41 @@ async def root():
     }
 
 
+def check_celery_workers() -> dict:
+    """
+    Check if Celery workers are running and connected.
+    
+    Returns:
+        dict with 'available' (bool), 'count' (int), and 'workers' (list)
+    """
+    try:
+        # Use Celery's inspect API with a short timeout
+        inspector = celery_app.control.inspect(timeout=2.0)
+        active_workers = inspector.ping()
+        
+        if active_workers:
+            worker_names = list(active_workers.keys())
+            return {
+                "available": True,
+                "count": len(worker_names),
+                "workers": worker_names
+            }
+        else:
+            return {
+                "available": False,
+                "count": 0,
+                "workers": []
+            }
+    except Exception as e:
+        logger.warning(f"Failed to check Celery workers: {e}")
+        return {
+            "available": False,
+            "count": 0,
+            "workers": [],
+            "error": str(e)
+        }
+
+
 @app.get("/api/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """
@@ -87,6 +124,32 @@ async def health_check():
         "version": "0.1.0",
         "database": "skipped"
     }
+
+
+@app.get("/api/health/workers", tags=["Health"])
+async def worker_health_check():
+    """
+    Check if Celery workers are available to process jobs.
+    
+    Returns worker availability status.
+    """
+    worker_status = check_celery_workers()
+    
+    if worker_status["available"]:
+        return {
+            "status": "healthy",
+            "workers_available": True,
+            "worker_count": worker_status["count"],
+            "workers": worker_status["workers"]
+        }
+    else:
+        return {
+            "status": "degraded",
+            "workers_available": False,
+            "worker_count": 0,
+            "workers": [],
+            "message": "No Celery workers are currently running. Jobs will be queued but not processed."
+        }
 
 
 @app.post("/api/submit", response_model=JobSubmitResponse, tags=["Jobs"])
@@ -136,14 +199,24 @@ async def submit_job(request: Request, course_input: CourseInputRequest):
         job_id = create_job(inputs)
         logger.info(f"Job created with ID: {job_id}")
 
+        # Check if workers are available (non-blocking check)
+        worker_status = check_celery_workers()
+        
         # Start background crew execution (pass bypass_cache separately)
         run_crew_async(job_id, inputs, bypass_cache=bypass_cache)
 
-        return {
+        response = {
             "job_id": job_id,
             "status": "pending",
             "message": "Job created successfully. Use job_id to poll for status."
         }
+        
+        # Add warning if no workers are available
+        if not worker_status["available"]:
+            response["warning"] = "No workers currently available. Job is queued but may take longer to start."
+            logger.warning(f"Job {job_id} submitted but no Celery workers are available")
+        
+        return response
 
     except Exception as e:
         logger.error(f"Job creation failed: {str(e)}", exc_info=True)
@@ -187,11 +260,27 @@ async def get_job_status(request: Request, job_id: str):
 
     # Extract relevant input fields for display
     inputs = job.get("inputs", {})
+    status_message = job.get("status_message")
+    
+    # Check if job is stuck in "queued" status (workers may be down)
+    if job["status"] == "queued":
+        try:
+            created_at = datetime.fromisoformat(job["created_at"].replace("Z", "+00:00"))
+            age_seconds = (datetime.now(timezone.utc) - created_at).total_seconds()
+            
+            # If queued for more than 30 seconds, check worker availability
+            if age_seconds > 30:
+                worker_status = check_celery_workers()
+                if not worker_status["available"]:
+                    status_message = "⚠️ Job is queued but no workers are available. Workers may be starting up or offline."
+                    logger.warning(f"Job {job_id} stuck in queue - no workers available")
+        except Exception as e:
+            logger.debug(f"Could not check queue age for job {job_id}: {e}")
     
     return {
         "job_id": job["id"],
         "status": job["status"],
-        "status_message": job.get("status_message"),
+        "status_message": status_message,
         "search_title": job.get("search_title"),
         "results": job.get("results"),
         "raw_output": job.get("raw_output"),
