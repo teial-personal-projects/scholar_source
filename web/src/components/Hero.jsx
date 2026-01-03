@@ -120,7 +120,7 @@ export default function Hero() {
             {steps.map((step, index) => (
               <div
                 key={step.number}
-                className={`hero-step-card ${step.gradient} ${step.borderColor}`}
+                className={`hero-step-card hero-step-card-compact ${step.gradient} ${step.borderColor}`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Step number badge */}
@@ -128,15 +128,15 @@ export default function Hero() {
                   {step.number}
                 </div>
 
-                {/* Icon */}
-                <div className={`hero-step-icon ${step.iconBg}`}>
-                  {step.icon}
+                {/* Icon + Title row */}
+                <div className="hero-step-header">
+                  <div className={`hero-step-icon-small ${step.iconBg}`}>
+                    {step.icon}
+                  </div>
+                  <h3 className="hero-step-title-inline">
+                    {step.title}
+                  </h3>
                 </div>
-
-                {/* Title */}
-                <h3 className="hero-step-title">
-                  {step.title}
-                </h3>
 
                 {/* Description */}
                 <p className="hero-step-description">

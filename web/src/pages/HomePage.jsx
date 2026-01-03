@@ -502,7 +502,7 @@ export default function HomePage() {
                     className="accordion-header accordion-header-blue"
                   >
                     <div className="accordion-header-content">
-                      <span className="accordion-title">🎯 Resource Types</span>
+                      <span className="accordion-title">Resource Types</span>
                       <OptionalBadge />
                     </div>
                     <svg className={`accordion-icon ${isResourceTypesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -535,7 +535,7 @@ export default function HomePage() {
                     className="accordion-header accordion-header-blue"
                   >
                     <div className="accordion-header-content">
-                      <span className="accordion-title">🎯 Focus Topics</span>
+                      <span className="accordion-title">Focus Topics</span>
                       <OptionalBadge />
                     </div>
                     <svg className={`accordion-icon ${isFocusTopicsExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,7 +576,7 @@ export default function HomePage() {
                   className="accordion-header accordion-header-blue"
                 >
                   <div className="accordion-header-content">
-                    <span className="accordion-title">🎯 Target Specific Sites</span>
+                    <span className="accordion-title">Target Specific Sites</span>
                     <OptionalBadge />
                   </div>
                   <svg className={`accordion-icon ${isTargetSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -615,7 +615,7 @@ export default function HomePage() {
                   className="accordion-header accordion-header-red"
                 >
                   <div className="accordion-header-content">
-                    <span className="accordion-title">🚫 Exclude Sites</span>
+                    <span className="accordion-title">Exclude Sites</span>
                     <OptionalBadge />
                   </div>
                   <svg className={`accordion-icon ${isExcludeSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

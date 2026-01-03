@@ -496,6 +496,23 @@
     @apply m-0 text-xs sm:text-sm font-bold text-slate-900 mb-1 leading-tight;
   }
 
+  /* Compact card layout - icon and title side by side */
+  .hero-step-card-compact {
+    @apply p-2 sm:p-3;
+  }
+
+  .hero-step-header {
+    @apply flex items-center gap-2 mb-1;
+  }
+
+  .hero-step-icon-small {
+    @apply w-7 h-7 sm:w-8 sm:h-8 rounded-md flex items-center justify-center text-base sm:text-lg shadow-sm flex-shrink-0;
+  }
+
+  .hero-step-title-inline {
+    @apply m-0 text-xs sm:text-sm font-bold text-slate-900 leading-tight;
+  }
+
   .hero-step-description {
     @apply m-0 text-xs text-slate-700 leading-snug;
   }
