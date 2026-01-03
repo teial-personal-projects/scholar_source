@@ -716,6 +716,14 @@
     @apply min-h-screen bg-blue-50;
   }
 
+  .cursor-wait {
+    cursor: wait !important;
+  }
+
+  .cursor-wait * {
+    cursor: wait !important;
+  }
+
   .home-page-header {
     @apply sticky top-0 z-20 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 shadow-lg;
   }

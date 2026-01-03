@@ -170,6 +170,10 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
     setShowCancelDialog(false);
   };
 
+  // Check if status message contains error/warning indicators
+  const isErrorMessage = statusMessage && (statusMessage.includes('⚠️') || statusMessage.includes('error') || statusMessage.includes('workers are available'));
+  const messageClass = isErrorMessage ? 'text-red-600 font-medium' : 'text-slate-700';
+
   return (
     <div className="mt-4 status-container info">
       {/* Header row: spinner + title + cancel */}
@@ -185,7 +189,7 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
                 ⏱ {formatElapsedTime(elapsedTime)}
               </span>
             </div>
-            <p className="mt-1 mb-0 text-sm text-slate-700" aria-live="polite">
+            <p className={`mt-1 mb-0 text-sm ${messageClass}`} aria-live="polite">
               {statusMessage}
             </p>
           </div>

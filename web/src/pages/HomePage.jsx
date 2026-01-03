@@ -228,7 +228,7 @@ export default function HomePage() {
 
 
   return (
-    <div className="home-page-container">
+    <div className={`home-page-container ${isLoading ? 'cursor-wait' : ''}`}>
       {/* Header */}
       <header className="home-page-header">
         <div className="home-page-header-inner">
@@ -677,12 +677,30 @@ export default function HomePage() {
           </form>
 
           {/* Inline Loading Status - shown while search is running */}
-          {isLoading && jobId && (
-            <InlineSearchStatus
-              jobId={jobId}
-              onComplete={handleComplete}
-              onError={handleError}
-            />
+          {isLoading && (
+            <>
+              {jobId ? (
+                <InlineSearchStatus
+                  jobId={jobId}
+                  onComplete={handleComplete}
+                  onError={handleError}
+                />
+              ) : (
+                <div className="mt-4 status-container info">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 spinner" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="m-0 text-sm sm:text-base font-semibold text-slate-900">
+                        Submitting job...
+                      </h4>
+                      <p className="mt-1 mb-0 text-sm text-slate-700">
+                        Creating your search request
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </section>
 
