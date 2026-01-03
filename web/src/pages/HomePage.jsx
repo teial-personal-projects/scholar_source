@@ -42,6 +42,7 @@ export default function HomePage() {
     bypass_cache: false
   });
   const [validationError, setValidationError] = useState('');
+  const [isAdvancedOptionsExpanded, setIsAdvancedOptionsExpanded] = useState(false);
   const [isResourceTypesExpanded, setIsResourceTypesExpanded] = useState(false);
   const [isFocusTopicsExpanded, setIsFocusTopicsExpanded] = useState(false);
   const [isExcludeSitesExpanded, setIsExcludeSitesExpanded] = useState(false);
@@ -119,6 +120,7 @@ export default function HomePage() {
       bypass_cache: false
     });
     setValidationError('');
+    setIsAdvancedOptionsExpanded(false);
     setIsResourceTypesExpanded(false);
     setIsFocusTopicsExpanded(false);
     setIsExcludeSitesExpanded(false);
@@ -492,156 +494,175 @@ export default function HomePage() {
                 </label>
               </div>
 
-              {/* Optional Sections */}
-              <div className="search-grid-two-col mb-2">
-                {/* Resource Types Accordion */}
-                <div className="accordion accordion-blue">
-                  <button
-                    type="button"
-                    onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
-                    className="accordion-header accordion-header-blue"
-                  >
-                    <div className="accordion-header-content">
-                      <span className="accordion-title">Resource Types</span>
-                      <OptionalBadge />
-                    </div>
-                    <svg className={`accordion-icon ${isResourceTypesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {isResourceTypesExpanded && (
-                    <div className="accordion-body accordion-body-blue accordion-grid">
-                      {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
-                        <label key={type} className="accordion-checkbox-label">
-                          <input
-                            type="checkbox"
-                            checked={formData.desired_resource_types?.includes(type) || false}
-                            onChange={() => handleResourceTypeChange(type)}
-                            disabled={isLoading}
-                            className="checkbox-input-with-margin"
-                          />
-                          <span className="accordion-checkbox-text">{type.replace(/_/g, ' ')}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Focus Topics Accordion */}
-                <div className="accordion accordion-blue">
-                  <button
-                    type="button"
-                    onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
-                    className="accordion-header accordion-header-blue"
-                  >
-                    <div className="accordion-header-content">
-                      <span className="accordion-title">Focus Topics</span>
-                      <OptionalBadge />
-                    </div>
-                    <svg className={`accordion-icon ${isFocusTopicsExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {isFocusTopicsExpanded && (
-                    <div className="accordion-body accordion-body-blue">
-                      <TextLabel htmlFor="topics_list">
-                        Topics List
-                      </TextLabel>
-                      <div className="mt-1">
-                        <TextInput
-                          as="textarea"
-                          id="topics_list"
-                          name="topics_list"
-                          value={formData.topics_list}
-                          onChange={handleChange}
-                          placeholder="e.g., Midterm review, Chapter 4, Dynamic programming"
-                          rows="2"
-                          disabled={isLoading}
-                        />
+              {/* Advanced Options - Collapsible Panel */}
+              <div className="advanced-options-panel mb-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAdvancedOptionsExpanded(!isAdvancedOptionsExpanded)}
+                  className="advanced-options-header"
+                >
+                  <div className="advanced-options-header-content">
+                    <span className="advanced-options-title">⚙️ Advanced Options</span>
+                    <OptionalBadge />
+                  </div>
+                  <svg className={`accordion-icon ${isAdvancedOptionsExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {isAdvancedOptionsExpanded && (
+                  <div className="advanced-options-body">
+                    {/* Row 1: Resource Types + Focus Topics */}
+                    <div className="search-grid-two-col mb-2">
+                      {/* Resource Types Accordion */}
+                      <div className="accordion accordion-blue">
+                        <button
+                          type="button"
+                          onClick={() => setIsResourceTypesExpanded(!isResourceTypesExpanded)}
+                          className="accordion-header accordion-header-blue"
+                        >
+                          <div className="accordion-header-content">
+                            <span className="accordion-title">Resource Types</span>
+                          </div>
+                          <svg className={`accordion-icon ${isResourceTypesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isResourceTypesExpanded && (
+                          <div className="accordion-body accordion-body-blue accordion-grid">
+                            {['textbooks', 'practice_problem_sets', 'practice_exams_tests', 'lecture_videos'].map(type => (
+                              <label key={type} className="accordion-checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.desired_resource_types?.includes(type) || false}
+                                  onChange={() => handleResourceTypeChange(type)}
+                                  disabled={isLoading}
+                                  className="checkbox-input-with-margin"
+                                />
+                                <span className="accordion-checkbox-text">{type.replace(/_/g, ' ')}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <HelperText>
-                        💡 Add 3–6 topics for better matches
-                      </HelperText>
-                    </div>
-                  )}
-                </div>
-              </div>
 
+                      {/* Focus Topics Accordion */}
+                      <div className="accordion accordion-blue">
+                        <button
+                          type="button"
+                          onClick={() => setIsFocusTopicsExpanded(!isFocusTopicsExpanded)}
+                          className="accordion-header accordion-header-blue"
+                        >
+                          <div className="accordion-header-content">
+                            <span className="accordion-title">Focus Topics</span>
+                          </div>
+                          <svg className={`accordion-icon ${isFocusTopicsExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isFocusTopicsExpanded && (
+                          <div className="accordion-body accordion-body-blue">
+                            <TextLabel htmlFor="topics_list">
+                              Topics List
+                            </TextLabel>
+                            <div className="mt-1">
+                              <TextInput
+                                as="textarea"
+                                id="topics_list"
+                                name="topics_list"
+                                value={formData.topics_list}
+                                onChange={handleChange}
+                                placeholder="e.g., Midterm review, Chapter 4, Dynamic programming"
+                                rows="2"
+                                disabled={isLoading}
+                              />
+                            </div>
+                            <HelperText>
+                              💡 Add 3–6 topics for better matches
+                            </HelperText>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-              {/* Target Sites Accordion */}
-              <div className="accordion accordion-blue mb-2">
-                <button
-                  type="button"
-                  onClick={() => setIsTargetSitesExpanded(!isTargetSitesExpanded)}
-                  className="accordion-header accordion-header-blue"
-                >
-                  <div className="accordion-header-content">
-                    <span className="accordion-title">Target Specific Sites</span>
-                    <OptionalBadge />
-                  </div>
-                  <svg className={`accordion-icon ${isTargetSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isTargetSitesExpanded && (
-                  <div className="accordion-body accordion-body-blue">
-                    <TextLabel htmlFor="targeted_sites">
-                      Target Domains
-                    </TextLabel>
-                    <div className="mt-1">
-                      <TextInput
-                        as="textarea"
-                        id="targeted_sites"
-                        name="targeted_sites"
-                        value={formData.targeted_sites}
-                        onChange={handleChange}
-                        placeholder="e.g., stanford.edu, berkeley.edu, myuniversity.edu"
-                        rows="2"
-                        disabled={isLoading}
-                      />
+                    {/* Row 2: Target Sites + Exclude Sites */}
+                    <div className="search-grid-two-col">
+                      {/* Target Sites Accordion */}
+                      <div className="accordion accordion-blue">
+                        <button
+                          type="button"
+                          onClick={() => setIsTargetSitesExpanded(!isTargetSitesExpanded)}
+                          className="accordion-header accordion-header-blue"
+                        >
+                          <div className="accordion-header-content">
+                            <span className="accordion-title">Target Sites</span>
+                          </div>
+                          <svg className={`accordion-icon ${isTargetSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isTargetSitesExpanded && (
+                          <div className="accordion-body accordion-body-blue">
+                            <TextLabel htmlFor="targeted_sites">
+                              Target Domains
+                            </TextLabel>
+                            <div className="mt-1">
+                              <TextInput
+                                as="textarea"
+                                id="targeted_sites"
+                                name="targeted_sites"
+                                value={formData.targeted_sites}
+                                onChange={handleChange}
+                                placeholder="e.g., stanford.edu, berkeley.edu"
+                                rows="2"
+                                disabled={isLoading}
+                              />
+                            </div>
+                            <HelperText>
+                              💡 Prioritize results from specific sites
+                            </HelperText>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Exclude Sites Accordion */}
+                      <div className="accordion accordion-blue">
+                        <button
+                          type="button"
+                          onClick={() => setIsExcludeSitesExpanded(!isExcludeSitesExpanded)}
+                          className="accordion-header accordion-header-blue"
+                        >
+                          <div className="accordion-header-content">
+                            <span className="accordion-title">Exclude Sites</span>
+                          </div>
+                          <svg className={`accordion-icon ${isExcludeSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isExcludeSitesExpanded && (
+                          <div className="accordion-body accordion-body-blue">
+                            <TextLabel htmlFor="excluded_sites">
+                              Exclude Domains
+                            </TextLabel>
+                            <div className="mt-1">
+                              <TextInput
+                                as="textarea"
+                                id="excluded_sites"
+                                name="excluded_sites"
+                                value={formData.excluded_sites}
+                                onChange={handleChange}
+                                placeholder="e.g., khanacademy.org, coursera.org"
+                                rows="2"
+                                disabled={isLoading}
+                              />
+                            </div>
+                            <HelperText>
+                              💡 Exclude specific sites from results
+                            </HelperText>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <HelperText>
-                      💡 Enter domain names separated by commas to prioritize results from specific sites
-                    </HelperText>
-                  </div>
-                )}
-              </div>
-              
-              {/* Exclude Sites Accordion */}
-              <div className="accordion accordion-red mb-2">
-                <button
-                  type="button"
-                  onClick={() => setIsExcludeSitesExpanded(!isExcludeSitesExpanded)}
-                  className="accordion-header accordion-header-red"
-                >
-                  <div className="accordion-header-content">
-                    <span className="accordion-title">Exclude Sites</span>
-                    <OptionalBadge />
-                  </div>
-                  <svg className={`accordion-icon ${isExcludeSitesExpanded ? 'accordion-icon-expanded' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isExcludeSitesExpanded && (
-                  <div className="accordion-body accordion-body-red">
-                    <TextLabel htmlFor="excluded_sites">
-                      Exclude Domains
-                    </TextLabel>
-                    <div className="mt-1">
-                      <TextInput
-                        as="textarea"
-                        id="excluded_sites"
-                        name="excluded_sites"
-                        value={formData.excluded_sites}
-                        onChange={handleChange}
-                        placeholder="e.g., khanacademy.org, coursera.org, udemy.com"
-                        rows="2"
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <HelperText>
-                      💡 Enter domain names separated by commas to exclude them from results
-                    </HelperText>
                   </div>
                 )}
               </div>

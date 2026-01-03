@@ -803,6 +803,28 @@
     @apply border-red-200 bg-red-50/30;
   }
 
+  /* Advanced Options Panel - Container for all optional accordions */
+  .advanced-options-panel {
+    @apply border border-slate-200 rounded-lg bg-slate-50/50 overflow-hidden;
+  }
+
+  .advanced-options-header {
+    @apply w-full flex items-center justify-between px-3 py-2 transition-colors text-left;
+    @apply bg-slate-100 hover:bg-slate-200;
+  }
+
+  .advanced-options-header-content {
+    @apply flex items-baseline gap-2;
+  }
+
+  .advanced-options-title {
+    @apply text-sm font-semibold text-slate-700;
+  }
+
+  .advanced-options-body {
+    @apply p-3 pt-2 border-t border-slate-200 bg-white;
+  }
+
   .accordion-header {
     @apply w-full flex items-center justify-between px-2.5 py-1.5 transition-colors text-left;
   }
