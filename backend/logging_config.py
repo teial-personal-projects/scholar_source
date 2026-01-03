@@ -5,6 +5,7 @@ This module sets up logging once and provides a simple get_logger() function
 that all backend modules can use.
 """
 import logging
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -63,8 +64,9 @@ def configure_logging(
         handlers = []
 
         # Console handler for our application logs (only if requested)
+        # Use stdout explicitly so Railway doesn't classify as errors
         if console_output:
-            console_handler = logging.StreamHandler()
+            console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setFormatter(
                 logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             )
@@ -87,6 +89,10 @@ def configure_logging(
     
     # Don't configure CrewAI loggers - let CrewAI handle its own output
     # CrewAI's verbose=True uses print() statements, not logging
+    
+    # Suppress noisy third-party loggers
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     _logging_configured = True
 
