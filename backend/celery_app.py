@@ -18,8 +18,15 @@ logger = get_logger(__name__)
 # Get Redis URL from environment
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-# Log startup message
+# Validate Redis URL exists (critical for Railway)
+if not REDIS_URL:
+    raise ValueError("❌ CRITICAL: REDIS_URL environment variable is not set!")
+
+# Log startup message with Redis URL (masked)
+print(f"🚀 CELERY APP MODULE LOADED", flush=True)
+print(f"📡 Broker URL: {REDIS_URL[:40]}...", flush=True)
 logger.info("🚀 CELERY APP MODULE LOADED")
+logger.info(f"Broker URL: {REDIS_URL[:40]}...")
 
 # Initialize Celery app
 app = Celery(
@@ -31,6 +38,12 @@ app = Celery(
 
 # Celery Configuration
 app.conf.update(
+    # Broker connection settings (CRITICAL for Railway)
+    broker_connection_retry_on_startup=True,  # Retry on startup
+    broker_connection_retry=True,  # Retry on connection loss
+    broker_connection_max_retries=10,  # Max retries before giving up
+    broker_pool_limit=10,  # Connection pool size
+
     # Task serialization
     task_serializer="json",
     accept_content=["json"],

@@ -1,2 +1,0 @@
-web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT 2>&1
-worker: env PYTHONUNBUFFERED=1 FORCE_COLOR=1 TERM=xterm-256color celery -A backend.celery_app worker --loglevel=debug --queues=crew_jobs,default --concurrency=2

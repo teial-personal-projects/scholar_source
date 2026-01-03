@@ -1,0 +1,6 @@
+# Railway Procfile - Optimized for Railway deployment
+# This Procfile uses the enhanced worker startup script with comprehensive logging
+
+web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --log-level info
+
+worker: bash scripts/railway_worker_start.sh
