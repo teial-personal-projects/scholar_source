@@ -21,6 +21,7 @@ from backend.logging_config import configure_logging, get_logger
 from backend.rate_limiter import limiter, rate_limit_handler
 from backend.csrf_protection import validate_origin
 from backend.celery_app import app as celery_app
+import os
 from slowapi.errors import RateLimitExceeded
 
 # Configure centralized logging (console only, no log file)
@@ -82,6 +83,26 @@ def check_celery_workers() -> dict:
     Returns:
         dict with 'available' (bool), 'count' (int), and 'workers' (list)
     """
+    # Check if running in sync mode
+    SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() in ("true", "1", "yes")
+    
+    if SYNC_MODE:
+        # In sync mode, workers are not needed (tasks run in-process)
+        return {
+            "available": True,
+            "count": 1,
+            "workers": ["sync-mode"],
+            "mode": "sync"
+        }
+    
+    if celery_app is None:
+        return {
+            "available": False,
+            "count": 0,
+            "workers": [],
+            "error": "Celery app not initialized (SYNC_MODE may be enabled)"
+        }
+    
     try:
         # Use Celery's inspect API with a short timeout
         inspector = celery_app.control.inspect(timeout=2.0)

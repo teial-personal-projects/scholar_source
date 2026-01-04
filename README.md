@@ -183,6 +183,8 @@ scholar_source/
 
 ### Development Mode
 
+#### Option 1: With Redis (Recommended for Production-like Setup)
+
 **Terminal 1 - Start Backend:**
 ```bash
 # From project root
@@ -210,6 +212,38 @@ npm run dev
 ```
 
 Frontend will be available at: http://localhost:5173
+
+#### Option 2: Without Redis (Simpler Local Development)
+
+If you don't want to run Redis locally, you can use **synchronous mode** where tasks run in-process:
+
+**Set environment variables:**
+```bash
+export SYNC_MODE=true
+export ALLOW_IN_MEMORY_RATE_LIMIT=true  # For rate limiting without Redis
+```
+
+**Terminal 1 - Start Backend:**
+```bash
+# From project root
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Terminal 2 - Start Frontend:**
+```bash
+# From web/ directory
+cd web
+npm run dev
+```
+
+**Note:** In sync mode, the API will block during task execution (not suitable for production). For production, use Redis with Celery workers.
+
+**Alternative:** Use a free cloud Redis service instead:
+- **Upstash Redis** (free: 10K commands/day) - https://upstash.com/
+- **Redis Cloud** (free: 30MB) - https://redis.com/try-free/
+- **Railway Redis** (if using Railway)
+
+Just set `REDIS_URL` and remove `SYNC_MODE`.
 
 ### Verify Installation
 
@@ -265,12 +299,16 @@ Open http://localhost:5173 in your browser - you should see the course input for
 | `SERPER_API_KEY` | ✅ Yes | Serper API key for web search | - |
 | `SUPABASE_URL` | ✅ Yes | Supabase project URL | - |
 | `SUPABASE_KEY` | ✅ Yes | Supabase anon key | - |
-| `REDIS_URL` | ✅ Yes | Redis connection for task queue & rate limiting | `redis://localhost:6379/0` |
+| `REDIS_URL` | Conditional | Redis connection for task queue & rate limiting | `redis://localhost:6379/0` |
+| `SYNC_MODE` | No | Set to `true` to run without Redis (tasks run synchronously) | `false` |
+| `ALLOW_IN_MEMORY_RATE_LIMIT` | No | Set to `true` for in-memory rate limiting (no Redis needed) | `false` |
 | `COURSE_ANALYSIS_TTL_DAYS` | No | Cache TTL for course analysis (days) | 30 |
 | `RESOURCE_RESULTS_TTL_DAYS` | No | Cache TTL for full results (days) | 7 |
 | `ALLOWED_ORIGINS` | No | CORS allowed origins (comma-separated) | - |
 
-**Note:** `REDIS_URL` is now required for production deployments. Get a free Redis instance from [Redis Cloud](https://redis.com/try-free/).
+**Note:** 
+- `REDIS_URL` is required for production deployments. Get a free Redis instance from [Redis Cloud](https://redis.com/try-free/) or [Upstash](https://upstash.com/).
+- For local development without Redis, set `SYNC_MODE=true` and `ALLOW_IN_MEMORY_RATE_LIMIT=true`. This runs tasks synchronously in-process (not suitable for production).
 
 ---
 
