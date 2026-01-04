@@ -6,6 +6,7 @@ It handles job execution, worker management, and task routing.
 """
 
 import os
+import ssl
 from celery import Celery
 from celery.signals import worker_ready
 from kombu import Queue, Exchange
@@ -41,8 +42,8 @@ app.conf.update(
     # Broker connection settings (CRITICAL for Railway)
     broker_connection_retry_on_startup=True,  # Retry on startup
     broker_connection_retry=True,  # Retry on connection loss
-    broker_connection_max_retries=10,  # Max retries before giving up
-    broker_pool_limit=10,  # Connection pool size
+    broker_connection_max_retries=5,  # Max retries before giving up
+    broker_pool_limit=3,  # Connection pool size
 
     # Task serialization
     task_serializer="json",
@@ -58,14 +59,14 @@ app.conf.update(
 
     # Task execution settings
     task_track_started=True,  # Track when tasks start
-    task_time_limit=3600,  # Hard time limit: 1 hour (kills task)
-    task_soft_time_limit=3000,  # Soft time limit: 50 minutes (raises exception)
+    task_time_limit=1800,  # Hard time limit: 30 min (kills task)
+    task_soft_time_limit=1500,  # Soft time limit: 25 minutes (raises exception)
     task_acks_late=True,  # Acknowledge task after completion (important for reliability)
     task_reject_on_worker_lost=True,  # Reject task if worker dies
 
     # Worker settings
     worker_prefetch_multiplier=1,  # Only fetch one task at a time (important for long-running tasks)
-    worker_max_tasks_per_child=100,  # Restart worker after 100 tasks (prevents memory leaks)
+    worker_max_tasks_per_child=50,  # Restart worker after 100 tasks (prevents memory leaks)
     worker_disable_rate_limits=False,
     worker_log_format="[%(asctime)s: %(levelname)s/%(processName)s] %(message)s",
     worker_task_log_format="[%(asctime)s: %(levelname)s/%(processName)s][%(task_name)s(%(task_id)s)] %(message)s",
@@ -121,18 +122,14 @@ app.conf.update(
     },
 )
 
-# Optional: Configure additional settings based on environment
-if os.getenv("CELERY_BROKER_USE_SSL"):
-    app.conf.broker_use_ssl = {
-        "ssl_cert_reqs": "required",
-        "ssl_ca_certs": "/etc/ssl/certs/ca-certificates.crt",
+app.conf.update(
+    broker_use_ssl={
+        'ssl_cert_reqs': ssl.CERT_NONE  # Railway's Redis uses self-signed certs
+    },
+    redis_backend_use_ssl={
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
-
-if os.getenv("CELERY_RESULT_BACKEND_USE_SSL"):
-    app.conf.redis_backend_use_ssl = {
-        "ssl_cert_reqs": "required",
-        "ssl_ca_certs": "/etc/ssl/certs/ca-certificates.crt",
-    }
+)
 
 # Task error handler
 @app.task(bind=True)
