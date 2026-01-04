@@ -1,142 +1,127 @@
 course_analysis_task:
   description: >
-    Analyze course page to extract textbook information, topics, and resource URLs.
+    Analyze a university course to extract textbook information, topics, and resource URLs.
 
-    **PRIMARY OBJECTIVE:**
-    Extract textbook title and author from the course page - this is MANDATORY for downstream agents.
+    PRIMARY OBJECTIVE (MANDATORY):
+    Identify the main textbook_title and textbook_author for the course.
 
-    **DEFINITION – OFFICIAL COURSE PAGE:**
-    "Official course page" = a page whose primary content is the description,
-    syllabus, or logistics of the specific course (title + number), not a
-    department home page, news page, event listing, or general program overview.
+    OFFICIAL COURSE PAGE:
+    The official course page is a page whose main content is the description,
+    syllabus, or logistics of this specific course (title + number). Department
+    home pages, news, events, and general program pages are NOT course pages.
 
-    If a fetched page only contains department-wide info, news, events, conferences,
-    or generic program descriptions and does not clearly describe the specific
-    course (matching course_name and/or course_number), treat it as NOT the course
-    page and keep searching.
+    WORKFLOW:
 
-    **WORKFLOW:**
-
-    1. If course_name and university_name are provided (no URL):
-       - Use web search to find the official course page URL.
-       - Construct search queries that combine:
-         - The exact course_name (including number if present), and
-         - The university_name, and
-         - Words like "course description", "class description", "syllabus",
+    1) Find course page (when only course_name + university_name given):
+       - Use web search to find the official course_url.
+       - Build queries combining:
+         - course_name (with number if present),
+         - university_name,
+         - and words like "course description", "class description",
+           "syllabus", or "course catalog".
+       - From the top results, consider several candidate URLs.
+         Prefer pages that:
+         - Are on the university’s own domain (e.g., *.edu or official domain),
+         - Include the course number/code in the URL or title,
+         - Mention "course description", "syllabus", "class description",
            or "course catalog".
-       - From the search results, collect several candidate URLs (top 5–10 results).
-       - For each candidate, quickly check the title and snippet:
-         - Prefer pages that:
-           - Come from the university's own domains (e.g., *.edu or the
-             university’s official domain), and
-           - Include the course number or code in the URL path or page title, and
-           - Mention "course description", "syllabus", "class description",
-             "course catalog", or similar phrases.
-         - Avoid selecting pages that are clearly department home pages, news pages,
-           event listings, or general program pages (titles with only department
-           names, "News", "Events", "Conference", etc.).
-       - Choose the single best candidate as course_url before fetching the page.
+         Avoid obvious department home/news/event/program pages.
+       - Choose the best candidate as course_url.
 
-    2. Check for user-provided textbook information:
+    2) Use user-provided textbook info (if available):
        - If {book_title} and {book_author} are provided:
-         - Use those as the primary textbook and set textbook_source="user_provided".
+         - Use them as the primary textbook and set textbook_source="user_provided".
        - If {isbn} is provided:
-         - Search for book info using the ISBN to confirm or fill missing metadata.
+         - Optionally look up metadata to confirm title/author.
        - If {book_pdf_path} or {book_url} is provided:
-         - Note these for downstream agents (they may use them as sources).
-       - If {textbook} input is provided:
-         - Parse it for title/author information and reconcile with any page data.
+         - Record them for downstream agents.
+       - If {textbook} is provided:
+         - Parse for title/author and reconcile with any page data.
 
-    3. Fetch course page content (if course_url is provided or found):
-       - Use "Webpage Content Fetcher" on course_url.
-       - FIRST, verify this is a true course page:
-         - It should contain the course title and/or course number and a
-           description or syllabus for this specific course.
-         - If it only contains department-wide information, news, or conferences
-           and no specific course details, treat it as NOT the course page and
-           return to step 1 to search for a better URL (once).
-       - Once a true course page is confirmed, search for textbook information in
-         sections like:
-         - "Materials", "Textbook", "Required Text", "Required Textbook",
-           "Course Materials", "Resources".
-       - Common textbook formats:
-         - "Title, Author"
-         - "Title by Author"
-         - "Title (Author)"
-         - Multi-line listing where title and author are on adjacent lines.
-       - Parse into separate textbook_title and textbook_author fields.
+    3) Fetch and verify course page:
+       - If course_url is provided or found, use "Webpage Content Fetcher" on it.
+       - Verify it is a true course page:
+         - It should mention the specific course title and/or number
+           and include a description or syllabus.
+         - If it only shows department-wide info, news, or conferences
+           with no specific course details, treat it as NOT the course page
+           and (once) repeat step 1 to find a better URL.
+       - On a confirmed course page, search for textbook info in sections
+         like "Materials", "Textbook", "Required Text", "Required Textbook",
+         "Course Materials", or "Resources".
+       - Handle common formats such as:
+         "Title, Author", "Title by Author", "Title (Author)",
+         or multi-line where title and author are on adjacent lines.
+       - Parse into textbook_title and textbook_author.
 
-    4. Extract syllabus (if present on course page):
-       - Identify syllabus links (HTML or PDF), converting relative URLs to
-         absolute URLs.
-       - Fetch the syllabus ONCE using "Webpage Content Fetcher" (HTML or PDF).
+    4) Extract syllabus (if present):
+       - Detect syllabus links (HTML or PDF), convert relative URLs to absolute.
+       - Use "Webpage Content Fetcher" ONCE on the syllabus.
        - Treat the syllabus as authoritative for textbook info and course scope.
 
-    5. Determine topics (priority order):
-       - If user provided topics_list → use as primary focus (user_specified_topics).
-       - Extract topics from syllabus schedule/outline (shows actual course coverage).
-       - Extract topics from course description and any listed learning objectives.
-       - Cross-reference textbook table of contents (if available) with the syllabus
-         to identify only the chapters/sections actually covered.
-       - Be specific:
-         - If the syllabus or page says "Chapters 3–7", map to the corresponding
-           chapter titles, not every chapter in the book.
+    5) Determine topics (priority order):
+       - If topics_list is provided, treat as user_specified_topics and main focus.
+       - Otherwise, extract topics from:
+         - Syllabus schedule/outline, then
+         - Course description and learning objectives.
+       - If textbook TOC is available, align it with the syllabus to keep only
+         chapters actually covered.
+       - Be specific: map ranges like "Chapters 3–7" to the corresponding
+         chapter titles, not the whole book.
 
-    6. Extract all resource URLs:
-       - List all links to lecture notes, problem sets, exams, videos, and other
-         course resources found on the course page and syllabus.
-       - DO NOT navigate to these linked resources (prevents redirect loops).
-       - These URLs will be used by downstream resource search and validation agents.
+    6) Extract resource URLs:
+       - Collect links to lecture notes, problem sets, exams, videos,
+         and other course resources found on the course page/syllabus.
+       - Do NOT navigate to these links; just record them for downstream agents.
 
-    **DEPTH RESTRICTION:**
-    - Navigate ONLY to:
-      - Main course page, and
-      - Syllabus (if found).
-    - Extract but do not navigate to other resource links.
+    DEPTH RESTRICTION:
+    - Only navigate to:
+      - The main course page, and
+      - The syllabus (if found).
+    - Do not follow other resource links.
 
-    **ERROR HANDLING AND VALIDATION:**
+    ERROR HANDLING / VALIDATION:
     - If the course page is not accessible:
-      - Halt with a clear message explaining the issue.
-    - If no textbook is found on the course page or syllabus and no user-provided
-      textbook information is available:
-      - Set textbook_source="not_found" and continue with topic extraction.
-    - If zero topics AND no textbook AND no description can be determined:
-      - Return an error asking the user to provide topics_list or a textbook PDF/URL.
-    - Validation:
-      - At least one of (user_topics, general_course_topics, textbook_title)
-        must exist in the final output.
+      - Return a clear error message.
+    - If no textbook is found on page/syllabus and none is provided by the user:
+      - Set textbook_source="not_found" and still extract topics if possible.
+    - If there are no topics, no textbook, and no usable description:
+      - Ask the user to provide topics_list or a textbook PDF/URL.
+    - Ensure the final result has at least one of:
+      user_topics, general_course_topics, or textbook_title.
 
     Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list},
             {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url},
             {desired_resource_types}, {targeted_sites}
 
   expected_output: >
-    JSON object containing:
+    JSON-like object with:
 
-    **Required fields:**
-    - course_title: Course name from page (or null if not clearly found).
-    - course_number: Course code (or null if not clearly found).
-    - textbook_title: Full title (null if not found).
-    - textbook_author: Author(s) (null if not found).
+    Required fields:
+    - course_title: Course name from page (or null).
+    - course_number: Course code (or null).
+    - textbook_title: Main textbook title (null if not found).
+    - textbook_author: Main textbook author(s) (null if not found).
     - textbook_source: "course_page" | "user_provided" | "not_found".
-    - search_priority: "user_topics" | "general_topics" based on presence of topics_list.
+    - search_priority: "user_topics" | "general_topics"
+      (based on whether topics_list is provided).
 
-    **Topic fields:**
-    - user_specified_topics: Array of topics from topics_list input (empty array if none).
-    - general_course_topics: Array of topics extracted from syllabus/course materials.
-    - subject_keywords: Descriptive keywords for the subject area / discipline.
+    Topic fields:
+    - user_specified_topics: Array from topics_list (empty if none).
+    - general_course_topics: Array from syllabus/description.
+    - subject_keywords: Short keyword list describing the discipline.
 
-    **Optional fields:**
-    - textbook_edition: Edition if specified.
+    Optional fields:
+    - textbook_edition: Edition if available.
     - textbook_isbn: ISBN if found.
     - syllabus_url: URL of the syllabus if found.
-    - resource_urls: List of all resource links found on the course page/syllabus.
+    - resource_urls: List of resource links from course page/syllabus.
     - course_level: "introductory" | "intermediate" | "advanced" if inferable.
 
-    Format as a clean JSON object or clearly structured text that subsequent
-    agents can easily parse.
+    Return clean JSON or clearly structured text that downstream agents can parse.
 
   agent: course_intelligence_agent
+
 
 
 resource_search_task:
