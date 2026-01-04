@@ -21,6 +21,7 @@ from backend.logging_config import configure_logging, get_logger
 from backend.rate_limiter import limiter, rate_limit_handler
 from backend.csrf_protection import validate_origin
 from backend.celery_app import app as celery_app
+from backend.error_utils import transform_error_for_user
 import os
 from slowapi.errors import RateLimitExceeded
 
@@ -122,12 +123,14 @@ def check_celery_workers() -> dict:
                 "workers": []
             }
     except Exception as e:
+        # Log technical details but return generic error
         logger.warning(f"Failed to check Celery workers: {e}")
+        user_message, _ = transform_error_for_user(e)
         return {
             "available": False,
             "count": 0,
             "workers": [],
-            "error": str(e)
+            "error": user_message
         }
 
 
@@ -240,12 +243,17 @@ async def submit_job(request: Request, course_input: CourseInputRequest):
         return response
 
     except Exception as e:
+        # Log technical details for debugging
         logger.error(f"Job creation failed: {str(e)}", exc_info=True)
+
+        # Transform error for user-friendly display
+        user_message, _ = transform_error_for_user(e)
+
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "Job creation failed",
-                "message": str(e)
+                "message": user_message
             }
         )
 
@@ -388,11 +396,17 @@ async def cancel_job(request: Request, job_id: str):
             "message": message
         }
     except Exception as e:
+        # Log technical details for debugging
+        logger.error(f"Job cancellation failed: {str(e)}", exc_info=True)
+
+        # Transform error for user-friendly display
+        user_message, _ = transform_error_for_user(e)
+
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "Cancellation failed",
-                "message": str(e)
+                "message": user_message
             }
         )
 

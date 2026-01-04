@@ -34,6 +34,7 @@ from backend.jobs import update_job_status, get_job
 from backend.markdown_parser import parse_markdown_to_resources
 from backend.cache import get_cached_analysis, set_cached_analysis
 from backend.logging_config import get_logger
+from backend.error_utils import transform_error_for_user
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -251,20 +252,24 @@ def run_crew_task(
         }
 
     except Exception as e:
-        # Log error and update job
-        error_message = str(e)
+        # Transform error for user-friendly display
+        user_message, error_type = transform_error_for_user(e)
+        technical_error = str(e)
         stack_trace = traceback.format_exc()
 
-        logger.error(f"Job {job_id} failed: {error_message}")
+        # Log the technical details for debugging
+        logger.error(f"Job {job_id} failed with {error_type}: {technical_error}")
         logger.error(stack_trace)
 
+        # Update job with user-friendly error message
         update_job_status(
             job_id,
             status="failed",
-            error=error_message,
+            error=user_message,  # User-friendly message
             status_message="Job failed due to an error",
             metadata={
-                "error_type": type(e).__name__,
+                "error_type": error_type,
+                "technical_error": technical_error,  # Store technical details in metadata
                 "stack_trace": stack_trace,
                 "celery_task_id": self.request.id
             }
@@ -500,20 +505,24 @@ def run_crew_task_sync(
         }
 
     except Exception as e:
-        # Log error and update job
-        error_message = str(e)
+        # Transform error for user-friendly display
+        user_message, error_type = transform_error_for_user(e)
+        technical_error = str(e)
         stack_trace = traceback.format_exc()
 
-        logger.error(f"Job {job_id} failed: {error_message}")
+        # Log the technical details for debugging
+        logger.error(f"Job {job_id} failed with {error_type}: {technical_error}")
         logger.error(stack_trace)
 
+        # Update job with user-friendly error message
         update_job_status(
             job_id,
             status="failed",
-            error=error_message,
+            error=user_message,  # User-friendly message
             status_message="Job failed due to an error",
             metadata={
-                "error_type": type(e).__name__,
+                "error_type": error_type,
+                "technical_error": technical_error,  # Store technical details in metadata
                 "stack_trace": stack_trace,
                 "sync_mode": True
             }
