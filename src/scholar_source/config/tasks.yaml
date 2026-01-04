@@ -5,90 +5,65 @@ course_analysis_task:
     PRIMARY OBJECTIVE (MANDATORY):
     Identify the main textbook_title and textbook_author for the course.
 
-    OFFICIAL COURSE PAGE:
-    The official course page is a page whose main content is the description,
-    syllabus, or logistics of this specific course (title + number). Department
-    home pages, news, events, and general program pages are NOT course pages.
-
-    WORKFLOW:
-
     1) Find course page (when only course_name + university_name given):
-       - Use web search to find the official course_url.
-       - Build queries combining:
-         - course_name (with number if present),
-         - university_name,
-         - and words like "course description", "class description",
-           "syllabus", or "course catalog".
-       - From the top results, consider several candidate URLs.
-         Prefer pages that:
-         - Are on the university’s own domain (e.g., *.edu or official domain),
-         - Include the course number/code in the URL or title,
+       - Use web search with explicit queries such as:
+         "{course_name} {university_name} course description",
+         "{course_name} {university_name} syllabus",
+         "{course_name} {university_name} course catalog".
+       - Do NOT search only for the department or university name.
+       - Prefer URLs on the university’s own domain that:
+         - Include the course number/code in the URL or title, and
          - Mention "course description", "syllabus", "class description",
            or "course catalog".
-         Avoid obvious department home/news/event/program pages.
-       - Choose the best candidate as course_url.
+       - Pick the best candidate as course_url.
 
     2) Use user-provided textbook info (if available):
        - If {book_title} and {book_author} are provided:
-         - Use them as the primary textbook and set textbook_source="user_provided".
-       - If {isbn} is provided:
-         - Optionally look up metadata to confirm title/author.
-       - If {book_pdf_path} or {book_url} is provided:
-         - Record them for downstream agents.
-       - If {textbook} is provided:
-         - Parse for title/author and reconcile with any page data.
+         - Use them and set textbook_source="user_provided".
+       - If {isbn} is provided, optionally confirm title/author.
+       - If {book_pdf_path} or {book_url} is provided, record for downstream agents.
+       - If {textbook} is provided, parse for title/author.
 
     3) Fetch and verify course page:
        - If course_url is provided or found, use "Webpage Content Fetcher" on it.
-       - Verify it is a true course page:
-         - It should mention the specific course title and/or number
-           and include a description or syllabus.
-         - If it only shows department-wide info, news, or conferences
-           with no specific course details, treat it as NOT the course page
-           and (once) repeat step 1 to find a better URL.
-       - On a confirmed course page, search for textbook info in sections
-         like "Materials", "Textbook", "Required Text", "Required Textbook",
-         "Course Materials", or "Resources".
-       - Handle common formats such as:
-         "Title, Author", "Title by Author", "Title (Author)",
-         or multi-line where title and author are on adjacent lines.
-       - Parse into textbook_title and textbook_author.
+       - Treat a page as the official course page ONLY if:
+         - It clearly mentions this course_name and/or course number
+           (e.g., "Math 228-2" or close variant), AND
+         - It contains a course description, syllabus, requirements, or schedule.
+       - Ignore global navigation (menus like "About", "People", "Events",
+         "News", "Undergraduate Program", "Make a Gift", search boxes, etc.)
+         and focus on central course content.
+       - If no course_name/number and no course description/syllabus are found:
+         - Do NOT extract textbook info.
+         - Return an error asking the user to provide course_url directly.
+       - On a confirmed course page, search for textbook info in sections such as
+         "Materials", "Textbook", "Required Text", "Course Materials", "Resources".
+       - Parse common formats like "Title, Author", "Title by Author",
+         or multi-line title/author into textbook_title and textbook_author.
 
-    4) Extract syllabus (if present):
-       - Detect syllabus links (HTML or PDF), convert relative URLs to absolute.
-       - Use "Webpage Content Fetcher" ONCE on the syllabus.
-       - Treat the syllabus as authoritative for textbook info and course scope.
+    4) Extract syllabus and topics:
+       - If a syllabus link (HTML or PDF) exists, convert relative URL to absolute
+         and fetch it once with "Webpage Content Fetcher".
+       - Treat the syllabus as authoritative for textbook info and topics.
+       - If topics_list is provided, treat as user_specified_topics (main focus).
+       - Otherwise, extract topics from syllabus schedule/outline and course description.
+       - If a textbook table of contents is available, align with syllabus to keep
+         only chapters actually covered.
 
-    5) Determine topics (priority order):
-       - If topics_list is provided, treat as user_specified_topics and main focus.
-       - Otherwise, extract topics from:
-         - Syllabus schedule/outline, then
-         - Course description and learning objectives.
-       - If textbook TOC is available, align it with the syllabus to keep only
-         chapters actually covered.
-       - Be specific: map ranges like "Chapters 3–7" to the corresponding
-         chapter titles, not the whole book.
-
-    6) Extract resource URLs:
-       - Collect links to lecture notes, problem sets, exams, videos,
-         and other course resources found on the course page/syllabus.
-       - Do NOT navigate to these links; just record them for downstream agents.
+    5) Extract resource URLs:
+       - Collect URLs for lecture notes, problem sets, exams, videos, and other
+         course resources from the course page/syllabus.
+       - Do NOT navigate to these links; just record them.
 
     DEPTH RESTRICTION:
-    - Only navigate to:
-      - The main course page, and
-      - The syllabus (if found).
-    - Do not follow other resource links.
+    - Only visit the main course page and, if present, the syllabus.
 
-    ERROR HANDLING / VALIDATION:
-    - If the course page is not accessible:
-      - Return a clear error message.
-    - If no textbook is found on page/syllabus and none is provided by the user:
-      - Set textbook_source="not_found" and still extract topics if possible.
-    - If there are no topics, no textbook, and no usable description:
-      - Ask the user to provide topics_list or a textbook PDF/URL.
-    - Ensure the final result has at least one of:
-      user_topics, general_course_topics, or textbook_title.
+    ERROR HANDLING:
+    - If the course page is not accessible, return a clear error.
+    - If no textbook is found on page/syllabus and none is provided, set
+      textbook_source="not_found" but still extract topics if possible.
+    - If there are no topics, no textbook, and no usable description, ask the
+      user for topics_list or a textbook PDF/URL.
 
     Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list},
             {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url},
@@ -121,7 +96,6 @@ course_analysis_task:
     Return clean JSON or clearly structured text that downstream agents can parse.
 
   agent: course_intelligence_agent
-
 
 
 resource_search_task:
