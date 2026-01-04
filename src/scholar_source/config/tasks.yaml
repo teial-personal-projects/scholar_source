@@ -5,30 +5,19 @@ course_analysis_task:
     PRIMARY OBJECTIVE (MANDATORY):
     Identify the main textbook_title and textbook_author for the course.
 
-    1. Find course page (when only course_name + university_name given):
-          - Use web search to find the official course page URL.
+    1. Find course_url (when only course_name + university_name given):
+          - Use "Website Search Tool" to search the web to find the official course page URL.
           - Construct search queries combining:
-            - Exact course_name (including number), AND
+            - Exact course_name AND
             - university_name, AND
             - Keywords: "syllabus" OR "course description" OR "course catalog"
           
-          Search query examples:
-          - "{course_name} {university_name} syllabus"
-          - "{course_name} {university_name} course description"
-          - 'site:{university_domain} "{course_name}" syllabus'
-          
           - Examine top 5-10 search results
           - PREFER URLs that contain ALL of these signals:
-            * Course number/code in URL path or title (e.g., "/228-2/", "math-228")
+            * Course name or part of course namem in title (e.g., "/228-2", "math-228")
+            * Example: For course Math 228-2, this name in the tile is acceptable: 228-2-1
             * Keywords in URL: "courses", "syllabus", "catalog", "class"
             * University's official domain (*.edu or official domain)
-          
-          - SKIP URLs containing these patterns (department/general pages):
-            * "/people/", "/faculty/", "/staff/", "/directory/"
-            * "/news/", "/events/", "/about/", "/alumni/"
-            * "/department/", "/welcome/", "/contact/"
-            * Ending in just department name: "/math", "/mathematics", "/chemistry"
-            * Page titles with only: "Department", "People", "News", "Events"
           
           - VALIDATE candidate page before accepting as course_url:
             * Fetch the page using "Webpage Content Fetcher"
