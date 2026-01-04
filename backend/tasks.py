@@ -7,11 +7,15 @@ Tasks are executed by Celery workers in separate processes.
 
 import sys
 import os
+from dotenv import load_dotenv
 
-# Force unbuffered output and terminal-like behavior for Rich/CrewAI
-os.environ["PYTHONUNBUFFERED"] = "1"
-os.environ["FORCE_COLOR"] = "1"  # Force Rich to output colors/formatting
-os.environ["TERM"] = "xterm-256color"  # Pretend we're in a terminal
+# Load environment variables from .env file
+load_dotenv()
+
+# CrewAI/ChromaDB requires CHROMA_OPENAI_API_KEY for embeddings
+# If not set, use OPENAI_API_KEY as fallback
+if not os.getenv("CHROMA_OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY"):
+    os.environ["CHROMA_OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 import re
 import asyncio
