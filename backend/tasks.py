@@ -12,11 +12,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# CrewAI/ChromaDB requires CHROMA_OPENAI_API_KEY for embeddings
-# If not set, use OPENAI_API_KEY as fallback
-if not os.getenv("CHROMA_OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY"):
-    os.environ["CHROMA_OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-
 import re
 import asyncio
 import traceback
