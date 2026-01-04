@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Disable CrewAI telemetry prompts in production/worker environment
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
 import re
 import asyncio
 import traceback
