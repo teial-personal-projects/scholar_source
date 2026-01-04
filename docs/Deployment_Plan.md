@@ -277,7 +277,62 @@ For a small internal app, this warning is usually acceptable during development.
 ​
 
 
-### 2.8 Configure Scaling (Optional)
+### 2.8 Railway Environment Management
+
+Railway supports multiple environments (production, development, staging) for managing different deployments.
+
+#### Environment Detection
+
+Railway automatically sets these environment variables:
+- `RAILWAY_ENVIRONMENT_NAME` - Environment name (production, development, etc.)
+- `RAILWAY_GIT_BRANCH` - Git branch deployed (main, develop, etc.)
+- `RAILWAY_GIT_COMMIT_SHA` - Full commit hash
+- `RAILWAY_SERVICE_NAME` - Service name (web, worker)
+- `RAILWAY_PROJECT_NAME` - Project name
+
+#### Setting Up Multiple Environments
+
+**Method 1: Branch-Based (Recommended)**
+- Production: Deploy from `main` branch → `production` environment
+- Development: Deploy from `develop` branch → `development` environment
+
+**Method 2: Manual Environment Creation**
+1. Railway Dashboard → Your Project
+2. Click "New Environment" (top right)
+3. Name it (e.g., `staging`, `testing`)
+4. Configure separate environment variables per environment
+
+#### Environment-Specific Configuration
+
+Set different variables per environment in Railway Dashboard:
+- Select environment from dropdown (top-left)
+- Go to Variables tab
+- Add environment-specific values
+
+**Example:**
+- Production: `LOG_LEVEL=INFO`, `REDIS_URL=redis://prod-redis...`
+- Development: `LOG_LEVEL=DEBUG`, `REDIS_URL=redis://dev-redis...`
+
+#### Checking Current Environment
+
+**In Railway Dashboard:**
+- Look at top-left breadcrumb: `[Project] > [Environment] > [Service]`
+
+**In Code:**
+```python
+import os
+railway_env = os.getenv("RAILWAY_ENVIRONMENT_NAME", "local")
+logger.info(f"Running in {railway_env} environment")
+```
+
+**Via Railway CLI:**
+```bash
+railway status  # Shows current environment
+railway environment production  # Switch to production
+railway environment development  # Switch to development
+```
+
+### 2.9 Configure Scaling (Optional)
 
 **Scale the Worker Process:**
 
@@ -300,7 +355,7 @@ By default, Railway runs 1 instance of each process. To scale:
 - Configure min/max instances
 - Automatically scales workers based on load
 
-### 2.9 Verify Backend Deployment
+### 2.10 Verify Backend Deployment
 
 1. Copy your Railway deployment URL (e.g., `https://scholarsource-dev.up.railway.app`)
 2. Test the health endpoint:
@@ -796,17 +851,44 @@ Track these metrics to measure deployment success:
 - Only see `web` process logs
 - No Celery startup messages
 - Jobs stay in `queued` status forever
+- Worker exits immediately with no error
 
 **Causes:**
-- Procfile not detected
+- Procfile not detected or incorrect
 - Worker process crashed during startup
 - Missing dependencies
+- Import errors
+- PYTHONPATH not set correctly
 
 **Fixes:**
-1. Verify `Procfile` exists in repository root
-2. Check Railway deployment logs for errors
-3. Ensure `celery` is in `requirements.txt`
-4. Verify `REDIS_URL` is set correctly
+
+1. **Verify Procfile exists and is correct:**
+   ```bash
+   web: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --log-level info
+   worker: bash scripts/railway_worker_start.sh
+   ```
+
+2. **Check Railway deployment logs:**
+   - Go to Railway Dashboard → Deployments → Latest
+   - Look for worker process startup messages
+   - Check for import errors or missing modules
+
+3. **Verify dependencies:**
+   - Ensure `celery[redis]>=5.3.0` and `redis>=5.0.0` in `requirements.txt`
+   - Check Railway build logs show successful installation
+
+4. **Test imports locally:**
+   ```bash
+   python -c "from backend.celery_app import app; print('✅ OK')"
+   python -c "from backend.tasks import run_crew_task; print('✅ OK')"
+   ```
+
+5. **Use enhanced startup script:**
+   The project includes `scripts/railway_worker_start.sh` which:
+   - Sets PYTHONPATH correctly
+   - Tests imports before starting
+   - Verifies Redis connection
+   - Provides detailed logging
 
 #### Issue 2: Redis Connection Failed
 
@@ -863,19 +945,152 @@ Error binding to 0.0.0.0:8000
 **Symptoms:**
 - Jobs stuck in `queued` status
 - Worker logs show "ready" but no task execution
+- Tasks not appearing in worker logs
 
 **Fixes:**
-1. Check worker logs for errors
-2. Verify queue names match:
-   - `backend/celery_app.py` defines queues
-   - Procfile worker listens to correct queues
-3. Manually test task:
+1. **Check worker logs for errors:**
+   - Railway Dashboard → Service Logs → Filter by `worker`
+   - Look for task execution messages
+
+2. **Verify queue names match:**
+   - `backend/celery_app.py` defines queues (`crew_jobs`, `default`)
+   - Procfile worker listens to correct queues: `--queues=crew_jobs,default`
+
+3. **Check task registration:**
    ```python
-   from backend.tasks import run_crew_task
-   result = run_crew_task.delay("test-job-id", {...})
+   from backend.celery_app import app
+   print(app.control.inspect().registered())  # Should show run_crew_task
    ```
 
-### 10.2 Useful Railway CLI Commands
+4. **Manually test task:**
+   ```python
+   from backend.tasks import run_crew_task
+   result = run_crew_task.delay("test-job-id", {"course_url": "https://example.com"})
+   print(f"Task ID: {result.id}, Status: {result.status}")
+   ```
+
+5. **Verify worker is listening to correct queues:**
+   ```python
+   from backend.celery_app import app
+   print(app.control.inspect().active_queues())  # Should show crew_jobs and default
+   ```
+
+#### Issue 6: Worker Dies Immediately
+
+**Symptoms:**
+- Worker starts but exits immediately
+- No error messages in logs
+- Process exits with code 1
+
+**Fixes:**
+1. **Check for syntax errors:**
+   ```bash
+   python -m py_compile backend/celery_app.py
+   python -m py_compile backend/tasks.py
+   ```
+
+2. **Test imports:**
+   ```bash
+   python -c "import backend.celery_app"
+   python -c "import backend.tasks"
+   ```
+
+3. **Check Railway build logs:**
+   - Verify all dependencies installed successfully
+   - Look for import errors during build
+
+4. **Use startup script with diagnostics:**
+   The `scripts/railway_worker_start.sh` script tests imports before starting
+
+#### Issue 7: No Logs Visible
+
+**Symptoms:**
+- Worker process starts but produces no logs
+- Cannot see what's happening
+
+**Fixes:**
+1. **Ensure unbuffered output:**
+   - Use `PYTHONUNBUFFERED=1` in Procfile
+   - Use `python -u` flag for unbuffered binary output
+   - Use `--loglevel=info` or `--loglevel=debug`
+
+2. **Check Railway log viewer:**
+   - Go to Railway Dashboard → Service Logs (not just Deploy Logs)
+   - Filter by `worker` process
+   - Logs may take a few seconds to appear
+
+3. **Verify logging configuration:**
+   - Check `backend/logging_config.py` is configured correctly
+   - Ensure handlers output to stdout/stderr
+
+#### Issue 8: Pool/Concurrency Issues
+
+**Symptoms:**
+- Worker starts but tasks don't execute
+- Worker hangs or becomes unresponsive
+- High memory usage
+
+**Fixes:**
+1. **Use `solo` pool for Railway (recommended):**
+   ```bash
+   celery -A backend.celery_app worker --pool=solo --loglevel=info
+   ```
+
+2. **Adjust concurrency based on Railway plan:**
+   - Hobby plan (512MB RAM): `--concurrency=1` or `--pool=solo`
+   - Pro plan (8GB RAM): `--concurrency=2-4`
+
+3. **Pool types:**
+   - `solo` - Single process (best for Railway, recommended)
+   - `prefork` - Multi-process (higher memory, default)
+   - `threads` - Multi-threaded (lower memory)
+
+### 10.2 Celery Worker Configuration
+
+#### Recommended Worker Settings for Railway
+
+**For Hobby Plan (512MB RAM):**
+```bash
+celery -A backend.celery_app worker \
+  --pool=solo \
+  --loglevel=info \
+  --queues=crew_jobs,default \
+  --max-tasks-per-child=50 \
+  --time-limit=1800 \
+  --soft-time-limit=1500
+```
+
+**For Pro Plan (8GB+ RAM):**
+```bash
+celery -A backend.celery_app worker \
+  --pool=prefork \
+  --concurrency=2 \
+  --loglevel=info \
+  --queues=crew_jobs,default \
+  --max-tasks-per-child=50 \
+  --time-limit=1800 \
+  --soft-time-limit=1500
+```
+
+#### Worker Health Monitoring
+
+The backend includes a worker health endpoint at `/api/health/workers`:
+
+```bash
+curl https://your-app.railway.app/api/health/workers
+```
+
+**Expected response:**
+```json
+{
+  "status": "healthy",
+  "workers_available": true,
+  "worker_count": 1,
+  "workers": ["celery@hostname"]
+}
+```
+
+### 10.3 Useful Railway CLI Commands
 
 ```bash
 # Install Railway CLI
@@ -897,7 +1112,7 @@ railway run python scripts/test.py --redis
 railway shell
 ```
 
-### 10.3 Monitoring and Maintenance
+### 10.4 Monitoring and Maintenance
 
 #### Monitoring Checklist
 
@@ -938,7 +1153,7 @@ railway shell
    - Check job status distribution in database
    - Investigate and fix failed job patterns
 
-### 10.4 Scaling Strategy
+### 10.5 Scaling Strategy
 
 #### When to Scale UP (More Resources per Instance)
 
@@ -983,7 +1198,7 @@ railway shell
 5. **Use caching** - Reduce redundant work
 6. **Schedule heavy tasks** - Run during off-peak hours if possible
 
-### 10.5 Deployment Checklist
+### 10.6 Deployment Checklist
 
 Before going live with production traffic:
 
@@ -1050,27 +1265,70 @@ Once deployed and stable:
 
 ## Appendix: Deployment Commands Reference
 
-### Railway Deployment
+### Railway CLI Commands
 
 ```bash
-# Install Railway CLI (optional)
+# Install Railway CLI
 npm install -g @railway/cli
+# OR
+brew install railway  # macOS
+# OR
+curl -fsSL https://railway.app/install.sh | sh  # Linux/macOS
 
 # Login
 railway login
 
 # Link to project
+cd /path/to/scholar_source
 railway link
+
+# Check current status
+railway status  # Shows current environment and service
+
+# Switch environments
+railway environment production
+railway environment development
+
+# View logs
+railway logs  # All services
+railway logs --filter worker  # Worker only
+railway logs --follow  # Follow in real-time
+
+# View variables
+railway variables  # All variables for current environment
+railway variables | grep REDIS_URL  # Specific variable
+
+# Set environment variable
+railway variables set OPENAI_API_KEY=sk-proj-...
+
+# Run command in Railway environment
+railway run python scripts/test.py --redis
 
 # Deploy manually (auto-deploy via GitHub is recommended)
 railway up
 
-# View logs
-railway logs
-
-# Set environment variable
-railway variables set OPENAI_API_KEY=sk-proj-...
+# Open dashboard
+railway open
 ```
+
+### Railway Quick Reference
+
+**Check Current Environment:**
+- Railway Dashboard: Look at top-left breadcrumb `[Project] > [Environment] > [Service]`
+- Railway CLI: `railway status`
+- In logs: Look for `RAILWAY_ENVIRONMENT_NAME` variable
+
+**Environment Variables Railway Sets:**
+- `RAILWAY_ENVIRONMENT_NAME` - Environment name (production, development)
+- `RAILWAY_GIT_BRANCH` - Git branch (main, develop)
+- `RAILWAY_GIT_COMMIT_SHA` - Full commit hash
+- `RAILWAY_SERVICE_NAME` - Service name (web, worker)
+- `RAILWAY_PROJECT_NAME` - Project name
+
+**Typical Setup:**
+- Production: `main` branch → `production` environment
+- Development: `develop` branch → `development` environment
+- Each environment has separate variables, databases, Redis instances
 
 ### Cloudflare Pages Deployment
 
