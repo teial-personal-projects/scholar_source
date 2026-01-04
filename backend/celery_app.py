@@ -122,14 +122,14 @@ app.conf.update(
     },
 )
 
-app.conf.update(
-    broker_use_ssl={
-        'ssl_cert_reqs': ssl.CERT_NONE  # Railway's Redis uses self-signed certs
-    },
-    redis_backend_use_ssl={
-        'ssl_cert_reqs': ssl.CERT_NONE
-    }
-)
+# app.conf.update(
+#     broker_use_ssl={
+#         'ssl_cert_reqs': ssl.CERT_NONE  # Railway's Redis uses self-signed certs
+#     },
+#     redis_backend_use_ssl={
+#         'ssl_cert_reqs': ssl.CERT_NONE
+#     }
+# )
 
 # Task error handler
 @app.task(bind=True)
