@@ -152,12 +152,26 @@ resource_search_task:
 
     **USA-ONLY REQUIREMENT:**
     ALL resources must be from USA-based institutions, universities, or platforms.
-    - Accept: MIT, Stanford, Berkeley, OpenStax, Khan Academy, US university sites
+    - Accept: MIT, Stanford, Berkeley, OpenStax, US university sites
     - REJECT: Cambridge.ac.uk, Oxford.ac.uk, any non-US institution
     - When searching, include USA university names or add "USA" to queries
     - Verify domain and institution location before including any resource
 
-    **USER FILTERS (APPLY AFTER USA CHECK):**
+    **PLATFORM RESTRICTIONS (DO NOT SEARCH OR INCLUDE):**
+    NEVER include resources from these platforms (require login/payment):
+    - Khan Academy (khanacademy.org) - requires login
+    - Coursera (coursera.org) - requires account
+    - Udemy (udemy.com) - paid courses
+    - edX (edx.org) - requires account
+    - Udacity (udacity.com) - requires account
+    - Brilliant.org - paid subscription
+    - Course platforms: *.thinkific.com, *.teachable.com, *.podia.com
+    
+    REJECT any URL containing: /premium/, /pro/, /subscription/, /members-only/
+    
+    Only recommend publicly accessible resources with NO login or payment required.
+
+    **USER FILTERS (APPLY AFTER USA AND PLATFORM CHECKS):**
     
     Targeted Sites (if {targeted_sites} provided):
     - Parse as comma-separated domains (e.g., "stanford.edu, berkeley.edu")
@@ -209,7 +223,7 @@ resource_search_task:
       course_notes | educational_video | problem_set | practice_exam
     - url: Direct link (accessible without login)
     - coverage_topics: List of topics this resource addresses
-    - source_credibility: USA-based origin (e.g., "MIT OpenCourseWare", "OpenStax", "Khan Academy")
+    - source_credibility: USA-based origin (e.g., "MIT OpenCourseWare", "OpenStax")
     - content_scope: comprehensive | supplementary | topic-specific
     - access_notes: Confirmation of free, legal, open access
     - estimated_depth: introductory | intermediate | advanced
@@ -219,6 +233,7 @@ resource_search_task:
     Format as structured JSON or clear text for downstream parsing.
 
   agent: resource_discovery_agent
+
 
 resource_validation_task:
   description: >
