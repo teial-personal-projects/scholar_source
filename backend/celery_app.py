@@ -191,12 +191,11 @@ if app is not None:
     @worker_ready.connect
     def on_worker_ready(sender, **kwargs):
         """Called when the Celery worker is ready to accept tasks."""
-        print("=" * 60, flush=True)
-        print("🚀 CELERY WORKER STARTED ON RAILWAY", flush=True)
-        print(f"   Worker: {sender}", flush=True)
-        print(f"   Redis URL: {REDIS_URL[:30]}...", flush=True)
-        print("=" * 60, flush=True)
+        logger.info("=" * 60)
         logger.info("🚀 CELERY WORKER STARTED ON RAILWAY")
+        logger.info(f"   Worker: {sender}")
+        logger.info(f"   Redis URL: {REDIS_URL[:30]}...")
+        logger.info("=" * 60)
         logger.info(f"Worker ready: {sender}")
 
 
