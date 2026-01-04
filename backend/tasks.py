@@ -7,15 +7,20 @@ Tasks are executed by Celery workers in separate processes.
 
 import sys
 import os
+import time
+from dotenv import load_dotenv
 
-# Force unbuffered output and terminal-like behavior for Rich/CrewAI
-os.environ["PYTHONUNBUFFERED"] = "1"
-os.environ["FORCE_COLOR"] = "1"  # Force Rich to output colors/formatting
-os.environ["TERM"] = "xterm-256color"  # Pretend we're in a terminal
+# Load environment variables from .env file
+load_dotenv()
+
+# Disable CrewAI telemetry prompts in production/worker environment
+os.environ["OTEL_SDK_DISABLED"] = "true"
 
 import re
 import asyncio
 import traceback
+import time
+import concurrent.futures
 from pathlib import Path
 from typing import Dict
 from celery import Task
@@ -29,12 +34,25 @@ from backend.jobs import update_job_status, get_job
 from backend.markdown_parser import parse_markdown_to_resources
 from backend.cache import get_cached_analysis, set_cached_analysis
 from backend.logging_config import get_logger
+from backend.error_utils import transform_error_for_user
 
 # Get logger for this module
 logger = get_logger(__name__)
 
+# Helper to conditionally apply Celery task decorator
+# If app is None (sync mode), return a no-op decorator
+def task_decorator(*args, **kwargs):
+    if app is not None:
+        # Return the actual Celery task decorator
+        return app.task(*args, **kwargs)
+    else:
+        # Return a no-op decorator for sync mode (ignores all arguments)
+        def noop_decorator(func):
+            return func
+        return noop_decorator
 
-@app.task(
+
+@task_decorator(
     bind=True,
     name="backend.tasks.run_crew_task",
     queue="crew_jobs",
@@ -68,12 +86,16 @@ def run_crew_task(
     Returns:
         Dict with status and results/error information
     """
+    start_time = time.time()
+
     logger.info(f"Starting Celery task for job {job_id} (task_id: {self.request.id})")
+    logger.info(f"Job {job_id} parameters: {inputs}")
 
     # Check if job was cancelled before starting
     job = get_job(job_id)
     if job and job.get("status") == "cancelled":
-        logger.info(f"Job {job_id} was cancelled before execution started")
+        elapsed = time.time() - start_time
+        logger.info(f"Job {job_id} was cancelled before execution started (elapsed: {elapsed:.2f}s)")
         return {"status": "cancelled", "message": "Job was cancelled before execution"}
 
     try:
@@ -225,7 +247,9 @@ def run_crew_task(
             metadata=metadata
         )
 
-        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources (elapsed: {elapsed:.2f}s)")
+        logger.info(f"Job {job_id} final parameters: {inputs}")
 
         return {
             "status": "completed",
@@ -234,20 +258,27 @@ def run_crew_task(
         }
 
     except Exception as e:
-        # Log error and update job
-        error_message = str(e)
+        elapsed = time.time() - start_time
+
+        # Transform error for user-friendly display
+        user_message, error_type = transform_error_for_user(e)
+        technical_error = str(e)
         stack_trace = traceback.format_exc()
 
-        logger.error(f"Job {job_id} failed: {error_message}")
+        # Log the technical details for debugging
+        logger.error(f"❌ Job {job_id} failed with {error_type}: {technical_error} (elapsed: {elapsed:.2f}s)")
+        logger.error(f"Job {job_id} failed parameters: {inputs}")
         logger.error(stack_trace)
 
+        # Update job with user-friendly error message
         update_job_status(
             job_id,
             status="failed",
-            error=error_message,
+            error=user_message,  # User-friendly message
             status_message="Job failed due to an error",
             metadata={
-                "error_type": type(e).__name__,
+                "error_type": error_type,
+                "technical_error": technical_error,  # Store technical details in metadata
                 "stack_trace": stack_trace,
                 "celery_task_id": self.request.id
             }
@@ -288,7 +319,240 @@ async def _run_crew_async(crew, inputs: Dict[str, str], job_id: str):
     return result
 
 
-@app.task(
+def run_crew_task_sync(
+    job_id: str,
+    inputs: Dict[str, str],
+    bypass_cache: bool = False
+) -> Dict[str, any]:
+    """
+    Synchronous version of run_crew_task that runs in-process without Celery.
+    
+    This function is used when SYNC_MODE=true (no Redis/Celery required).
+    It performs the same operations as the Celery task but runs synchronously.
+
+    Args:
+        job_id: UUID of the job to run
+        inputs: Dictionary of course input parameters
+        bypass_cache: If True, bypass cache and get fresh results
+
+    Returns:
+        Dict with status and results/error information
+    """
+    start_time = time.time()
+
+    logger.info(f"Starting synchronous task for job {job_id} (SYNC_MODE)")
+    logger.info(f"Job {job_id} parameters: {inputs}")
+
+    # Check if job was cancelled before starting
+    job = get_job(job_id)
+    if job and job.get("status") == "cancelled":
+        logger.info(f"Job {job_id} was cancelled before execution started")
+        return {"status": "cancelled", "message": "Job was cancelled before execution"}
+
+    try:
+        # Update status to running
+        update_job_status(
+            job_id,
+            status="running",
+            status_message="Initializing CrewAI agents...",
+            metadata={"sync_mode": True}
+        )
+
+        # Normalize inputs - convert None to empty string, but preserve lists for desired_resource_types
+        normalized_inputs = {}
+        for key, value in inputs.items():
+            if key == 'desired_resource_types':
+                # Keep as list (empty list if None or empty)
+                normalized_inputs[key] = value if isinstance(value, list) else ([] if value is None else [])
+            else:
+                normalized_inputs[key] = (value if value is not None else "")
+
+        # Ensure all required keys exist
+        required_keys = [
+            'university_name', 'course_name', 'course_url', 'textbook',
+            'topics_list', 'book_title', 'book_author', 'isbn',
+            'book_pdf_path', 'book_url', 'desired_resource_types', 'excluded_sites', 'targeted_sites'
+        ]
+
+        for key in required_keys:
+            if key not in normalized_inputs:
+                if key == 'desired_resource_types':
+                    normalized_inputs[key] = []
+                else:
+                    normalized_inputs[key] = ""
+
+        # Check cache for course analysis
+        cached_analysis = get_cached_analysis(
+            normalized_inputs,
+            cache_type="analysis",
+            bypass_cache=bypass_cache
+        )
+
+        if cached_analysis:
+            logger.info(f"✅ CACHE HIT - Job {job_id}: Using cached course analysis")
+            logger.debug(f"Cache data: textbook_title={cached_analysis.get('textbook_title', 'N/A')}")
+            update_job_status(
+                job_id,
+                status="running",
+                status_message="Using cached course analysis, discovering resources..."
+            )
+        else:
+            cache_reason = "bypass_cache=True" if bypass_cache else "no cached data found"
+            logger.info(f"❌ CACHE MISS - Job {job_id}: Running fresh analysis ({cache_reason})")
+            update_job_status(
+                job_id,
+                status="running",
+                status_message="Analyzing course and book structure..."
+            )
+
+        # Initialize crew
+        crew_instance = ScholarSource()
+        crew = crew_instance.crew()
+
+        logger.info(f"🚀 Starting CrewAI execution for job {job_id} (sync mode)")
+
+        # Run crew asynchronously
+        # Handle case where we're already in an event loop (e.g., called from async FastAPI endpoint)
+        try:
+            # Try to get the current event loop
+            loop = asyncio.get_running_loop()
+            # If we're in a running loop, we need to run in a new thread
+            # Create a new event loop in a thread to avoid the "cannot be called from a running event loop" error
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, _run_crew_async(crew, normalized_inputs, job_id))
+                result = future.result()
+        except RuntimeError:
+            # No running event loop, safe to use asyncio.run()
+            result = asyncio.run(_run_crew_async(crew, normalized_inputs, job_id))
+
+        # Update status
+        update_job_status(
+            job_id,
+            status="running",
+            status_message="Parsing results..."
+        )
+
+        # Extract raw output
+        raw_output = str(result.raw) if hasattr(result, 'raw') else str(result)
+
+        # Try to read the report.md file if it exists
+        report_path = Path("report.md")
+        if report_path.exists():
+            with open(report_path, "r") as f:
+                markdown_content = f.read()
+        else:
+            # Use raw output as fallback
+            markdown_content = raw_output
+
+        # Check if the crew returned an error
+        if "ERROR:" in markdown_content[:500]:
+            error_match = re.search(r'ERROR:\s*(.+?)(?:\n|$)', markdown_content)
+            error_msg = error_match.group(1) if error_match else "Cannot access provided resources"
+
+            update_job_status(
+                job_id,
+                status="failed",
+                error=error_msg,
+                status_message="Failed to access course or book resources",
+                raw_output=markdown_content[:1000]
+            )
+            return {
+                "status": "failed",
+                "error": error_msg,
+                "job_id": job_id
+            }
+
+        # Parse markdown into structured resources and metadata
+        excluded_sites = normalized_inputs.get('excluded_sites', '')
+        parsed_data = parse_markdown_to_resources(markdown_content, excluded_sites=excluded_sites)
+        resources = parsed_data.get("resources", [])
+        textbook_info = parsed_data.get("textbook_info")
+
+        # Cache course analysis results if this was a fresh analysis
+        if not cached_analysis and textbook_info:
+            analysis_results = {
+                "textbook_title": textbook_info.get("title", ""),
+                "textbook_author": textbook_info.get("author", ""),
+                "textbook_source": textbook_info.get("source", ""),
+                "raw_analysis": markdown_content[:2000]
+            }
+
+            set_cached_analysis(normalized_inputs, analysis_results, cache_type="analysis")
+            logger.info(f"💾 CACHE STORED - Job {job_id}: Cached analysis for future use")
+            if textbook_info:
+                logger.debug(f" Cached: title='{textbook_info.get('title', 'N/A')}', author='{textbook_info.get('author', 'N/A')}'")
+
+        # Prepare metadata
+        metadata = {
+            "resource_count": len(resources),
+            "crew_output_length": len(raw_output),
+            "cache_used": bool(cached_analysis),
+            "sync_mode": True
+        }
+        if textbook_info:
+            metadata["textbook_info"] = textbook_info
+
+        # Check if job was cancelled during execution
+        job = get_job(job_id)
+        if job and job.get("status") == "cancelled":
+            logger.info(f"Job {job_id} was cancelled during execution, discarding results")
+            return {"status": "cancelled", "message": "Job was cancelled during execution"}
+
+        # Update job with results
+        update_job_status(
+            job_id,
+            status="completed",
+            status_message="Resource discovery completed successfully",
+            results=resources,
+            raw_output=markdown_content,
+            metadata=metadata
+        )
+
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources (elapsed: {elapsed:.2f}s)")
+        logger.info(f"Job {job_id} final parameters: {inputs}")
+
+        return {
+            "status": "completed",
+            "job_id": job_id,
+            "resource_count": len(resources)
+        }
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+
+        # Transform error for user-friendly display
+        user_message, error_type = transform_error_for_user(e)
+        technical_error = str(e)
+        stack_trace = traceback.format_exc()
+
+        # Log the technical details for debugging
+        logger.error(f"❌ Job {job_id} failed with {error_type}: {technical_error} (elapsed: {elapsed:.2f}s)")
+        logger.error(f"Job {job_id} failed parameters: {inputs}")
+        logger.error(stack_trace)
+
+        # Update job with user-friendly error message
+        update_job_status(
+            job_id,
+            status="failed",
+            error=user_message,  # User-friendly message
+            status_message="Job failed due to an error",
+            metadata={
+                "error_type": error_type,
+                "technical_error": technical_error,  # Store technical details in metadata
+                "stack_trace": stack_trace,
+                "sync_mode": True
+            }
+        )
+
+        return {
+            "status": "failed",
+            "error": user_message,
+            "job_id": job_id
+        }
+
+
+@task_decorator(
     bind=True,
     name="backend.tasks.cleanup_old_results",
     queue="default",
@@ -315,7 +579,7 @@ def cleanup_old_results(self: Task) -> Dict[str, any]:
     }
 
 
-@app.task(
+@task_decorator(
     bind=True,
     name="backend.tasks.health_check",
     queue="default",

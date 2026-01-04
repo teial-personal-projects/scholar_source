@@ -6,43 +6,64 @@ It handles job execution, worker management, and task routing.
 """
 
 import os
+import ssl
+from dotenv import load_dotenv
 from celery import Celery
 from celery.signals import worker_ready
 from kombu import Queue, Exchange
 from backend.logging_config import get_logger, configure_logging
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Configure logging for Celery worker
 configure_logging(log_level="INFO")
 logger = get_logger(__name__)
 
+# Check if running in sync mode (no Redis/Celery required)
+SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() in ("true", "1", "yes")
+
 # Get Redis URL from environment
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-# Validate Redis URL exists (critical for Railway)
-if not REDIS_URL:
-    raise ValueError("❌ CRITICAL: REDIS_URL environment variable is not set!")
+# In sync mode, we don't need Redis/Celery
+if SYNC_MODE:
+    print("⚠️  SYNC MODE ENABLED - Running without Celery/Redis", flush=True)
+    logger.info("⚠️  SYNC MODE ENABLED - Running without Celery/Redis")
+    app = None  # Celery app will be None in sync mode
+else:
+    # Validate Redis URL exists (critical for Railway)
+    if not REDIS_URL:
+        raise ValueError(
+            "❌ CRITICAL: REDIS_URL environment variable is not set!\n"
+            "   Options:\n"
+            "   1. Set REDIS_URL to a Redis connection string (e.g., redis://localhost:6379/0)\n"
+            "   2. Set SYNC_MODE=true to run without Redis (tasks run synchronously in-process)\n"
+            "   3. Use a free cloud Redis service (Upstash, Redis Cloud, Railway)"
+        )
 
-# Log startup message with Redis URL (masked)
-print(f"🚀 CELERY APP MODULE LOADED", flush=True)
-print(f"📡 Broker URL: {REDIS_URL[:40]}...", flush=True)
-logger.info("🚀 CELERY APP MODULE LOADED")
-logger.info(f"Broker URL: {REDIS_URL[:40]}...")
+    # Log startup message with Redis URL (masked)
+    print(f"🚀 CELERY APP MODULE LOADED", flush=True)
+    print(f"📡 Broker URL: {REDIS_URL[:40]}...", flush=True)
+    logger.info("🚀 CELERY APP MODULE LOADED")
+    logger.info(f"Broker URL: {REDIS_URL[:40]}...")
 
-# Initialize Celery app
-app = Celery(
-    "scholar_source",
-    broker=REDIS_URL,
-    backend=REDIS_URL,
-    include=["backend.tasks"]  # Module where tasks are defined
-)
+    # Initialize Celery app
+    app = Celery(
+        "scholar_source",
+        broker=REDIS_URL,
+        backend=REDIS_URL,
+        include=["backend.tasks"]  # Module where tasks are defined
+    )
 
-# Celery Configuration
-app.conf.update(
+# Celery Configuration (only if not in sync mode)
+if app is not None:
+    app.conf.update(
     # Broker connection settings (CRITICAL for Railway)
     broker_connection_retry_on_startup=True,  # Retry on startup
     broker_connection_retry=True,  # Retry on connection loss
-    broker_connection_max_retries=10,  # Max retries before giving up
-    broker_pool_limit=10,  # Connection pool size
+    broker_connection_max_retries=5,  # Max retries before giving up
+    broker_pool_limit=3,  # Connection pool size
 
     # Task serialization
     task_serializer="json",
@@ -58,14 +79,14 @@ app.conf.update(
 
     # Task execution settings
     task_track_started=True,  # Track when tasks start
-    task_time_limit=3600,  # Hard time limit: 1 hour (kills task)
-    task_soft_time_limit=3000,  # Soft time limit: 50 minutes (raises exception)
+    task_time_limit=1800,  # Hard time limit: 30 min (kills task)
+    task_soft_time_limit=1500,  # Soft time limit: 25 minutes (raises exception)
     task_acks_late=True,  # Acknowledge task after completion (important for reliability)
     task_reject_on_worker_lost=True,  # Reject task if worker dies
 
     # Worker settings
     worker_prefetch_multiplier=1,  # Only fetch one task at a time (important for long-running tasks)
-    worker_max_tasks_per_child=100,  # Restart worker after 100 tasks (prevents memory leaks)
+    worker_max_tasks_per_child=50,  # Restart worker after 100 tasks (prevents memory leaks)
     worker_disable_rate_limits=False,
     worker_log_format="[%(asctime)s: %(levelname)s/%(processName)s] %(message)s",
     worker_task_log_format="[%(asctime)s: %(levelname)s/%(processName)s][%(task_name)s(%(task_id)s)] %(message)s",
@@ -119,71 +140,67 @@ app.conf.update(
         #     "schedule": 3600.0,  # Every hour
         # },
     },
-)
-
-# Optional: Configure additional settings based on environment
-if os.getenv("CELERY_BROKER_USE_SSL"):
-    app.conf.broker_use_ssl = {
-        "ssl_cert_reqs": "required",
-        "ssl_ca_certs": "/etc/ssl/certs/ca-certificates.crt",
-    }
-
-if os.getenv("CELERY_RESULT_BACKEND_USE_SSL"):
-    app.conf.redis_backend_use_ssl = {
-        "ssl_cert_reqs": "required",
-        "ssl_ca_certs": "/etc/ssl/certs/ca-certificates.crt",
-    }
-
-# Task error handler
-@app.task(bind=True)
-def error_handler(self, uuid):
-    """
-    Error handler for failed tasks.
-    This will be called when a task fails after all retries.
-    """
-    from backend.logging_config import get_logger
-    logger = get_logger(__name__)
-
-    result = self.app.AsyncResult(uuid)
-    logger.error(
-        f"Task {uuid} failed: {result.result}",
-        exc_info=result.traceback
     )
 
-# Configure task base class for automatic retry on common exceptions
-class BaseTask(app.Task):
-    """
-    Base task class with automatic retry logic for common exceptions.
-    """
-    autoretry_for = (
-        Exception,  # Retry on any exception (can be more specific)
-    )
-    retry_kwargs = {
-        "max_retries": 3,
-        "countdown": 60,  # Wait 60 seconds before retry
-    }
-    retry_backoff = True  # Exponential backoff
-    retry_backoff_max = 600  # Max 10 minutes backoff
-    retry_jitter = True  # Add random jitter to backoff
+# app.conf.update(
+#     broker_use_ssl={
+#         'ssl_cert_reqs': ssl.CERT_NONE  # Railway's Redis uses self-signed certs
+#     },
+#     redis_backend_use_ssl={
+#         'ssl_cert_reqs': ssl.CERT_NONE
+#     }
+# )
 
-# Update default task class
-app.Task = BaseTask
+# Task error handler (only if Celery is available)
+if app is not None:
+    @app.task(bind=True)
+    def error_handler(self, uuid):
+        """
+        Error handler for failed tasks.
+        This will be called when a task fails after all retries.
+        """
+        from backend.logging_config import get_logger
+        logger = get_logger(__name__)
 
+        result = self.app.AsyncResult(uuid)
+        logger.error(
+            f"Task {uuid} failed: {result.result}",
+            exc_info=result.traceback
+        )
 
-# Signal handler for when worker is ready
-@worker_ready.connect
-def on_worker_ready(sender, **kwargs):
-    """Called when the Celery worker is ready to accept tasks."""
-    print("=" * 60, flush=True)
-    print("🚀 CELERY WORKER STARTED ON RAILWAY", flush=True)
-    print(f"   Worker: {sender}", flush=True)
-    print(f"   Redis URL: {REDIS_URL[:30]}...", flush=True)
-    print("=" * 60, flush=True)
-    logger.info("🚀 CELERY WORKER STARTED ON RAILWAY")
-    logger.info(f"Worker ready: {sender}")
+    # Configure task base class for automatic retry on common exceptions
+    class BaseTask(app.Task):
+        """
+        Base task class with automatic retry logic for common exceptions.
+        """
+        autoretry_for = (
+            Exception,  # Retry on any exception (can be more specific)
+        )
+        retry_kwargs = {
+            "max_retries": 3,
+            "countdown": 60,  # Wait 60 seconds before retry
+        }
+        retry_backoff = True  # Exponential backoff
+        retry_backoff_max = 600  # Max 10 minutes backoff
+        retry_jitter = True  # Add random jitter to backoff
+
+    # Update default task class
+    app.Task = BaseTask
+
+    # Signal handler for when worker is ready
+    @worker_ready.connect
+    def on_worker_ready(sender, **kwargs):
+        """Called when the Celery worker is ready to accept tasks."""
+        # Log a single concise message instead of multiple lines
+        # This reduces log noise in Railway
+        worker_name = getattr(sender, 'hostname', str(sender))
+        logger.info(f"🚀 Celery worker ready: {worker_name} (Redis: {REDIS_URL[:20]}...)")
 
 
 if __name__ == "__main__":
     # For testing: Start a worker with
     # celery -A backend.celery_app worker --loglevel=info
-    app.start()
+    if app is not None:
+        app.start()
+    else:
+        print("⚠️  Cannot start Celery worker in SYNC_MODE. Set SYNC_MODE=false and provide REDIS_URL.")

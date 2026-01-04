@@ -10,16 +10,24 @@ Uses Redis for distributed rate limiting across multiple instances.
 """
 
 import os
+from dotenv import load_dotenv
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from starlette.responses import JSONResponse
 
+# Load environment variables from .env file
+load_dotenv()
 
 # Check for Redis connection string (required for production/scaling)
 REDIS_URL = os.getenv("REDIS_URL")
+SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() in ("true", "1", "yes")
 ALLOW_IN_MEMORY = os.getenv("ALLOW_IN_MEMORY_RATE_LIMIT", "false").lower() in ("true", "1", "yes")
+
+# In sync mode, automatically allow in-memory rate limiting
+if SYNC_MODE:
+    ALLOW_IN_MEMORY = True
 
 if REDIS_URL:
     # Production: Use Redis for shared rate limiting across instances
@@ -30,18 +38,21 @@ if REDIS_URL:
     )
     print("✅ Rate limiting: Redis (multi-instance mode)")
 elif ALLOW_IN_MEMORY:
-    # Development/Testing: Use in-memory storage (only when explicitly allowed)
+    # Development/Testing: Use in-memory storage (only when explicitly allowed or in SYNC_MODE)
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=["1000/hour"]
     )
-    print("⚠️  Rate limiting: In-memory (development mode only - single instance)")
+    if SYNC_MODE:
+        print("⚠️  Rate limiting: In-memory (SYNC_MODE - single instance)")
+    else:
+        print("⚠️  Rate limiting: In-memory (development mode only - single instance)")
 else:
     # Production without Redis: Raise error
     raise ValueError(
         "REDIS_URL environment variable is required for rate limiting. "
         "Set REDIS_URL to your Redis connection string, or set "
-        "ALLOW_IN_MEMORY_RATE_LIMIT=true for local development/testing only."
+        "SYNC_MODE=true or ALLOW_IN_MEMORY_RATE_LIMIT=true for local development/testing only."
     )
 
 

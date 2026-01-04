@@ -39,11 +39,6 @@ export PYTHONPATH="${PYTHONPATH:-.}:$(pwd)"
 echo "✅ PYTHONPATH set to: $PYTHONPATH" >&2
 echo "" >&2
 
-# Force unbuffered output
-export PYTHONUNBUFFERED=1
-export FORCE_COLOR=1
-export TERM=xterm-256color
-
 echo "🔍 DIRECTORY STRUCTURE:" >&2
 ls -la >&2
 echo "" >&2

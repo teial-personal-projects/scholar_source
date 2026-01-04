@@ -21,16 +21,15 @@ logger = get_logger(__name__)
 
 def run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> str:
     """
-    Enqueue a ScholarSource crew job to the Celery task queue.
+    Enqueue a ScholarSource crew job to the Celery task queue, or run synchronously if in SYNC_MODE.
 
-    This function replaces the old threading-based approach with Celery task queue.
-    The actual job execution happens in a separate worker process via the run_crew_task Celery task.
-
-    This function:
-    1. Validates the job exists and is in pending status
-    2. Enqueues the job to Celery task queue
-    3. Updates job metadata with Celery task ID
-    4. Returns the Celery task ID for tracking
+    In normal mode (with Redis/Celery):
+    - Enqueues the job to Celery task queue
+    - The actual job execution happens in a separate worker process
+    
+    In SYNC_MODE (no Redis):
+    - Runs the job synchronously in the current process
+    - Blocks until completion (not recommended for production)
 
     Args:
         job_id: UUID of the job to run
@@ -38,14 +37,16 @@ def run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = Fal
         bypass_cache: If True, bypass cache and get fresh results
 
     Returns:
-        str: Celery task ID for the enqueued task
+        str: Celery task ID (in async mode) or "sync" (in sync mode)
 
     Raises:
         ValueError: If job doesn't exist or is not in pending status
     """
-    # Import here to avoid circular dependency
-    from backend.tasks import run_crew_task
-
+    import os
+    
+    # Check if running in sync mode
+    SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() in ("true", "1", "yes")
+    
     # Verify job exists and is in correct status
     job = get_job(job_id)
     if not job:
@@ -55,57 +56,99 @@ def run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = Fal
     if job_status not in ["pending", "queued"]:
         logger.warning(
             f"Job {job_id} is in status '{job_status}', expected 'pending' or 'queued'. "
-            f"Proceeding with enqueue anyway."
+            f"Proceeding anyway."
         )
 
-    # Enqueue the task to Celery
-    logger.info(f"Enqueueing job {job_id} to Celery task queue")
-    celery_result = run_crew_task.apply_async(
-        args=[job_id, inputs, bypass_cache],
-        task_id=None,  # Let Celery generate task ID
-        queue="crew_jobs",  # Use the crew_jobs queue
-        priority=5,  # Default priority (can be adjusted based on user tier, etc.)
-    )
+    if SYNC_MODE:
+        # Run synchronously in the current process
+        logger.info(f"Running job {job_id} synchronously (SYNC_MODE)")
+        from backend.tasks import run_crew_task_sync
+        
+        # Update job status to running (will be updated by the sync task)
+        update_job_status(
+            job_id,
+            status="running",
+            status_message="Starting job execution (sync mode)...",
+            metadata={
+                "sync_mode": True,
+                "bypass_cache": bypass_cache
+            }
+        )
+        
+        # Run the task synchronously (this will block)
+        try:
+            result = run_crew_task_sync(job_id, inputs, bypass_cache)
+            logger.info(f"Job {job_id} completed in sync mode: {result.get('status')}")
+            return "sync"
+        except Exception as e:
+            logger.error(f"Job {job_id} failed in sync mode: {e}")
+            raise
+    else:
+        # Import here to avoid circular dependency
+        from backend.tasks import run_crew_task
 
-    celery_task_id = celery_result.id
-    logger.info(f"Job {job_id} enqueued with Celery task ID: {celery_task_id}")
+        # Enqueue the task to Celery
+        logger.info(f"Enqueueing job {job_id} to Celery task queue")
+        celery_result = run_crew_task.apply_async(
+            args=[job_id, inputs, bypass_cache],
+            task_id=None,  # Let Celery generate task ID
+            queue="crew_jobs",  # Use the crew_jobs queue
+            priority=5,  # Default priority (can be adjusted based on user tier, etc.)
+        )
 
-    # Update job status to queued with task ID
-    update_job_status(
-        job_id,
-        status="queued",
-        status_message="Job queued for processing",
-        metadata={
-            "celery_task_id": celery_task_id,
-            "bypass_cache": bypass_cache
-        }
-    )
+        celery_task_id = celery_result.id
+        logger.info(f"Job {job_id} enqueued with Celery task ID: {celery_task_id}")
 
-    return celery_task_id
+        # Update job status to queued with task ID
+        update_job_status(
+            job_id,
+            status="queued",
+            status_message="Job queued for processing",
+            metadata={
+                "celery_task_id": celery_task_id,
+                "bypass_cache": bypass_cache
+            }
+        )
+
+        return celery_task_id
 
 
 def cancel_crew_job(job_id: str) -> bool:
     """
-    Cancel an active crew job by revoking its Celery task.
+    Cancel an active crew job by revoking its Celery task (or marking as cancelled in sync mode).
 
-    This function:
-    1. Retrieves the job and its Celery task ID from the database
-    2. Revokes the Celery task (terminates if running, removes if queued)
-    3. Updates the job status to 'cancelled'
+    In async mode (with Celery):
+    - Revokes the Celery task (terminates if running, removes if queued)
+    
+    In sync mode:
+    - Marks the job as cancelled (cannot actually stop running task)
 
     Args:
         job_id: UUID of the job to cancel
 
     Returns:
-        bool: True if task was found and revoked, False otherwise
+        bool: True if task was found and cancelled, False otherwise
     """
-    from backend.celery_app import app
-
+    import os
+    
+    SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() in ("true", "1", "yes")
+    
     # Get the job to find the Celery task ID
     job = get_job(job_id)
     if not job:
         logger.warning(f"Cannot cancel job {job_id}: Job not found")
         return False
+
+    # In sync mode, just mark as cancelled (can't actually stop running task)
+    if SYNC_MODE or job.get("metadata", {}).get("sync_mode"):
+        logger.info(f"Marking job {job_id} as cancelled (sync mode - cannot stop running task)")
+        update_job_status(
+            job_id,
+            status="cancelled",
+            status_message="Job cancelled by user (sync mode)",
+            error="Job was cancelled (sync mode - task may complete)"
+        )
+        return True
 
     # Get Celery task ID from job metadata
     metadata = job.get("metadata", {})
@@ -123,6 +166,17 @@ def cancel_crew_job(job_id: str) -> bool:
         return False
 
     # Revoke the Celery task
+    from backend.celery_app import app
+    if app is None:
+        logger.warning(f"Cannot cancel job {job_id}: Celery app not available")
+        update_job_status(
+            job_id,
+            status="cancelled",
+            status_message="Job cancelled by user",
+            error="Job was cancelled (Celery not available)"
+        )
+        return False
+
     # terminate=True will kill the worker processing the task (if it's running)
     # signal='SIGTERM' is a graceful termination signal
     logger.info(f"Revoking Celery task {celery_task_id} for job {job_id}")

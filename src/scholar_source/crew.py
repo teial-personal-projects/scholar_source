@@ -31,7 +31,8 @@ class ScholarSource():
             llm=model,
             verbose=True,
             tools=[
-                WebPageFetcherTool(),  # For fetching full page content
+                SerperDevTool(),        # For web search to find course pages
+                WebPageFetcherTool(),   # For fetching full page content
                 WebsiteSearchTool()     # For searching within pages if needed
             ]
         )

@@ -7,7 +7,7 @@ Handles job submission and status polling.
 
 import os
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from backend.models import (
     CourseInputRequest,
@@ -21,6 +21,8 @@ from backend.logging_config import configure_logging, get_logger
 from backend.rate_limiter import limiter, rate_limit_handler
 from backend.csrf_protection import validate_origin
 from backend.celery_app import app as celery_app
+from backend.error_utils import transform_error_for_user
+import os
 from slowapi.errors import RateLimitExceeded
 
 # Configure centralized logging (console only, no log file)
@@ -82,6 +84,26 @@ def check_celery_workers() -> dict:
     Returns:
         dict with 'available' (bool), 'count' (int), and 'workers' (list)
     """
+    # Check if running in sync mode
+    SYNC_MODE = os.getenv("SYNC_MODE", "false").lower() in ("true", "1", "yes")
+    
+    if SYNC_MODE:
+        # In sync mode, workers are not needed (tasks run in-process)
+        return {
+            "available": True,
+            "count": 1,
+            "workers": ["sync-mode"],
+            "mode": "sync"
+        }
+    
+    if celery_app is None:
+        return {
+            "available": False,
+            "count": 0,
+            "workers": [],
+            "error": "Celery app not initialized (SYNC_MODE may be enabled)"
+        }
+    
     try:
         # Use Celery's inspect API with a short timeout
         inspector = celery_app.control.inspect(timeout=2.0)
@@ -101,12 +123,14 @@ def check_celery_workers() -> dict:
                 "workers": []
             }
     except Exception as e:
+        # Log technical details but return generic error
         logger.warning(f"Failed to check Celery workers: {e}")
+        user_message, _ = transform_error_for_user(e)
         return {
             "available": False,
             "count": 0,
             "workers": [],
-            "error": str(e)
+            "error": user_message
         }
 
 
@@ -154,7 +178,7 @@ async def worker_health_check():
 
 @app.post("/api/submit", response_model=JobSubmitResponse, tags=["Jobs"])
 @limiter.limit("10/hour; 2/minute")
-async def submit_job(request: Request, course_input: CourseInputRequest):
+async def submit_job(request: Request, course_input: CourseInputRequest, background_tasks: BackgroundTasks):
     """
     Submit a new job to find educational resources.
 
@@ -203,7 +227,9 @@ async def submit_job(request: Request, course_input: CourseInputRequest):
         worker_status = check_celery_workers()
         
         # Start background crew execution (pass bypass_cache separately)
-        run_crew_async(job_id, inputs, bypass_cache=bypass_cache)
+        # Use BackgroundTasks to ensure this doesn't block the response,
+        # even in SYNC_MODE
+        background_tasks.add_task(run_crew_async, job_id, inputs, bypass_cache)
 
         response = {
             "job_id": job_id,
@@ -219,12 +245,17 @@ async def submit_job(request: Request, course_input: CourseInputRequest):
         return response
 
     except Exception as e:
+        # Log technical details for debugging
         logger.error(f"Job creation failed: {str(e)}", exc_info=True)
+
+        # Transform error for user-friendly display
+        user_message, _ = transform_error_for_user(e)
+
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "Job creation failed",
-                "message": str(e)
+                "message": user_message
             }
         )
 
@@ -367,11 +398,17 @@ async def cancel_job(request: Request, job_id: str):
             "message": message
         }
     except Exception as e:
+        # Log technical details for debugging
+        logger.error(f"Job cancellation failed: {str(e)}", exc_info=True)
+
+        # Transform error for user-friendly display
+        user_message, _ = transform_error_for_user(e)
+
         raise HTTPException(
             status_code=500,
             detail={
                 "error": "Cancellation failed",
-                "message": str(e)
+                "message": user_message
             }
         )
 
