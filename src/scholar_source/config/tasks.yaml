@@ -141,69 +141,83 @@ course_analysis_task:
 
 resource_search_task:
   description: >
-    Search for 5-7 high-quality resources from USA-based institutions matching the course topics.
+    Search for 5-7 high-quality resources from USA-based sources matching the course topics and user preferences.
 
-    **USER-TARGETED SITES (HIGH PRIORITY):**
-    Check the {targeted_sites} input parameter. If provided, PRIORITIZE resources from domains in this list.
-    - Parse targeted_sites as comma-separated domain names (e.g., "stanford.edu, berkeley.edu, myschool.edu")
-    - When searching, add "site:[domain]" to your search queries to find resources from these specific sites
-    - Example: If user specified "stanford.edu", search "statics practice problems site:stanford.edu"
-    - Try to find at least 2-3 resources from targeted sites if they exist and match the course topics
-    - This is useful when students want resources from their own institution or specific universities
-    - If no quality resources found from targeted sites, proceed with general search
+    **WORKFLOW:**
+    1. Parse user filters from inputs
+    2. Determine search focus from course_analysis_task output
+    3. Execute targeted searches (USA sources only)
+    4. Filter and validate results (reject non-USA sources)
+    5. Return curated list
 
-    **USER-EXCLUDED SITES (CRITICAL):**
-    Check the {excluded_sites} input parameter. If provided, REJECT any resource from domains in this list.
-    - Parse excluded_sites as comma-separated domain names (e.g., "mit, khanacademy.org, coursera.org")
-    - REJECT any URL containing ANY of these domain strings (substring match - e.g., "mit" will match "ocw.mit.edu", "mit.edu", etc.)
-    - Examples: "mit" excludes "ocw.mit.edu", "khanacademy.org" excludes "www.khanacademy.org", "coursera" excludes "coursera.org"
-    - This takes precedence over all other filtering - if user excluded a site, never include it
+    **USA-ONLY REQUIREMENT:**
+    ALL resources must be from USA-based institutions, universities, or platforms.
+    - Accept: MIT, Stanford, Berkeley, OpenStax, Khan Academy, US university sites
+    - REJECT: Cambridge.ac.uk, Oxford.ac.uk, any non-US institution
+    - When searching, include USA university names or add "USA" to queries
+    - Verify domain and institution location before including any resource
 
-    **TOPIC MATCHING - CRITICAL:** Check search_priority from course_analysis_task output:
-    - **IF search_priority = "user_topics":** Focus EXCLUSIVELY on user_specified_topics. Search for resources specifically covering those topics.
-      Example: User specified "line integrals, surface integrals" → search "line integrals practice problems" and "surface integrals tutorial", NOT general "vector calculus"
-    - **IF search_priority = "general_topics":** Search for resources covering the general_course_topics
-    - Always verify resources match the course's subject_keywords to avoid cross-discipline contamination
-    - REJECT any resource from a different academic field (e.g., don't match statistics resources for a calculus course, don't match biology resources for a history course)
-    - Verify the course title/description matches the subject area before including it
-
-    **USA ONLY:** Only include resources from US universities, institutions, and platforms.
-
-    **RESOURCE TYPE FILTERING:** Check {desired_resource_types} input.
-    - If provided (non-empty list), ONLY search for matching types:
-      * "textbooks" → resource_type="open_textbook"
-      * "practice_problem_sets" → resource_type="practice_problem" or "problem_set"
-      * "practice_exams_tests" → resource_type="practice_exam" or "test"
-      * "lecture_videos" → resource_type="video_lecture" or "lecture_series" or "educational_video"
-    - If empty/null, use priority order: (1) Practice problems, (2) Open textbooks, (3) Course materials, (4) Platform content, (5) Papers
-
-    **SEARCH TOOL USAGE - CRITICAL:**
-    You have access to "Search the internet with Serper" tool. 
-    - Call the tool with ONLY a string value for search_query parameter
-    - Example: search_query="statics practice problems MIT"
-    - DO NOT pass dictionaries, objects, or complex structures
-    - DO NOT pass description, metadata, or other fields - ONLY the search_query string
-    - Perform 5-7 targeted searches, each with a simple string query
-
-    **QUALITY:** Free, legal, US sources only. NotebookLM compatible (PDF/web/YouTube). Prioritize text-based content. Match course level.
-
-    Use course_analysis_task output to guide searches.
-  expected_output: >
-    A curated list of 5-7 recommended resources that complement the student's book, each containing:
+    **USER FILTERS (APPLY AFTER USA CHECK):**
     
-    - resource_title: Full title of the resource
-    - resource_type: "open_textbook" | "video_lecture" | "lecture_series" | 
-      "interactive_tutorial" | "course_notes" | "educational_video"
-    - url: Direct link to the resource (must be accessible without login)
-    - coverage_topics: List of book topics/chapters this resource addresses
-    - source_credibility: Origin (e.g., "MIT OpenCourseWare", "OpenStax", "Khan Academy")
-    - content_scope: "comprehensive" | "supplementary" | "topic-specific"
-    - access_notes: Confirmation that it's free, legal, and openly accessible
-    - estimated_depth: "introductory" | "intermediate" | "advanced"
-    - alignment_with_book: Brief note on how this resource aligns with the book's structure
+    Targeted Sites (if {targeted_sites} provided):
+    - Parse as comma-separated domains (e.g., "stanford.edu, berkeley.edu")
+    - Prioritize resources from these sites using "site:[domain]" in searches
+    - Aim for 2-3 resources from targeted sites if quality matches
+    
+    Excluded Sites (if {excluded_sites} provided):
+    - Parse as comma-separated domains (e.g., "mit, khanacademy.org")
+    - REJECT any URL containing these strings (substring match)
+    - This overrides all other filtering
+    
+    Resource Types (if {desired_resource_types} provided):
+    - ONLY search for specified types:
+      * "textbooks" → open_textbook
+      * "practice_problem_sets" → practice_problem, problem_set
+      * "practice_exams_tests" → practice_exam, test
+      * "lecture_videos" → video_lecture, lecture_series, educational_video
+    - If empty: use priority order (practice problems > textbooks > course materials > videos > papers)
 
-    Organize resources clearly. Include brief reasoning for why each resource was selected
-    and how it complements the student's book.
+    **TOPIC MATCHING:**
+    From course_analysis_task output, check search_priority:
+    - "user_topics" → Search ONLY user_specified_topics (e.g., "line integrals" not "vector calculus")
+    - "general_topics" → Search general_course_topics
+    - Always verify subject_keywords match to prevent cross-discipline results
+    - REJECT resources from different academic fields
+
+    **SEARCH EXECUTION:**
+    Use "Search the internet with Serper" tool:
+    - Pass ONLY a string to search_query parameter (e.g., "statics practice problems MIT")
+    - DO NOT pass dictionaries or complex objects
+    - Perform 5-7 targeted searches with simple string queries
+    - Add "site:[domain]" for targeted sites
+    - Include USA university names (e.g., "MIT", "Stanford", "Berkeley")
+
+    **QUALITY CRITERIA:**
+    - USA-based institutions and platforms ONLY (non-negotiable)
+    - Free and legal access (no login required)
+    - NotebookLM compatible (PDF/web/YouTube)
+    - Match course level (from course_analysis_task)
+    - Prioritize text-based content
+
+    Inputs: {targeted_sites}, {excluded_sites}, {desired_resource_types}, course_analysis_task output
+
+  expected_output: >
+    List of 5-7 resources from USA sources only, each containing:
+    
+    - resource_title: Full title
+    - resource_type: open_textbook | video_lecture | lecture_series | practice_problem | 
+      course_notes | educational_video | problem_set | practice_exam
+    - url: Direct link (accessible without login)
+    - coverage_topics: List of topics this resource addresses
+    - source_credibility: USA-based origin (e.g., "MIT OpenCourseWare", "OpenStax", "Khan Academy")
+    - content_scope: comprehensive | supplementary | topic-specific
+    - access_notes: Confirmation of free, legal, open access
+    - estimated_depth: introductory | intermediate | advanced
+    - alignment_with_book: How resource complements the course material
+    - selection_rationale: Brief explanation of why included
+
+    Format as structured JSON or clear text for downstream parsing.
+
   agent: resource_discovery_agent
 
 resource_validation_task:
