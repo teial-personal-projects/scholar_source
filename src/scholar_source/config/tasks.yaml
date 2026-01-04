@@ -6,28 +6,34 @@ course_analysis_task:
     Extract textbook title and author from the course page - this is MANDATORY for downstream agents.
     
     **WORKFLOW:**
-    1. If course_name and course_university provided (no URL):
+    1. If course_name and university_name provided (no URL):
        - Use web search to find official course page URL
-    
-    2. Fetch course page content:
+
+    2. Check for user-provided textbook information:
+       - If {book_title} and {book_author} provided: use those and set textbook_source="user_provided"
+       - If {isbn} provided: search for book info using ISBN
+       - If {book_pdf_path} or {book_url} provided: note these for downstream agents
+       - If {textbook} input provided: parse it for title/author information
+
+    3. Fetch course page content (if course_url provided):
        - Use "Webpage Content Fetcher" on course_url
        - Search for textbook in sections: "Materials", "Textbook", "Required Text", "Resources"
        - Common formats: "Title, Author", "Title by Author", "Title (Author)", multi-line
        - Parse into separate textbook_title and textbook_author fields
     
-    3. Extract syllabus (if present):
+    4. Extract syllabus (if present on course page):
        - Convert relative URLs to absolute URLs
        - Fetch syllabus ONCE using "Webpage Content Fetcher" (HTML or PDF)
        - Syllabus is authoritative for textbook info and course scope
-    
-    4. Determine topics (priority order):
+
+    5. Determine topics (priority order):
        - If user provided topics_list → use as primary focus
        - Extract from syllabus schedule/outline (shows actual course coverage)
        - Extract from course description
        - Cross-reference textbook ToC with syllabus to identify covered chapters only
        - BE SPECIFIC: "Chapters 3-7" should map to specific chapter titles, not all chapters
-    
-    5. Extract all resource URLs:
+
+    6. Extract all resource URLs:
        - List all links to lecture notes, problem sets, exams, videos, etc.
        - DO NOT navigate to these links (prevents redirect loops)
        - These URLs will be used by downstream resource search agents
@@ -42,7 +48,8 @@ course_analysis_task:
     - If zero topics AND no textbook AND no description: return error asking user to provide topics_list or textbook PDF
     - Validation: At least one of (user_topics, general_topics, textbook_title) must exist
     
-    Inputs: {university_name}, {course_name}, {course_url}, {topics_list}, 
+    Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list},
+            {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url},
             {desired_resource_types}, {targeted_sites}
 
   expected_output: >
