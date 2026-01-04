@@ -233,7 +233,6 @@ LOG_LEVEL=INFO
 3. Select the Redis Template
 4. Deploy the changes
 
-
 ### [✅] 2.6 Configure Railway Service
 
 1. [✅] **Set up custom domain (optional):**
@@ -266,7 +265,17 @@ LOG_LEVEL=INFO
 5. Select the scholar_source repo
 6. Go to Settings->Config-as-Code
 7. Select the railway.celery.json file
-0. Deploy changes
+10. Deploy changes
+
+NOTE: YOU'LL NEED TO SET THE APPROPRIATE USER PRIVELGES FOR THE CONTAINER 
+You will see this warning in the Railway celery log files. 
+"SecurityWarning: You're running the worker with superuser privileges: this is
+absolutely not recommended!"
+For a small internal app, this warning is usually acceptable during development. To harden later, you would:
+ 1. Create a non‑root user in the image (or use a base image that does), and
+ 2. Start Celery with --uid / --gid for that user, or set the container user in your Dockerfile or service config.
+​
+
 
 ### 2.8 Configure Scaling (Optional)
 
