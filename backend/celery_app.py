@@ -191,12 +191,10 @@ if app is not None:
     @worker_ready.connect
     def on_worker_ready(sender, **kwargs):
         """Called when the Celery worker is ready to accept tasks."""
-        logger.info("=" * 60)
-        logger.info("🚀 CELERY WORKER STARTED ON RAILWAY")
-        logger.info(f"   Worker: {sender}")
-        logger.info(f"   Redis URL: {REDIS_URL[:30]}...")
-        logger.info("=" * 60)
-        logger.info(f"Worker ready: {sender}")
+        # Log a single concise message instead of multiple lines
+        # This reduces log noise in Railway
+        worker_name = getattr(sender, 'hostname', str(sender))
+        logger.info(f"🚀 Celery worker ready: {worker_name} (Redis: {REDIS_URL[:20]}...)")
 
 
 if __name__ == "__main__":
