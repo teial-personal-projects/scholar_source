@@ -7,7 +7,7 @@ Handles job submission and status polling.
 
 import os
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from backend.models import (
     CourseInputRequest,
@@ -178,7 +178,7 @@ async def worker_health_check():
 
 @app.post("/api/submit", response_model=JobSubmitResponse, tags=["Jobs"])
 @limiter.limit("10/hour; 2/minute")
-async def submit_job(request: Request, course_input: CourseInputRequest):
+async def submit_job(request: Request, course_input: CourseInputRequest, background_tasks: BackgroundTasks):
     """
     Submit a new job to find educational resources.
 
@@ -227,7 +227,9 @@ async def submit_job(request: Request, course_input: CourseInputRequest):
         worker_status = check_celery_workers()
         
         # Start background crew execution (pass bypass_cache separately)
-        run_crew_async(job_id, inputs, bypass_cache=bypass_cache)
+        # Use BackgroundTasks to ensure this doesn't block the response,
+        # even in SYNC_MODE
+        background_tasks.add_task(run_crew_async, job_id, inputs, bypass_cache)
 
         response = {
             "job_id": job_id,

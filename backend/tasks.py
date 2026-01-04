@@ -7,6 +7,7 @@ Tasks are executed by Celery workers in separate processes.
 
 import sys
 import os
+import time
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -18,6 +19,7 @@ os.environ["OTEL_SDK_DISABLED"] = "true"
 import re
 import asyncio
 import traceback
+import time
 import concurrent.futures
 from pathlib import Path
 from typing import Dict
@@ -84,12 +86,16 @@ def run_crew_task(
     Returns:
         Dict with status and results/error information
     """
+    start_time = time.time()
+
     logger.info(f"Starting Celery task for job {job_id} (task_id: {self.request.id})")
+    logger.info(f"Job {job_id} parameters: {inputs}")
 
     # Check if job was cancelled before starting
     job = get_job(job_id)
     if job and job.get("status") == "cancelled":
-        logger.info(f"Job {job_id} was cancelled before execution started")
+        elapsed = time.time() - start_time
+        logger.info(f"Job {job_id} was cancelled before execution started (elapsed: {elapsed:.2f}s)")
         return {"status": "cancelled", "message": "Job was cancelled before execution"}
 
     try:
@@ -241,7 +247,9 @@ def run_crew_task(
             metadata=metadata
         )
 
-        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources (elapsed: {elapsed:.2f}s)")
+        logger.info(f"Job {job_id} final parameters: {inputs}")
 
         return {
             "status": "completed",
@@ -250,13 +258,16 @@ def run_crew_task(
         }
 
     except Exception as e:
+        elapsed = time.time() - start_time
+
         # Transform error for user-friendly display
         user_message, error_type = transform_error_for_user(e)
         technical_error = str(e)
         stack_trace = traceback.format_exc()
 
         # Log the technical details for debugging
-        logger.error(f"Job {job_id} failed with {error_type}: {technical_error}")
+        logger.error(f"❌ Job {job_id} failed with {error_type}: {technical_error} (elapsed: {elapsed:.2f}s)")
+        logger.error(f"Job {job_id} failed parameters: {inputs}")
         logger.error(stack_trace)
 
         # Update job with user-friendly error message
@@ -327,7 +338,10 @@ def run_crew_task_sync(
     Returns:
         Dict with status and results/error information
     """
+    start_time = time.time()
+
     logger.info(f"Starting synchronous task for job {job_id} (SYNC_MODE)")
+    logger.info(f"Job {job_id} parameters: {inputs}")
 
     # Check if job was cancelled before starting
     job = get_job(job_id)
@@ -494,7 +508,9 @@ def run_crew_task_sync(
             metadata=metadata
         )
 
-        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Job {job_id} completed successfully with {len(resources)} resources (elapsed: {elapsed:.2f}s)")
+        logger.info(f"Job {job_id} final parameters: {inputs}")
 
         return {
             "status": "completed",
@@ -503,13 +519,16 @@ def run_crew_task_sync(
         }
 
     except Exception as e:
+        elapsed = time.time() - start_time
+
         # Transform error for user-friendly display
         user_message, error_type = transform_error_for_user(e)
         technical_error = str(e)
         stack_trace = traceback.format_exc()
 
         # Log the technical details for debugging
-        logger.error(f"Job {job_id} failed with {error_type}: {technical_error}")
+        logger.error(f"❌ Job {job_id} failed with {error_type}: {technical_error} (elapsed: {elapsed:.2f}s)")
+        logger.error(f"Job {job_id} failed parameters: {inputs}")
         logger.error(stack_trace)
 
         # Update job with user-friendly error message
@@ -528,7 +547,7 @@ def run_crew_task_sync(
 
         return {
             "status": "failed",
-            "error": error_message,
+            "error": user_message,
             "job_id": job_id
         }
 

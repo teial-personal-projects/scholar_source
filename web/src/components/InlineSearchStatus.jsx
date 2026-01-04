@@ -56,6 +56,19 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
     }
   }, [jobId, onError]);
 
+  const getDefaultMessage = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Job created, waiting to be queued...';
+      case 'queued':
+        return 'Job queued, waiting to start...';
+      case 'running':
+        return 'Analyzing course and discovering resources...';
+      default:
+        return 'Processing...';
+    }
+  };
+
   useEffect(() => {
     let intervalId;
     isActiveRef.current = true;
@@ -136,19 +149,6 @@ export default function InlineSearchStatus({ jobId, onComplete, onError }) {
       }
     };
   }, [jobId, onComplete, onError, handleTimeoutCancel, isTimedOut]);
-
-  const getDefaultMessage = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'Job created, waiting to be queued...';
-      case 'queued':
-        return 'Job queued, waiting to start...';
-      case 'running':
-        return 'Analyzing course and discovering resources...';
-      default:
-        return 'Processing...';
-    }
-  };
 
   const handleCancelClick = () => {
     setShowCancelDialog(true);

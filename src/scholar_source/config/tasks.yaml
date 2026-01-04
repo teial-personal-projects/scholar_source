@@ -45,7 +45,7 @@ course_analysis_task:
        - Ignore global navigation (menus like "About", "People", "Events",
          "News", "Undergraduate Program", "Make a Gift", search boxes, etc.)
          and focus on central course content.
-       - If no course_name/number and no course description/syllabus are found:
+       - If no course_name and no course description/syllabus are found:
          - Do NOT extract textbook info.
          - Return an error asking the user to provide course_url directly.
        - On a confirmed course page, search for textbook info in sections such as

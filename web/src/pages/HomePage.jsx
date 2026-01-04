@@ -180,9 +180,14 @@ export default function HomePage() {
       setJobId(null);
       setIsLoading(true);
 
+      console.log('[HomePage] Submitting job...');
       const response = await submitJob(formData);
+      console.log('[HomePage] Job submitted, response:', response);
+      console.log('[HomePage] Setting jobId to:', response.job_id);
       setJobId(response.job_id);
+      console.log('[HomePage] jobId state updated');
     } catch (err) {
+      console.error('[HomePage] Job submission failed:', err);
       setError(err.message);
       setIsLoading(false);
     }
