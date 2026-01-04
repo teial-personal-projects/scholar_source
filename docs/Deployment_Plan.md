@@ -158,6 +158,8 @@ app.add_middleware(
 1. In Railway dashboard, click on your deployed service
 2. Go to **"Variables"** tab
 3. Add the following environment variables:
+NOTE: You can go to the project root and add shared variables. BUT you
+must remember to go to the actual service->variables->shared, and add any specific ones you need.
 
 ```bash
 # API Keys
