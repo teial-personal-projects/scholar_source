@@ -25,7 +25,7 @@ class ScholarSource():
     def course_intelligence_agent(self) -> Agent:
         agent_config = self.agents_config['course_intelligence_agent']  # type: ignore[index]
         # Override LLM from environment variable if set
-        model = os.getenv('COURSE_INTELLIGENCE_AGENT_MODEL', agent_config.get('llm', 'openai/gpt-4o'))
+        model = os.getenv('COURSE_INTELLIGENCE_AGENT_MODEL', agent_config.get('llm', 'openai/gpt-4o-mini'))
         return Agent(
             config=agent_config,
             llm=model,
