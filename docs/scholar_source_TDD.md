@@ -1120,11 +1120,10 @@ High Load:
     - `test_job_lifecycle.py` - Job workflow tests
   - `e2e/` - End-to-end tests (future)
 
-**Test Coverage Goals:**
-- Markdown Parser: 90%+
-- API Endpoints: 85%+
-- Models: 80%+
-- Overall Backend: ≥70%
+**Test Quality Goals:**
+- Comprehensive test coverage for Markdown Parser
+- Thorough testing of API Endpoints
+- Complete validation testing for Models
 
 #### 9.1.2 Frontend Test Structure
 
@@ -1139,9 +1138,9 @@ High Load:
 - `web/src/api/` - API client tests
   - `client.test.js` - API client tests
 
-**Test Coverage Goals:**
-- UI Components: 70%+
-- Overall Frontend: ≥70%
+**Test Quality Goals:**
+- Comprehensive testing of UI Components
+- Thorough testing of API client functionality
 
 ### 9.2 Test Tools and Configuration
 
@@ -1150,7 +1149,6 @@ High Load:
 **Tools:**
 - **pytest** (≥7.4.0) - Test runner and framework
 - **pytest-asyncio** (≥0.21.0) - Async test support for FastAPI
-- **pytest-cov** (≥4.1.0) - Code coverage reporting
 - **pytest-mock** (≥3.11.0) - Mocking external dependencies
 - **httpx** (≥0.24.0) - HTTP client for testing FastAPI
 - **fakeredis** (≥2.19.0) - Mock Redis for rate limiting
@@ -1160,7 +1158,7 @@ High Load:
 
 Configuration includes:
 - testpaths set to 'tests'
-- adopts: verbose mode, coverage for backend module, HTML coverage report
+- adopts: verbose mode
 - asyncio_mode set to 'auto'
 
 **Installation:**
@@ -1184,7 +1182,7 @@ Configuration includes:
 - test environment: 'jsdom'
 - globals: true
 - setupFiles: './src/test/setup.js'
-- coverage provider: 'v8' with text, json, and html reporters
+- test environment and configuration
 
 **Installation:**
 
@@ -1228,23 +1226,11 @@ Run via `./scripts/test-all.sh`
 
 - Run all: `./scripts/test-backend.sh` or `pytest`
 - Run specific file: `pytest tests/unit/test_markdown_parser.py`
-- With coverage: `pytest --cov=backend --cov-report=html`
 
 **Frontend Tests:**
 
 - Run all: `cd web && npm test`
 - With UI: `npm run test:ui`
-- With coverage: `npm run test:coverage`
-
-#### 9.4.2 Coverage Reports
-
-**Backend:**
-
-Run `pytest --cov=backend --cov-report=html` then open `htmlcov/index.html`
-
-**Frontend:**
-
-Run `cd web && npm run test:coverage` then open `coverage/index.html`
 
 ## 10. References
 
