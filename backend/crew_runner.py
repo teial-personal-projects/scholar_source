@@ -199,7 +199,7 @@ def validate_crew_inputs(inputs: Dict[str, str]) -> bool:
     Validate that crew inputs meet minimum requirements.
 
     At least one of the following must be provided:
-    - (course_name AND university_name) OR course_url
+    - course_url
     - (book_title AND book_author) OR isbn
     - book_pdf_path
     - book_url
@@ -210,11 +210,8 @@ def validate_crew_inputs(inputs: Dict[str, str]) -> bool:
     Returns:
         bool: True if inputs are valid, False otherwise
     """
-    # Check for course information
-    has_course_info = bool(
-        (inputs.get('course_name') and inputs.get('university_name')) or
-        inputs.get('course_url')
-    )
+    # Check for course URL
+    has_course_url = bool(inputs.get('course_url'))
 
     # Check for book identification
     has_book_info = bool(
@@ -227,4 +224,4 @@ def validate_crew_inputs(inputs: Dict[str, str]) -> bool:
     has_book_link = bool(inputs.get('book_url'))
 
     # At least one combination must be satisfied
-    return has_course_info or has_book_info or has_book_file or has_book_link
+    return has_course_url or has_book_info or has_book_file or has_book_link

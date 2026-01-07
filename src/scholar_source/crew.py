@@ -3,7 +3,6 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import (
     SerperDevTool,
-    WebsiteSearchTool,
     YoutubeVideoSearchTool
 )
 from typing import List
@@ -25,15 +24,14 @@ class ScholarSource():
     def course_intelligence_agent(self) -> Agent:
         agent_config = self.agents_config['course_intelligence_agent']  # type: ignore[index]
         # Override LLM from environment variable if set
-        model = os.getenv('COURSE_INTELLIGENCE_AGENT_MODEL', agent_config.get('llm', 'openai/gpt-4o'))
+        model = os.getenv('COURSE_INTELLIGENCE_AGENT_MODEL', agent_config.get('llm', 'openai/gpt-4o-mini'))
         return Agent(
             config=agent_config,
             llm=model,
             verbose=True,
             tools=[
                 SerperDevTool(),        # For web search to find course pages
-                WebPageFetcherTool(),   # For fetching full page content
-                WebsiteSearchTool()     # For searching within pages if needed
+                WebPageFetcherTool()    # For fetching full page content
             ]
         )
 
@@ -60,7 +58,6 @@ class ScholarSource():
             verbose=True,
             tools=[
                 SerperDevTool(),  # For verifying URLs exist via web search
-                WebsiteSearchTool(),  # For validating web pages
                 YoutubeVideoSearchTool()  # For validating YouTube videos
             ]
         )

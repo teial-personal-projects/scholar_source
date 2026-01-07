@@ -207,7 +207,7 @@ async def submit_job(request: Request, course_input: CourseInputRequest, backgro
             detail={
                 "error": "Invalid inputs",
                 "message": "You must provide at least one of the following: "
-                          "course information (course_name, university_name, or course_url), "
+                          "course URL (course_url), "
                           "book information (book_title + book_author, or ISBN), "
                           "book file (book_pdf_path), or book URL (book_url)"
             }

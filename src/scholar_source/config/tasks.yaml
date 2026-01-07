@@ -1,85 +1,45 @@
 course_analysis_task:
   description: >
-    Analyze a university course to extract textbook information, topics, and resource URLs.
+    Analyze a university course page to extract textbook information, topics, and resource URLs.
 
-    PRIMARY OBJECTIVE (MANDATORY):
+    PRIMARY OBJECTIVE:
     Identify the main textbook_title and textbook_author for the course.
 
-    1. Find course_url (when only course_name + university_name given):
-          - Use "Website Search Tool" to search the web to find the official course page URL.
-          - Construct search queries combining:
-            - Exact course_name AND
-            - university_name, AND
-            - Keywords: "syllabus" OR "course description" OR "course catalog"
-          
-          - Examine top 5-10 search results
-          - PREFER URLs that contain ALL of these signals:
-            * Course name or part of course namem in title (e.g., "/228-2", "math-228")
-            * Example: For course Math 228-2, this name in the tile is acceptable: 228-2-1
-            * Keywords in URL: "courses", "syllabus", "catalog", "class"
-            * University's official domain (*.edu or official domain)
-          
-          - VALIDATE candidate page before accepting as course_url:
-            * Fetch the page using "Webpage Content Fetcher"
-            * Verify page content includes:
-              - Course name/number matching input
-              - At least TWO of: "Textbook", "Text:", "Prerequisites", "Syllabus", "Topics", "Description", "Instructor"
-            * If page only contains department info/news/general content → reject and try next candidate
-          
-          - Try up to 3 search queries and validate top 2 candidates from each
-          - If no valid course page found after validation, return ERROR with guidance to provide course_url directly
+    WORKFLOW:
 
-    2) Use user-provided textbook info (if available):
-       - If {book_title} and {book_author} are provided:
-         - Use them and set textbook_source="user_provided".
-       - If {isbn} is provided, optionally confirm title/author.
-       - If {book_pdf_path} or {book_url} is provided, record for downstream agents.
-       - If {textbook} is provided, parse for title/author.
+    1) Use user-provided textbook info (if available):
+       - If {book_title} and {book_author} provided → use them, set textbook_source="user_provided"
+       - If {isbn} provided → optionally confirm title/author
+       - If {book_pdf_path} or {book_url} provided → record for downstream agents
+       - If {textbook} provided → parse for title/author
 
-    3) Fetch and verify course page:
-       - If course_url is provided or found, use "Webpage Content Fetcher" on it.
-       - Treat a page as the official course page ONLY if:
-         - It clearly mentions this course_name and/or course number
-           (e.g., "Math 228-2" or close variant), AND
-         - It contains a course description, syllabus, requirements, or schedule.
-       - Ignore global navigation (menus like "About", "People", "Events",
-         "News", "Undergraduate Program", "Make a Gift", search boxes, etc.)
-         and focus on central course content.
-       - If no course_name and no course description/syllabus are found:
-         - Do NOT extract textbook info.
-         - Return an error asking the user to provide course_url directly.
-       - On a confirmed course page, search for textbook info in sections such as
-         "Materials", "Textbook", "Required Text", "Course Materials", "Resources".
-       - Parse common formats like "Title, Author", "Title by Author",
-         or multi-line title/author into textbook_title and textbook_author.
+    2) Fetch course page:
+       - Use "Webpage Content Fetcher" on {course_url}
+       - Ignore global navigation (menus, headers, footers, "About", "People", "Events", etc.)
+       - Focus on central course content only
 
-    4) Extract syllabus and topics:
-       - If a syllabus link (HTML or PDF) exists, convert relative URL to absolute
-         and fetch it once with "Webpage Content Fetcher".
-       - Treat the syllabus as authoritative for textbook info and topics.
-       - If topics_list is provided, treat as user_specified_topics (main focus).
-       - Otherwise, extract topics from syllabus schedule/outline and course description.
-       - If a textbook table of contents is available, align with syllabus to keep
-         only chapters actually covered.
+    3) Extract textbook info from course page:
+       - Look in sections: "Materials", "Textbook", "Required Text", "Course Materials", "Resources"
+       - Parse formats: "Title, Author", "Title by Author", multi-line title/author
+       - Set textbook_source="course_page"
+       - If not found and none provided → set textbook_source="not_found"
+
+    4) Extract topics:
+       - If {topics_list} provided → treat as user_specified_topics (priority)
+       - Extract from syllabus/course description → general_course_topics
+       - If syllabus link exists → fetch with "Webpage Content Fetcher" (one level only)
+       - Extract subject keywords for discipline identification
 
     5) Extract resource URLs:
-       - Collect URLs for lecture notes, problem sets, exams, videos, and other
-         course resources from the course page/syllabus.
-       - Do NOT navigate to these links; just record them.
-
-    DEPTH RESTRICTION:
-    - Only visit the main course page and, if present, the syllabus.
+       - Collect URLs for lecture notes, problem sets, exams, videos from course page/syllabus
+       - Do NOT navigate to links, just record them
 
     ERROR HANDLING:
-    - If the course page is not accessible, return a clear error.
-    - If no textbook is found on page/syllabus and none is provided, set
-      textbook_source="not_found" but still extract topics if possible.
-    - If there are no topics, no textbook, and no usable description, ask the
-      user for topics_list or a textbook PDF/URL.
+    - If course page not accessible → return clear error
+    - If no textbook and no topics → ask user for course_url or book info
 
-    Inputs: {university_name}, {course_name}, {course_url}, {textbook}, {topics_list},
-            {book_title}, {book_author}, {isbn}, {book_pdf_path}, {book_url},
-            {desired_resource_types}, {targeted_sites}
+    Inputs: {course_url}, {textbook}, {topics_list}, {book_title}, {book_author},
+            {isbn}, {book_pdf_path}, {book_url}, {desired_resource_types}, {targeted_sites}
 
   expected_output: >
     JSON-like object with:

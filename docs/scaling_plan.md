@@ -297,7 +297,6 @@ Migration from thread-based job execution to a distributed task queue architectu
 **Dependencies:**
 - Add `redis` Python package
 - Add `celery` package
-- Add `flower` for monitoring (optional)
 
 #### 5.1.2 Worker Process Separation
 

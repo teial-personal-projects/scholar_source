@@ -13,9 +13,7 @@ import re
 class CourseInputRequest(BaseModel):
     """Request model for course input form submission"""
 
-    university_name: Optional[str] = Field(None, description="University name")
-    course_name: Optional[str] = Field(None, description="Course name")
-    course_url: Optional[str] = Field(None, description="Course webpage URL")
+    course_url: Optional[str] = Field(None, description="Course webpage URL (required if no book info)")
     textbook: Optional[str] = Field(None, description="Textbook information (legacy)")
     topics_list: Optional[str] = Field(None, description="Comma-separated topics")
     book_title: Optional[str] = Field(None, description="Book title")
@@ -60,8 +58,7 @@ class CourseInputRequest(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "university_name": "MIT",
-                "course_name": "Introduction to Algorithms",
+                "course_url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/",
                 "book_title": "Introduction to Algorithms",
                 "book_author": "Cormen, Leiserson, Rivest, Stein"
             }
