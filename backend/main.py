@@ -25,6 +25,9 @@ from backend.error_utils import transform_error_for_user
 import os
 from slowapi.errors import RateLimitExceeded
 
+# Constants
+QUEUE_ELAPSED_TIME_THRESHOLD_SECONDS = 30  # Time in seconds before checking worker availability for queued jobs
+
 # Configure centralized logging (console only, no log file)
 configure_logging(
     log_level=os.getenv("LOG_LEVEL", "INFO"),
@@ -299,8 +302,8 @@ async def get_job_status(request: Request, job_id: str):
             created_at = datetime.fromisoformat(job["created_at"].replace("Z", "+00:00"))
             age_seconds = (datetime.now(timezone.utc) - created_at).total_seconds()
             
-            # If queued for more than 30 seconds, check worker availability
-            if age_seconds > 30:
+            # If queued for more than threshold, check worker availability
+            if age_seconds > QUEUE_ELAPSED_TIME_THRESHOLD_SECONDS:
                 worker_status = check_celery_workers()
                 if not worker_status["available"]:
                     status_message = "⚠️ Job is queued but no workers are available. Workers may be starting up or offline."
