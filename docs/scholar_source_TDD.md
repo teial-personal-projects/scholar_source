@@ -999,62 +999,104 @@ Rate limiting is integrated into FastAPI by:
 
 ### 8.2 Multi-Instance Deployment Considerations
 
-#### 8.2.1 Critical Warning
+#### 8.2.1 Current Scalable Architecture
 
-**⚠️ CRITICAL: In-memory rate limiting ONLY works for single-instance deployments!**
+**✅ The system now uses a distributed task queue architecture with Celery and Redis:**
 
-**If you scale to multiple Railway instances (2+):**
-- ❌ **In-memory rate limiting WILL NOT WORK**
-- ❌ Rate limits will become ineffective (users can bypass by refreshing)
-- ✅ **You MUST migrate to Redis BEFORE scaling**
+- **API Layer** (FastAPI Backend service): Stateless, can scale horizontally
+- **Worker Layer** (Celery service): Separate processes that execute jobs, can scale independently
+- **Redis**: Required for both task queuing (Celery broker) and rate limiting (shared state)
 
-**Example with 2 instances:**
+**Architecture Benefits:**
+- ✅ **Independent Scaling**: Scale API and Worker instances separately based on demand
+- ✅ **Process Isolation**: Worker crashes don't affect API availability
+- ✅ **Shared Rate Limiting**: Redis-backed rate limiting works across all API instances
+- ✅ **Task Distribution**: Jobs automatically distributed across available workers
+- ✅ **Fault Tolerance**: Jobs persist in Redis queue, can be retried if worker fails
 
-User makes 10 requests → Load balancer routes 5 to Instance A, 5 to Instance B. Instance A counts 5 requests (within limit), Instance B counts 5 requests (within limit). Actual total: 10 requests (should have been blocked at request #10). Result: Rate limit is 2× what you intended!
+#### 8.2.2 Redis Requirements
 
-#### 8.2.2 Redis Migration Guide
+**Redis is REQUIRED (not optional) for the current architecture:**
 
-**When to Switch to Redis:**
-- ✅ **BEFORE** scaling to 2+ Railway instances (not optional!)
-- When you need persistent rate limits across restarts
-- When you implement user authentication (track by user ID)
+1. **Celery Message Broker**: Stores enqueued jobs in task queues
+2. **Celery Result Backend**: Optional task result storage
+3. **Rate Limiting**: Shared state across all API instances
 
-**Migration Steps:**
+**Without Redis:**
+- ❌ Celery workers cannot receive jobs
+- ❌ Rate limiting falls back to in-memory (single-instance only)
+- ⚠️ System can run in `SYNC_MODE` (development only, not for production)
 
-1. **Add Railway Redis Service:**
+#### 8.2.3 Scaling Strategy
+
+**API Layer Scaling:**
+- Scale API instances based on HTTP request volume
+- All instances share Redis for rate limiting (consistent limits)
+- Stateless design allows horizontal scaling behind load balancer
+- Each instance can handle job submission (enqueues to Redis)
+
+**Worker Layer Scaling:**
+- Scale worker instances based on queue depth and job volume
+- Workers automatically consume jobs from Redis queue
+- Each worker can process multiple jobs concurrently (configurable)
+- Workers update job status in shared database
+
+**Example Scaling Scenario:**
+
+```
+Initial Setup:
+- 1 API instance (handles requests)
+- 1 Worker instance (2 concurrent jobs)
+
+High Load:
+- 3 API instances (handle more requests)
+- 5 Worker instances (10 concurrent jobs total)
+- 1 Redis instance (shared by all)
+```
+
+#### 8.2.4 Redis Setup for Production
+
+**Railway Deployment:**
+
+1. **Add Redis Service:**
    - Go to Railway Dashboard → "+ New" → "Database" → "Add Redis"
-   - Railway will provision a Redis instance (~$5-10/month)
+   - Or use external Redis Cloud service (recommended)
    - Copy the `REDIS_URL` connection string
 
-2. **Set Environment Variable:**
-   - Go to Railway dashboard → Variables tab
-   - Add `REDIS_URL` environment variable
-   - Value: `redis://default:password@red-xxxxx.railway.app:6379`
+2. **Set Environment Variables:**
+   - **Backend Service**: Add `REDIS_URL` environment variable
+   - **Celery Service**: Add `REDIS_URL` environment variable (same value)
+   - Value format: `redis://default:password@red-xxxxx.railway.app:6379`
 
-3. **Verify Redis Connection:**
-   - Check deployment logs for: `✅ Rate limiting: Redis (multi-instance mode)`
-   - If you see this message, Redis is working correctly
+3. **Verify Configuration:**
+   - **API logs**: Should show `✅ Rate limiting: Redis (multi-instance mode)`
+   - **Worker logs**: Should show `🚀 CELERY APP MODULE LOADED` and successful Redis connection
+   - **Health check**: `/api/health/workers` should show available workers
 
-4. **Test Rate Limiting:**
+4. **Test Multi-Instance Behavior:**
+   - Deploy 2+ API instances
    - Make requests from same IP
-   - Verify rate limits work across instances
-   - Should get 429 at request #11 (not #21)
+   - Verify rate limits work consistently across instances
+   - Submit multiple jobs and verify they're distributed to workers
 
-**Rollback Plan:**
-- Remove `REDIS_URL` from Railway variables
-- App automatically falls back to in-memory
-- Scale down to 1 instance temporarily until Redis is fixed
+**External Redis Options:**
+- **Redis Cloud**: Managed service, free tier available
+- **Upstash**: Serverless Redis, pay-per-use
+- **Railway Redis**: Integrated with Railway platform
 
 ### 8.3 Rate Limiting Configuration
 
 **Environment Variables:**
 
-Optional `REDIS_URL` environment variable for multi-instance deployments. Format: `redis://default:password@red-xxxxx.railway.app:6379`
+**Required `REDIS_URL` environment variable** for production deployments. Format: `redis://default:password@red-xxxxx.railway.app:6379`
+
+**Note:** In development, the system can run without Redis using `SYNC_MODE=true`, but this is not suitable for production multi-instance deployments.
 
 **Code Configuration:**
 - Limits are hardcoded in endpoint decorators
 - Can be made configurable via environment variables if needed
-- Default fallback: 1000 requests/hour
+- Redis-backed rate limiting provides consistent limits across all API instances
+- Rate limit state is shared via Redis, ensuring accurate enforcement in multi-instance deployments
 
 ---
 

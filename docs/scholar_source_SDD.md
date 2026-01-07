@@ -138,7 +138,7 @@ For detailed requirements traceability, see Section 2.3.2.
 
 ### 3.1 Architecture Overview
 
-ScholarSource follows a **layered architecture** with clear separation between presentation, application, data, and external service layers. The system is designed as a **monolithic backend** with a **decoupled frontend**, enabling independent deployment and scaling.
+ScholarSource follows a **layered architecture** with clear separation between presentation, application, data, and external service layers. The system uses a **distributed task queue architecture** with separate API and worker processes, enabling independent scaling and fault isolation.
 
 **High-Level Architecture Diagram:**
 
@@ -154,52 +154,81 @@ ScholarSource follows a **layered architecture** with clear separation between p
                        │
 ┌──────────────────────▼──────────────────────────────────────┐
 │                   API LAYER                                 │
-│  FastAPI Backend (Railway)                                  │
-│  - RESTful API design                                       │
-│  - Request validation and rate limiting                     │
-│  - Background job orchestration                             │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-┌───────▼────────┐         ┌──────────▼──────────┐
-│  JOB MANAGER   │         │   CREW RUNNER       │
-│  (State Mgmt)  │         │  (AI Orchestration) │
-└───────┬────────┘         └──────────┬──────────┘
-        │                             │
-┌───────▼─────────────────────────────▼──────────┐
-│              DATABASE LAYER                     │
-│  Supabase PostgreSQL                            │
-│  - Job persistence                              │
-│  - Result caching                               │
-└──────────────────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│              EXTERNAL SERVICES                               │
-│  - OpenAI API (LLM inference)                                │
-│  - Serper API (web search)                                   │
+│  FastAPI Backend (Railway - Backend Service)               │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ - RESTful API endpoints                              │  │
+│  │ - Request validation and rate limiting               │  │
+│  │ - JOB MANAGER (backend/jobs.py)                     │  │
+│  │   • create_job(), get_job(), update_job_status()    │  │
+│  │ - CREW RUNNER (backend/crew_runner.py)               │  │
+│  │   • run_crew_async() - Enqueues jobs to Celery      │  │
+│  └──────────────────────────────────────────────────────┘  │
+└──────┬──────────────────────────────────────────────────────┘
+       │
+       │ Enqueue jobs to Celery queue
+       │
+┌──────▼──────────────────────────────────────────────────────┐
+│              TASK QUEUE LAYER                               │
+│  Redis (Celery Message Broker)                             │
+│  - Celery task queue (stores enqueued jobs)                │
+│  - Rate limit state (shared across API instances)         │
+│  - Result backend (optional task results)                  │
+└──────┬──────────────────────────────────────────────────────┘
+       │
+       │ Workers consume jobs from queue
+       │
+┌──────▼──────────────────────────────────────────────────────┐
+│              WORKER LAYER                                   │
+│  Celery Worker Processes (Railway - Celery Service)         │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ - CREW RUNNER Execution (backend/tasks.py)          │  │
+│  │   • run_crew_task() - Executes CrewAI jobs          │  │
+│  │   • Runs CrewAI orchestration                        │  │
+│  │   • Updates job status via JOB MANAGER              │  │
+│  │ - Process isolation (separate from API)              │  │
+│  │ - Can scale independently                             │  │
+│  └──────────────────────────────────────────────────────┘  │
+└──────┬──────────────────────────────────────────────────────┘
+       │
+       │ Job status updates
+       │
+┌──────▼──────────────────────────────────────────────────────┐
+│              DATABASE LAYER                                 │
+│  Supabase PostgreSQL                                        │
+│  - Job persistence (via JOB MANAGER)                        │
+│  - Result caching                                           │
+└──────┬──────────────────────────────────────────────────────┘
+       │
+┌──────▼──────────────────────────────────────────────────────┐
+│              EXTERNAL SERVICES                              │
+│  - OpenAI API (LLM inference)                              │
+│  - Serper API (web search)                                 │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.2 Architectural Style
 
-The system employs a **RESTful API architecture** with:
+The system employs a **RESTful API architecture** with **distributed task queue processing**:
 
 - **Stateless communication** - Each request contains all necessary information
 - **Resource-based URLs** - Endpoints represent resources (jobs, status)
 - **JSON data exchange** - Standard format for request/response payloads
-- **Background job processing** - Long-running operations execute asynchronously
+- **Distributed task queue** - Jobs are enqueued to Celery/Redis and executed by separate worker processes
+- **Process isolation** - API and worker processes run independently, enabling independent scaling
+- **Asynchronous job processing** - Long-running operations execute in background worker processes
 - **Polling-based status updates** - Frontend polls for job status (trade-off: simplicity vs. real-time)
 
 ### 3.3 System Decomposition
 
-The system is decomposed into five major domains:
+The system is decomposed into seven major domains:
 
 1. **Frontend Domain** - React/Vite single-page application
-2. **Backend Domain** - FastAPI REST API server
-3. **CrewAI Domain** - Multi-agent orchestration framework
-4. **Database Domain** - Supabase PostgreSQL persistence layer
-5. **Caching Domain** - Two-tier caching system
+2. **Backend Domain** - FastAPI REST API server (handles job submission and status)
+3. **Task Queue Domain** - Redis/Celery message broker (enqueues and distributes jobs)
+4. **Worker Domain** - Celery worker processes (executes CrewAI jobs asynchronously)
+5. **CrewAI Domain** - Multi-agent orchestration framework (runs within workers)
+6. **Database Domain** - Supabase PostgreSQL persistence layer
+7. **Caching Domain** - Two-tier caching system
 
 See Section 4 for detailed domain descriptions.
 
