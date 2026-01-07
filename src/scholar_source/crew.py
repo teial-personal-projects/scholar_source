@@ -3,7 +3,6 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai_tools import (
     SerperDevTool,
-    WebsiteSearchTool,
     YoutubeVideoSearchTool
 )
 from typing import List
@@ -32,8 +31,7 @@ class ScholarSource():
             verbose=True,
             tools=[
                 SerperDevTool(),        # For web search to find course pages
-                WebPageFetcherTool(),   # For fetching full page content
-                WebsiteSearchTool()     # For searching within pages if needed
+                WebPageFetcherTool()    # For fetching full page content
             ]
         )
 
@@ -60,7 +58,6 @@ class ScholarSource():
             verbose=True,
             tools=[
                 SerperDevTool(),  # For verifying URLs exist via web search
-                WebsiteSearchTool(),  # For validating web pages
                 YoutubeVideoSearchTool()  # For validating YouTube videos
             ]
         )
