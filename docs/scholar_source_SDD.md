@@ -225,7 +225,7 @@ The system is decomposed into seven major domains:
 1. **Frontend Domain** - React/Vite single-page application
 2. **Backend Domain** - FastAPI REST API server (handles job submission and status)
 3. **Task Queue Domain** - Redis/Celery message broker (enqueues and distributes jobs)
-4. **Worker Domain** - Celery worker processes (executes CrewAI jobs asynchronously)
+4. **Worker Domain** - Celery service creates separate processes that execute CrewAI jobs asynchronously (can scale independently of API)
 5. **CrewAI Domain** - Multi-agent orchestration framework (runs within workers)
 6. **Database Domain** - Supabase PostgreSQL persistence layer
 7. **Caching Domain** - Two-tier caching system

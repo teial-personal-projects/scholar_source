@@ -1004,7 +1004,7 @@ Rate limiting is integrated into FastAPI by:
 **✅ The system now uses a distributed task queue architecture with Celery and Redis:**
 
 - **API Layer** (FastAPI Backend service): Stateless, can scale horizontally
-- **Worker Layer** (Celery service): Separate processes that execute jobs, can scale independently
+- **Worker Layer** (Celery service): Celery creates separate processes that execute jobs.  Celery service can scale independently of FastAPI service.
 - **Redis**: Required for both task queuing (Celery broker) and rate limiting (shared state)
 
 **Architecture Benefits:**
