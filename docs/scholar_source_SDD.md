@@ -544,28 +544,44 @@ This section documents major architectural and design decisions, alternatives co
 
 ### 8.1 Background Job Execution
 
-**Decision:** Use Python threading with async event loops instead of task queue (Celery, RQ).
+**Decision:** Use Celery with Redis for distributed task queue processing.
 
 **Rationale:**
-- ✅ **Simplicity** - No additional infrastructure (Redis, message broker)
-- ✅ **Sufficient for current scale** - Single instance handles concurrent jobs
-- ✅ **Railway supports long-running processes** - No timeout limitations
-- ✅ **Fewer moving parts** - Easier to debug and deploy
+- ✅ **Horizontal Scalability** - Can scale API and worker instances independently
+- ✅ **Process Isolation** - Worker crashes don't affect API availability
+- ✅ **Fault Tolerance** - Jobs persist in Redis queue, can be retried if worker fails
+- ✅ **Task Distribution** - Jobs automatically distributed across available workers
+- ✅ **Production Ready** - Industry-standard solution for background job processing
+
+**Implementation:**
+- **Celery** - Distributed task queue library
+- **Redis** - Message broker and task queue storage
+- **Separate Services** - API (FastAPI) and Workers (Celery) run as separate Railway services
+- **Job Persistence** - Job status stored in Supabase, tasks queued in Redis
 
 **Alternatives Considered:**
-- **Celery with Redis** - More scalable but adds infrastructure complexity
-- **AWS SQS / Google Cloud Tasks** - Overkill for current needs, vendor lock-in
+- **Python Threading** - Initial implementation, limited scalability (migrated away from this)
+- **AWS SQS / Google Cloud Tasks** - Vendor lock-in, more complex setup
+- **RQ (Redis Queue)** - Simpler but less features than Celery
 
 **Trade-offs:**
-- ✅ Simpler deployment and debugging
-- ✅ No additional infrastructure costs
-- ❌ Limited horizontal scaling (single instance)
-- ❌ No distributed task execution
-- ❌ Jobs lost on server restart (mitigated by database persistence)
+- ✅ Enables horizontal scaling of both API and workers
+- ✅ Process isolation improves reliability
+- ✅ Jobs can be retried and distributed across workers
+- ❌ Additional infrastructure (Redis required)
+- ❌ More complex deployment (separate services)
+- ❌ Slightly higher operational overhead
 
-**Future Evolution Path:**
-- Migrate to Celery/RQ when scaling to multiple instances
-- Or use Railway's native queue service if available
+**Current Architecture:**
+- API Layer: FastAPI service on Railway (handles job submission, enqueues to Celery)
+- Task Queue: Redis (stores enqueued jobs, shared rate limit state)
+- Worker Layer: Celery worker service on Railway (consumes jobs from Redis, executes CrewAI tasks)
+- Database: Supabase (stores job status and results)
+
+**Migration Status:**
+- ✅ **Completed** - Migrated from threading-based to Celery-based architecture
+- ✅ **Completed** - Separate API and Worker services deployed on Railway
+- ✅ **Completed** - Redis integration for task queue and rate limiting
 
 ### 8.2 Database Choice
 
