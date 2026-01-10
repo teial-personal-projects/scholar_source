@@ -118,82 +118,113 @@ Deletes jobs older than specified number of days.
 
 #### 2.1.2 Job Management Flow
 
-The job management system coordinates job submission, execution, and status tracking through a combination of database state, background threads, and API endpoints.
+The job management system coordinates job submission, execution, and status tracking through a distributed task queue architecture with Celery, Redis, and Supabase.
 
-**1. Job Submission (`/api/submit`)**
-- Client POSTs job request to API endpoint
-- API validates inputs and checks rate limits
-- `create_job()` creates job record in Supabase with `status: "pending"`
-- API immediately returns `job_id` to client
-- `run_crew_async()` is called (non-blocking) to start background execution
+**Request Flow:**
 
-**2. Background Execution**
-- `run_crew_async()` spawns a daemon thread that runs `_run_crew_worker()`
-- API returns immediately while thread executes independently
-- Thread creates its own event loop for async execution
+1. **Client submits job** → POST `/api/submit`
+   - API validates input and checks rate limits (Redis-backed)
+   - `create_job()` creates job record in Supabase with `status: "pending"`
+   - `run_crew_async()` enqueues job to Celery queue (via `run_crew_task.apply_async()`)
+   - API returns `job_id` immediately (200 OK)
 
-**3. Job Execution (in background thread)**
-- Thread updates job status to `"running"` in Supabase via `update_job_status()`
-- CrewAI execution begins (LLM calls, web scraping, resource discovery)
-- Execution takes 2-10 minutes depending on complexity
-- Thread periodically updates `status_message` during execution
-- On completion: updates status to `"completed"` with results via `update_job_status()`
-- On failure: updates status to `"failed"` with error message via `update_job_status()`
+2. **API enqueues Celery task** → Job stored in Redis queue
+   - Job status updated to `"queued"` in Supabase
+   - Task metadata stored (celery_task_id, bypass_cache)
+   - API response returned immediately (non-blocking)
 
-**4. Status Polling (`/api/status/{job_id}`)**
-- Client polls this endpoint repeatedly to check job progress
-- API queries Supabase by `job_id` using `get_job()`
-- Returns current status, results (if completed), or error (if failed)
-- No direct communication between API and worker thread
+3. **Celery worker picks up task** → Worker consumes job from Redis queue
+   - Worker process polls Redis for jobs from `crew_jobs` queue
+   - Worker selects job based on queue and priority
+   - `run_crew_task()` executes in separate worker process
+
+4. **Worker executes CrewAI** → `run_crew_task()` runs multi-agent workflow
+   - Worker updates job status to `"running"` in Supabase
+   - CrewAI execution begins (LLM calls, web scraping, resource discovery)
+   - Execution takes 2-10 minutes depending on complexity
+   - Worker periodically updates `status_message` during execution
+
+5. **Worker updates job status** → Updates stored in Supabase database
+   - On completion: updates status to `"completed"` with results via `update_job_status()`
+   - On failure: updates status to `"failed"` with error message via `update_job_status()`
+   - Status messages include progress updates during execution
+
+6. **Client polls status** → GET `/api/status/{job_id}`
+   - Client polls this endpoint repeatedly (every 2 seconds) to check job progress
+   - API queries Supabase by `job_id` using `get_job()`
+   - Returns current status, results (if completed), or error (if failed)
+   - No direct communication between API and worker processes (database acts as coordination point)
 
 **Key Characteristics:**
 - **State Storage:** Supabase `jobs` table serves as the single source of truth for job state
-- **Execution Model:** Daemon threads (not async tasks, not a queue system)
-- **Communication:** Worker thread writes directly to Supabase; no inter-process communication
-- **No Queue:** Jobs start immediately when submitted (no queuing mechanism)
-- **No Cleanup:** Daemon threads exit automatically when execution completes; no explicit cleanup needed
+- **Execution Model:** Distributed task queue with Celery workers (separate processes, not threads)
+- **Communication:** Worker processes write to Supabase; Redis queue coordinates job distribution
+- **Queue System:** Jobs are queued in Redis, distributed across available workers
+- **Process Isolation:** Worker crashes don't affect API availability; jobs can be retried
+- **Scalability:** API and worker layers can scale independently based on demand
 
-The job record in Supabase acts as the coordination point between the API (which creates jobs and handles status polling) and the worker thread (which executes the CrewAI workflow and updates job status).
+The job record in Supabase acts as the coordination point between the API (which creates jobs and handles status polling) and the Celery worker processes (which execute the CrewAI workflow and update job status).
 
 ### 2.2 Crew Runner Component (`backend/crew_runner.py`)
 
 #### 2.2.1 Function Signatures
 
-**`run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None`**
+**`run_crew_async(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> str`**
 
-Runs the ScholarSource crew asynchronously with cancellation support.
+Enqueues a ScholarSource crew job to the Celery task queue, or runs synchronously if in SYNC_MODE.
 
 - **Function flow:**
-  1. Updates job status to 'running'
-  2. Executes the crew with provided inputs using `kickoff_async()`
-  3. Parses the markdown output into structured resources
-  4. Updates job with results or error
-  5. Supports cancellation via `cancel_crew_job()`
+  1. Validates job exists and is in correct status
+  2. If SYNC_MODE: Runs job synchronously in current process (development only)
+  3. If Celery mode: Enqueues job to Celery queue via `run_crew_task.apply_async()`
+  4. Updates job status to 'queued' with Celery task ID
+  5. Returns Celery task ID (or "sync" in SYNC_MODE)
 - **Parameters:**
   - `job_id`: UUID of the job to run
   - `inputs`: Dictionary of course input parameters
   - `bypass_cache`: If True, bypass cache and get fresh results
+- **Returns:**
+  - `str`: Celery task ID (in async mode) or "sync" (in sync mode)
 
 **Implementation Details:**
-- Creates new thread with daemon=True
-- Creates new event loop in thread (asyncio.new_event_loop())
-- Calls `_run_crew_worker()` in the event loop
-- Thread runs independently of main process
+- Enqueues job to Celery queue using `run_crew_task.apply_async()`
+- Job routed to `crew_jobs` queue with default priority
+- Celery task ID stored in job metadata for cancellation tracking
+- Returns immediately after enqueuing (non-blocking)
 
-**`_run_crew_worker(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> None` (async)**
+### 2.3 Celery Task Component (`backend/tasks.py`)
 
-Worker function that runs in background thread.
+#### 2.3.1 Function Signatures
 
+**`run_crew_task(job_id: str, inputs: Dict[str, str], bypass_cache: bool = False) -> Dict[str, any]` (Celery Task)**
+
+Celery task that executes the ScholarSource crew. Runs in separate worker process.
+
+- **Function flow:**
+  1. Updates job status to 'running'
+  2. Checks cache (if not bypassed) using `get_cached_analysis()`
+  3. Executes the crew with provided inputs using `kickoff_async()`
+  4. Parses the markdown output into structured resources
+  5. Updates job with results or error
+  6. Supports cancellation via Celery's revoke mechanism
 - **Parameters:**
-  - `job_id`: UUID of the job
-  - `inputs`: Course input parameters
+  - `job_id`: UUID of the job to run
+  - `inputs`: Dictionary of course input parameters
   - `bypass_cache`: If True, bypass cache and get fresh results
+- **Returns:**
+  - `Dict[str, any]`: Status and results/error information
+
+**Implementation Details:**
+- Decorated with `@app.task()` making it a Celery task
+- Runs in separate worker process (not in API process)
+- Handles retries automatically (max 3 retries, 60s delay)
+- Updates job status via `update_job_status()` throughout execution
 
 **Execution Flow:**
 1. Check if job was cancelled before starting
-2. Check cache (if not bypassed) using `get_cached_analysis()`
-3. If cache hit and valid, update job with cached results and return
-4. Update job status to 'running'
+2. Update job status to 'running'
+3. Check cache (if not bypassed) using `get_cached_analysis()`
+4. If cache hit and valid, use cached results, skip to parsing
 5. Create ScholarSource crew instance
 6. Execute crew with `crew().kickoff_async(inputs=inputs)`
 7. Store async task in `_active_tasks` dict for cancellation
