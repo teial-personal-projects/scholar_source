@@ -581,8 +581,10 @@ normalization path that steps 1.10.4, 1.10.5, and 1.10.6 already depend on.
 - [x] 0.7.7 ~~An uploaded PDF is removed from disk after its run completes,
   including when the run fails.~~ Withdrawn with steps 0.6.10 and 0.6.11: no
   request can place a PDF on disk anymore.
-- [ ] 0.7.8 The validation gates in AGENTS.md pass with the new regression
+- [x] 0.7.8 The validation gates in AGENTS.md pass with the new regression
   tests in place.
+  Verified on 2026-08-18: `ruff check .` passed, all 110 Python files passed
+  `ruff format --check .`, and the full test suite passed with 484 tests.
 
 ---
 
