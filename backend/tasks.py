@@ -120,6 +120,18 @@ def _read_crew_output(result) -> Tuple[str, str]:
     return raw_output, markdown_content
 
 
+def _extract_crew_error(markdown_content: str) -> Optional[str]:
+    """Return a top-level crew error without matching errors inside resources."""
+    error_match = re.match(
+        r'^\s*ERROR:\s*(.+?)(?:\n|$)',
+        markdown_content,
+        flags=re.IGNORECASE,
+    )
+    if error_match is None:
+        return None
+    return error_match.group(1)
+
+
 def _parse_crew_results(
     markdown_content: str,
     normalized_inputs: Dict,
@@ -292,10 +304,10 @@ def run_crew_task(
 
         raw_output, markdown_content = _read_crew_output(result)
 
-        # Check if the crew itself returned an error marker
-        if "ERROR:" in markdown_content[:500]:
-            error_match = re.search(r'ERROR:\s*(.+?)(?:\n|$)', markdown_content)
-            error_msg = error_match.group(1) if error_match else "Cannot access provided resources"
+        # Fail only when the crew output itself starts with an error. Errors
+        # inside individual resources are filtered by the markdown parser.
+        error_msg = _extract_crew_error(markdown_content)
+        if error_msg is not None:
             update_job_status(
                 job_id,
                 status="failed",
@@ -438,10 +450,10 @@ def run_crew_task_sync(
 
         raw_output, markdown_content = _read_crew_output(result)
 
-        # Check if the crew itself returned an error marker
-        if "ERROR:" in markdown_content[:500]:
-            error_match = re.search(r'ERROR:\s*(.+?)(?:\n|$)', markdown_content)
-            error_msg = error_match.group(1) if error_match else "Cannot access provided resources"
+        # Fail only when the crew output itself starts with an error. Errors
+        # inside individual resources are filtered by the markdown parser.
+        error_msg = _extract_crew_error(markdown_content)
+        if error_msg is not None:
             update_job_status(
                 job_id,
                 status="failed",

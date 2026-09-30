@@ -209,7 +209,7 @@ branch until the dependency audits and test suites pass, then merge through
 
 ## 5. Resolve Direct Python Dependency Vulnerabilities
 
-- [ ] 5.1. Update the following direct dependencies consistently in both
+- [x] 5.1. Update the following direct dependencies consistently in both
   `pyproject.toml` and `requirements.txt`:
 
   - `aiohttp` to at least `3.14.3`
@@ -219,24 +219,45 @@ branch until the dependency audits and test suites pass, then merge through
   - `pypdf` to at least `6.16.1` while remaining below `7.0.0`
   - `python-multipart` to at least `0.0.31`
 
-- [ ] 5.2. Regenerate and install the Python lockfile.
+  Completed September 29, 2026: both manifests now require `aiohttp` 3.14.3,
+  `cryptography` 50.0.0, `pillow` 12.3.0, `pyasn1` 0.6.4,
+  `pypdf>=6.16.1,<7.0.0`, and `python-multipart` 0.0.31.
+
+- [x] 5.2. Regenerate and install the Python lockfile.
 
   ```bash
   uv lock
   uv sync
   ```
 
-- [ ] 5.3. Run the complete Python test suite.
+  Completed September 29, 2026: `uv lock` resolved `pypdf` 6.19.0 along with
+  the five exact target versions, and `uv sync` installed the regenerated
+  environment successfully after cryptography 50.0.0 compiled locally.
+
+- [x] 5.3. Run the complete Python test suite.
 
   ```bash
   uv run pytest
   ```
 
-- [ ] 5.4. Run the Python dependency audit again.
+  Completed September 29, 2026 after synchronizing the locked `dev` extra. An
+  initial run exposed an error-classification bug in the synchronous job path:
+  an error inside one resource incorrectly failed the whole job. After fixing
+  the shared sync and Celery handling and adding regression tests, all 258 tests
+  passed.
+
+- [x] 5.4. Run the Python dependency audit again.
 
   ```bash
   uv run --with pip-audit pip-audit
   ```
+
+  Audit recorded September 29, 2026: 57 advisory matches remained across 11
+  packages: `anyio`, `chromadb`, `crewai-tools`, `h2`, `hpack`, `json-repair`,
+  `litellm`, `oauthlib`, `pydantic-settings`, `pyjwt`, and `soupsieve`. None of
+  the six direct dependencies updated in step 5.1 remained in the findings. The
+  local `scholar-source` package was skipped because it is not published on
+  PyPI.
 
 - [ ] 5.5. Commit the direct Python dependency updates.
 
