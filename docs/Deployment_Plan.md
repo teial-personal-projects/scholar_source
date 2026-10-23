@@ -175,7 +175,7 @@ SERPER_API_KEY=...your_serper_key_here
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...your_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here  # WARNING: never prefix with VITE_
-SUPABASE_JWT_SECRET=your_jwt_secret_here  # CRITICAL: Required for JWT verification
+SUPABASE_JWT_SECRET=your_jwt_secret_here  # Optional: legacy HS256 tokens only
 
 # Redis (Required for task queue and rate limiting)
 REDIS_URL=redis://default:PASSWORD@HOST:PORT

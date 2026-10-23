@@ -269,6 +269,41 @@ class TestAuthorizationHeader:
 
         assert response.status_code == 401
 
+    def test_legacy_token_requires_legacy_secret(self, monkeypatch, valid_jwt_token):
+        """HS256 tokens should fail cleanly when legacy verification is disabled."""
+        from backend import auth
+
+        monkeypatch.setattr(auth, "SUPABASE_JWT_SECRET", None)
+
+        with pytest.raises(auth.AuthenticationError) as exc_info:
+            auth.verify_jwt_token(valid_jwt_token)
+
+        assert exc_info.value.status_code == 401
+        assert "Legacy HS256" in exc_info.value.detail
+
+    def test_asymmetric_token_does_not_require_legacy_secret(self, monkeypatch):
+        """ES256/RS256 verification should use JWKS without a legacy secret."""
+        from backend import auth
+
+        expected_payload = {
+            "sub": "123e4567-e89b-12d3-a456-426614174000",
+            "aud": "authenticated",
+        }
+
+        class SigningKey:
+            key = "public-signing-key"
+
+        class JwksClient:
+            def get_signing_key_from_jwt(self, token):
+                return SigningKey()
+
+        monkeypatch.setattr(auth, "SUPABASE_JWT_SECRET", None)
+        monkeypatch.setattr(auth.jwt, "get_unverified_header", lambda token: {"alg": "ES256"})
+        monkeypatch.setattr(auth, "_get_jwks_client", lambda: JwksClient())
+        monkeypatch.setattr(auth.jwt, "decode", lambda *args, **kwargs: expected_payload)
+
+        assert auth.verify_jwt_token("asymmetric-token") == expected_payload
+
 
 class TestTokenPayload:
     """Test JWT token payload extraction."""

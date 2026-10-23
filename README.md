@@ -434,7 +434,7 @@ Open http://localhost:5173 in your browser - you should see the course input for
 | `SERPER_API_KEY` | ✅ Yes | Serper API key for web search | - |
 | `SUPABASE_URL` | ✅ Yes | Supabase project URL | - |
 | `SUPABASE_ANON_KEY` | ✅ Yes | Supabase anon/public key | - |
-| `SUPABASE_JWT_SECRET` | ✅ Yes | Supabase JWT secret for token verification | - |
+| `SUPABASE_JWT_SECRET` | No | Legacy HS256 token verification; omit after migrating to ES256/RS256 signing keys | - |
 | `REDIS_URL` | Conditional | Redis connection for task queue & rate limiting | `redis://localhost:6379/0` |
 | `SYNC_MODE` | No | Set to `true` to run without Redis (tasks run synchronously) | `false` |
 | `ALLOW_IN_MEMORY_RATE_LIMIT` | No | Set to `true` for in-memory rate limiting (no Redis needed) | `false` |
