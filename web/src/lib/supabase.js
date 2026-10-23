@@ -13,17 +13,39 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env.local file.');
 }
 
-// Validate key format
-if (!supabaseAnonKey.startsWith('eyJ')) {
-  console.error('❌ Invalid Supabase anon key format! Key must start with "eyJ" (JWT format)');
-  console.error('Key starts with:', supabaseAnonKey.substring(0, 10));
-  throw new Error('Invalid Supabase anon key format. Please check your VITE_SUPABASE_ANON_KEY in .env.local');
+// Validate key format.
+// Accepts the new publishable key (sb_publishable_...) and the legacy anon JWT (eyJ...).
+// A secret key (sb_secret_...) bypasses Row Level Security and must never ship to the browser.
+if (supabaseAnonKey.startsWith('sb_secret_')) {
+  throw new Error('VITE_SUPABASE_ANON_KEY is a Supabase secret key. Use the publishable key (sb_publishable_...) instead.');
 }
 
-// Validate URL format
-if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
+const isPublishableKey = supabaseAnonKey.startsWith('sb_publishable_');
+const isLegacyAnonKey = supabaseAnonKey.startsWith('eyJ');
+
+if (!isPublishableKey && !isLegacyAnonKey) {
+  console.error('❌ Invalid Supabase key format! Expected a publishable key (sb_publishable_...) or a legacy anon key (eyJ...)');
+  console.error('Key starts with:', supabaseAnonKey.substring(0, 10));
+  throw new Error('Invalid Supabase key format. Please check your VITE_SUPABASE_ANON_KEY in .env.local');
+}
+
+// Hosted projects must use HTTPS on supabase.co. Local Supabase development
+// uses an HTTP loopback URL such as http://127.0.0.1:54321.
+const isValidSupabaseUrl = (value) => {
+  try {
+    const url = new URL(value);
+    const isHostedProject = url.protocol === 'https:' && url.hostname.endsWith('.supabase.co');
+    const isLocalProject = url.protocol === 'http:' && ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+
+    return isHostedProject || isLocalProject;
+  } catch {
+    return false;
+  }
+};
+
+if (!isValidSupabaseUrl(supabaseUrl)) {
   console.error('❌ Invalid Supabase URL format!');
-  console.error('URL should be: https://xxxxxxxxxxxxx.supabase.co');
+  console.error('URL should be a hosted https://xxxxxxxxxxxxx.supabase.co URL or a local loopback URL');
   console.error('Actual URL:', supabaseUrl);
   throw new Error('Invalid Supabase URL format. Please check your VITE_SUPABASE_URL in .env.local');
 }
@@ -36,8 +58,7 @@ if (import.meta.env.DEV) {
     keyLength: supabaseAnonKey?.length,
     keyPrefix: supabaseAnonKey?.substring(0, 20) + '...',
     keySuffix: '...' + supabaseAnonKey?.substring(supabaseAnonKey.length - 10),
-    keyStartsWithJWT: supabaseAnonKey?.startsWith('eyJ'),
-    keyEndsWithValid: supabaseAnonKey?.length > 100,
+    keyType: isPublishableKey ? 'publishable' : 'legacy anon',
   });
 }
 

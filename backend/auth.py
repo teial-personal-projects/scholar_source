@@ -16,12 +16,10 @@ from backend.env_loader import load_environment
 # Load environment variables
 load_environment()
 
-# Supabase JWT secret from environment (used for legacy HS256 tokens)
+# Optional legacy secret. New ES256/RS256 tokens are verified through Supabase's
+# public JWKS endpoint and do not require a signing secret in this service.
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-
-if not SUPABASE_JWT_SECRET:
-    raise ValueError("SUPABASE_JWT_SECRET environment variable is required")
 
 # JWT bearer scheme
 security = HTTPBearer()
@@ -68,6 +66,10 @@ def verify_jwt_token(token: str) -> Dict:
 
         if alg == "HS256":
             # Legacy Supabase projects — symmetric secret
+            if not SUPABASE_JWT_SECRET:
+                raise AuthenticationError(
+                    "Legacy HS256 token verification is not configured"
+                )
             payload = jwt.decode(
                 token,
                 SUPABASE_JWT_SECRET,
@@ -91,6 +93,8 @@ def verify_jwt_token(token: str) -> Dict:
         raise AuthenticationError("Invalid token audience")
     except jwt.InvalidTokenError:
         raise AuthenticationError("Invalid token")
+    except AuthenticationError:
+        raise
     except Exception as e:
         raise AuthenticationError(f"Token verification failed: {str(e)}")
 
