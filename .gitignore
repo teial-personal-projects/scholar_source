@@ -91,3 +91,6 @@ supabase/
 # Manual backup files
 *.backup
 
+
+# Database dumps (contain user data)
+schema-backups/
